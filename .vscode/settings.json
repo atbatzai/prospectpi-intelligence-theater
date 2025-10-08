@@ -1,0 +1,27 @@
+{
+  "chat.agent.enabled": true,
+  "chat.agent.maxRequests": 50000,
+  "github.copilot.chat.agent.runTasks": true,
+  "chat.mcp.discovery.enabled": {
+    "claude-desktop": true,
+    "windsurf": true,
+    "cursor-global": true,
+    "cursor-workspace": true
+  },
+  "github.copilot.chat.agent.autoFix": true,
+  "chat.tools.autoApprove": false,
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "terminal.integrated.automationProfile.windows": {
+    "path": "C:\\Windows\\System32\\cmd.exe"
+  },
+  "terminal.integrated.hideDefaultProfiles": true,
+  "terminal.integrated.profiles.windows": {
+    "Command Prompt": {
+      "path": [
+        "C:\\Windows\\System32\\cmd.exe",
+        "C:\\Windows\\Sysnative\\cmd.exe"
+      ],
+      "icon": "terminal-cmd"
+    }
+  }
+}
