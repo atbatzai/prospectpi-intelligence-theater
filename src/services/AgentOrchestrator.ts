@@ -142,7 +142,7 @@ export class AgentOrchestrator {
           approved: finalQA.approved,
           confidence: finalQA.confidence,
           qualityScore: finalQA.qualityScore,
-          dossierLength: dossier.detailedAnalysis.length
+          dossierLength: dossier.sections.strategicRecommendations.approachStrategy.length
         },
         'Dossier quality, accuracy, and completeness standards'
       );

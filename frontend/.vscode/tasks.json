@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Create Mobile Integration Tests Directory",
+			"type": "shell",
+			"command": "mkdir -p src/__tests__/mobile-integration",
+			"group": "build"
+		}
+	]
+}

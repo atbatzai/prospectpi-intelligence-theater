@@ -8,7 +8,7 @@ import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import { v4 as uuidv4 } from 'uuid';
 import Joi from 'joi';
-import { ProspectResearchInput, ResearchApiResponse } from '@interfaces/AgentTypes';
+import { ResearchApiResponse } from '@interfaces/AgentTypes';
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -31,7 +31,7 @@ const researchInputSchema = Joi.object({
 
 export const generateDossierHandler = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   // Validate request body
-  const { error, value } = researchInputSchema.validate(req.body);
+  const { error } = researchInputSchema.validate(req.body);
   if (error) {
     res.status(400).json({
       success: false,
@@ -47,12 +47,12 @@ export const generateDossierHandler = asyncHandler(async (req: AuthenticatedRequ
     return;
   }
 
-  const input: ProspectResearchInput = value;
   const requestId = `req_${uuidv4().replace(/-/g, '').substring(0, 12)}`;
 
   try {
     // TODO: Integrate with database and agent orchestration
     // For now, return immediate response for WebSocket integration testing
+    // Input validation passed: value contains ProspectResearchInput
     
     // Return response with WebSocket URL matching Story 1.3 specifications
     const response: ResearchApiResponse = {

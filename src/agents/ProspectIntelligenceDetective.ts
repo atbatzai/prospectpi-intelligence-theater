@@ -361,10 +361,62 @@ export class ProspectIntelligenceDetective {
       return {
         requestId: this.context?.requestId || 'unknown',
         companyName,
-        summary: dossierData.executiveSummary || 'Analysis completed',
-        detailedAnalysis: fullDossier,
+        vendorName: 'Unknown Vendor',
+        productName: 'Unknown Product',
+        industry: 'Unknown Industry',
+        primaryPainPoint: 'Unknown Pain Point',
+        sections: {
+          executiveSummary: {
+            summary: dossierData.executiveSummary || 'Analysis completed',
+            solutionRelevanceScore: Math.round((dossierData.overallConfidenceScore || 0) * 100),
+            keyOpportunities: dossierData.keyFindings || [],
+            criticalRisks: []
+          },
+          painPointAlignment: {
+            primaryPainPoint: {
+              challenge: 'Unknown',
+              evidence: [],
+              solutionFit: 'Analysis pending',
+              confidence: 'medium'
+            }
+          },
+          competitiveIntelligence: {
+            currentVendors: [],
+            competitorThreat: 'medium',
+            competitiveAdvantages: [],
+            threats: []
+          },
+          budgetIntelligence: {
+            spendingPatterns: [],
+            budgetCycle: 'Unknown',
+            budgetFitAnalysis: 'Pending analysis',
+            decisionMakers: []
+          },
+          technologyIntelligence: {
+            currentStack: [],
+            modernizationSignals: [],
+            implementationReadiness: 'needs-prep',
+            technicalRequirements: []
+          },
+          marketPosition: {
+            industryContext: 'Analysis pending',
+            marketTrends: [],
+            growthSignals: [],
+            riskFactors: [],
+            strategicInitiatives: []
+          },
+          strategicRecommendations: {
+            approachStrategy: fullDossier,
+            keyMessaging: [],
+            stakeholderStrategy: [],
+            timeline: 'TBD',
+            nextSteps: []
+          }
+        },
         sources: researchData,
         confidenceScore: dossierData.overallConfidenceScore || triangulation.confidenceLevel,
+        insightsCount: dossierData.keyFindings?.length || 0,
+        sourcesCount: researchData.length,
         totalCost,
         generatedAt: new Date(),
         format: outputFormat as 'cia' | 'executive' | 'custom'
@@ -382,10 +434,62 @@ export class ProspectIntelligenceDetective {
       return {
         requestId: this.context?.requestId || 'unknown',
         companyName,
-        summary: 'Intelligence analysis failed',
-        detailedAnalysis: `Error: ${error.message}`,
+        vendorName: 'Unknown Vendor',
+        productName: 'Unknown Product', 
+        industry: 'Unknown Industry',
+        primaryPainPoint: 'Unknown Pain Point',
+        sections: {
+          executiveSummary: {
+            summary: 'Intelligence analysis failed',
+            solutionRelevanceScore: 0,
+            keyOpportunities: [],
+            criticalRisks: [error.message]
+          },
+          painPointAlignment: {
+            primaryPainPoint: {
+              challenge: 'Analysis failed',
+              evidence: [],
+              solutionFit: 'Error occurred',
+              confidence: 'limited'
+            }
+          },
+          competitiveIntelligence: {
+            currentVendors: [],
+            competitorThreat: 'medium',
+            competitiveAdvantages: [],
+            threats: []
+          },
+          budgetIntelligence: {
+            spendingPatterns: [],
+            budgetCycle: 'Unknown',
+            budgetFitAnalysis: 'Analysis failed',
+            decisionMakers: []
+          },
+          technologyIntelligence: {
+            currentStack: [],
+            modernizationSignals: [],
+            implementationReadiness: 'not-ready',
+            technicalRequirements: []
+          },
+          marketPosition: {
+            industryContext: 'Analysis failed',
+            marketTrends: [],
+            growthSignals: [],
+            riskFactors: [],
+            strategicInitiatives: []
+          },
+          strategicRecommendations: {
+            approachStrategy: `Error: ${error.message}`,
+            keyMessaging: [],
+            stakeholderStrategy: [],
+            timeline: 'TBD',
+            nextSteps: []
+          }
+        },
         sources: researchData,
         confidenceScore: 0,
+        insightsCount: 0,
+        sourcesCount: researchData.length,
         totalCost,
         generatedAt: new Date(),
         format: 'cia'

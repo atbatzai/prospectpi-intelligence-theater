@@ -1,6 +1,12 @@
 /**
  * ProspectPI Intelligence Theater - Main Entry Point
- * Story 1.1: Three-Agent Orchestration System
+ * Story 1.1: Three-Agent Orch      console.log('\n📄 EXECUTIVE SUMMARY:');
+      console.log('-'.repeat(40));
+      console.log(result.dossier.sections.executiveSummary.summary);
+      
+      console.log('\n📊 STRATEGIC RECOMMENDATIONS:');
+      console.log('-'.repeat(40));
+      console.log(result.dossier.sections.strategicRecommendations.approachStrategy.substring(0, 1000) + '...');on System
  * 
  * Main application entry point for the three-agent intelligence system
  */
@@ -37,6 +43,10 @@ async function demoIntelligenceMission(): Promise<void> {
   // Demo user input
   const demoInput: OptimizedUserInput = {
     companyName: 'OpenAI',
+    vendorName: 'Microsoft',
+    productName: 'Azure AI Services',
+    industry: 'Technology',
+    primaryPainPoint: 'AI model training and deployment costs',
     additionalContext: 'AI research company, creator of ChatGPT and GPT models',
     priority: 'standard',
     outputFormat: 'full',
@@ -86,11 +96,11 @@ async function demoIntelligenceMission(): Promise<void> {
       
       console.log('\n📄 EXECUTIVE SUMMARY:');
       console.log('-'.repeat(40));
-      console.log(result.dossier.summary);
+      console.log(result.dossier.sections.executiveSummary.summary);
       
-      console.log('\n📑 DETAILED INTELLIGENCE DOSSIER:');
+      console.log('\n📑 STRATEGIC RECOMMENDATIONS:');
       console.log('-'.repeat(40));
-      console.log(result.dossier.detailedAnalysis.substring(0, 1000) + '...');
+      console.log(result.dossier.sections.strategicRecommendations.approachStrategy.substring(0, 1000) + '...');
       
       console.log('\n🔍 RESEARCH SOURCES:');
       result.dossier.sources.forEach((source, i) => {

@@ -1,0 +1,263 @@
+# Story 2.1: Frontend Intelligence Theater Implementation
+
+## Status
+Draft
+
+## Story
+**As a** ProspectPI Intelligence Theater user,  
+**I want** a responsive web frontend that implements the Intelligence Theater UX design,  
+**so that** I can interact with the 3-agent system through an intuitive interface and watch real-time dossier generation.
+
+## Acceptance Criteria
+1. Smart Input Interface - Implement company name input with expandable context section following Story 2.2 specifications
+2. Agent Progress Theater - Display real-time 3-column agent dashboard with live status updates via WebSocket
+3. CIA-Style Dossier Viewer - Render structured intelligence dossiers with expandable sections and confidence indicators
+4. User Authentication Flow - Login/registration forms connecting to existing JWT authentication system
+5. Existing backend API endpoints (Stories 1.2-1.4) continue to work unchanged
+6. New frontend follows existing Story 2.2 UX patterns exactly
+7. Integration with existing WebSocket system maintains current real-time behavior
+8. Frontend is covered by appropriate tests (React Testing Library)
+9. Mobile-responsive design following Story 2.2 specifications
+10. No regression in existing backend functionality verified
+
+## Dev Notes
+
+### Story Context
+
+**Existing System Integration:**
+- **Integrates with:** Complete backend REST API (Stories 1.1-1.4), WebSocket system, user authentication
+- **Technology:** React/TypeScript frontend connecting to existing Node.js/TypeScript backend
+- **Follows pattern:** Story 2.2 UX specifications, existing API interfaces from Story 1.2
+- **Touch points:** `/api/research/requests`, `/api/auth`, WebSocket connections for real-time updates
+
+### Technical Notes
+
+- **Integration Approach:** Create React SPA that consumes existing REST API and WebSocket connections
+- **Existing Pattern Reference:** Story 2.2 UX Design Specifications for all UI components
+- **Key Constraints:** Must use existing API interfaces from Story 1.2, maintain backend compatibility
+
+### Frontend Architecture Overview
+The frontend must implement the complete Intelligence Theater user experience:
+1. **Authentication Layer**: Login/registration with JWT token management
+2. **Smart Input Interface**: Company research request form with context options
+3. **Real-Time Theater**: 3-agent progress dashboard with WebSocket updates
+4. **Dossier Presentation**: CIA-style document viewer with structured intelligence
+
+## Tasks / Subtasks
+
+### Task 1: Project Setup & Authentication Integration (AC: 4, 5)
+- [ ] 1.1. Set up React/TypeScript project with Vite/Create React App
+- [ ] 1.2. Configure API client for existing backend endpoints
+- [ ] 1.3. Implement login/registration forms using existing JWT authentication
+- [ ] 1.4. Set up protected routes and authentication context
+- [ ] 1.5. Configure environment variables for backend API connection
+
+### Task 2: Smart Input Interface - Story 2.2 Component 1 (AC: 1, 6)
+- [ ] 2.1. Create company name input field with autocomplete
+- [ ] 2.2. Implement expandable "Additional Context" section
+- [ ] 2.3. Add priority toggle (Standard vs Express)
+- [ ] 2.4. Build output format selection component
+- [ ] 2.5. Connect to `/api/research/requests` POST endpoint
+
+### Task 3: Agent Progress Theater - Story 2.2 Component 2 (AC: 2, 7)
+- [ ] 3.1. Create three-column agent dashboard layout
+- [ ] 3.2. Implement WebSocket connection to existing progress system
+- [ ] 3.3. Build real-time status updates for each agent
+- [ ] 3.4. Add progress indicators and time estimates
+- [ ] 3.5. Display data sources and insights counters
+
+### Task 4: Dossier Viewer - Story 2.2 Component 3 (AC: 3, 6)
+- [ ] 4.1. Create CIA-style document layout with professional typography
+- [ ] 4.2. Implement expandable sections for intelligence findings
+- [ ] 4.3. Add confidence indicators with color coding
+- [ ] 4.4. Build source attribution with hover tooltips
+- [ ] 4.5. Add PDF export functionality
+
+### Task 5: Error Recovery & Mobile Responsiveness (AC: 9)
+- [ ] 5.1. Implement error recovery UX patterns from Story 2.2
+- [ ] 5.2. Build mobile-responsive design for all components
+- [ ] 5.3. Add loading states and error boundaries
+- [ ] 5.4. Create accessibility features (ARIA labels, keyboard navigation)
+- [ ] 5.5. Test cross-browser compatibility
+
+### Task 6: Testing & Integration Validation (AC: 8, 10)
+- [ ] 6.1. Write unit tests for all React components
+- [ ] 6.2. Create integration tests for API connectivity
+- [ ] 6.3. Test WebSocket real-time functionality
+- [ ] 6.4. Validate responsive design on multiple devices
+- [ ] 6.5. Performance testing and optimization
+
+## Component Implementation Details
+
+### Smart Input Interface (Task 2)
+```typescript
+// Smart Company Input Component (from Story 2.2)
+interface SmartInputProps {
+  onSubmit: (input: OptimizedUserInput) => void;
+  isGenerating: boolean;
+  previousCompanies: string[];
+}
+
+interface OptimizedUserInput {
+  companyName: string;
+  companyUrl?: string;
+  linkedinUrl?: string;
+  additionalContext?: string;
+  organizationFocus?: string;
+  locationOfInterest?: string;
+  priority: 'standard' | 'express';
+  outputFormat: 'full' | 'executive' | 'custom';
+}
+```
+
+### Agent Progress Theater (Task 3)
+```typescript
+// Three-Agent Dashboard (from Story 2.2)
+interface AgentProgressProps {
+  agents: {
+    coordinator: AgentStatus;
+    researcher: AgentStatus;
+    detective: AgentStatus;
+  };
+  requestId: string;
+}
+
+interface AgentStatus {
+  name: string;
+  stage: string;
+  message: string;
+  confidence?: number;
+  estimatedTimeRemaining?: number;
+  dataSourcesActive: string[];
+  insightsDiscovered: number;
+}
+```
+
+### Dossier Viewer (Task 4)
+```typescript
+// CIA-Style Dossier Component (from Story 2.2)
+interface DossierViewerProps {
+  dossier: IntelligenceDossier;
+  onSectionToggle: (sectionId: string) => void;
+  onExport: () => void;
+}
+
+interface IntelligenceDossier {
+  companyName: string;
+  confidenceScore: number;
+  sourceCount: number;
+  classification: string;
+  sections: IntelligenceSection[];
+  dataSources: DataSource[];
+}
+```
+
+## Testing
+
+### Unit Testing Requirements
+- React component rendering and user interactions
+- API client methods and error handling
+- WebSocket connection management
+- Authentication flow and JWT token handling
+
+### Integration Testing Requirements
+- End-to-end user flows from login to dossier generation
+- Real-time WebSocket updates during agent progress
+- API integration with existing backend endpoints
+- Mobile responsiveness across different screen sizes
+
+### Performance Testing Requirements
+- Frontend bundle size optimization
+- WebSocket connection efficiency under load
+- Component rendering performance with large dossiers
+- API request caching and optimization
+
+## Risk Assessment
+
+**Primary Risk:** Frontend-backend integration complexity with WebSocket real-time updates  
+**Mitigation:** Use existing API interfaces exactly as defined in Story 1.2, test integration early  
+**Rollback:** Frontend is independent addition - can be disabled without affecting backend
+
+**Compatibility Verification:**
+- [x] No breaking changes to existing APIs (frontend is pure consumer)
+- [x] Database changes not required (uses existing schema)
+- [x] UI follows existing Story 2.2 design patterns
+- [x] No performance impact on backend (stateless frontend)
+
+## File Structure for Frontend Layer
+```
+frontend/
+├── src/
+│   ├── components/
+│   │   ├── auth/
+│   │   │   ├── LoginForm.tsx
+│   │   │   └── RegisterForm.tsx
+│   │   ├── input/
+│   │   │   ├── SmartCompanyInput.tsx
+│   │   │   └── ContextOptions.tsx
+│   │   ├── theater/
+│   │   │   ├── AgentProgressTheater.tsx
+│   │   │   ├── AgentColumn.tsx
+│   │   │   └── ProgressIndicator.tsx
+│   │   ├── dossier/
+│   │   │   ├── DossierViewer.tsx
+│   │   │   ├── IntelligenceSection.tsx
+│   │   │   └── SourceAttribution.tsx
+│   │   └── common/
+│   │       ├── LoadingSpinner.tsx
+│   │       └── ErrorBoundary.tsx
+│   ├── services/
+│   │   ├── apiClient.ts
+│   │   ├── websocketClient.ts
+│   │   └── authService.ts
+│   ├── hooks/
+│   │   ├── useAuth.ts
+│   │   ├── useWebSocket.ts
+│   │   └── useApiCall.ts
+│   ├── types/
+│   │   ├── api.types.ts
+│   │   ├── dossier.types.ts
+│   │   └── auth.types.ts
+│   └── tests/
+│       ├── components/
+│       ├── services/
+│       └── integration/
+├── public/
+└── package.json
+```
+
+## Change Log
+- **Created**: October 8, 2025 by Product Owner Sarah
+- **Status**: Draft - Ready for Frontend Development Team
+
+## Dev Agent Record
+
+### Agent Model Used
+TBD
+
+### Implementation Status
+**Status**: Draft - Awaiting Development
+
+### Completion Notes
+TBD - Story ready for developer assignment
+
+### File List
+#### New Files to be Created:
+- Frontend React application with complete Intelligence Theater UI
+- Integration with existing backend APIs from Stories 1.1-1.4
+- Implementation of UX specifications from Story 2.2
+
+#### Files to be Modified:
+- None - Frontend is pure addition to existing backend system
+
+### Dependencies
+- **Completed Stories:** 1.1 (Agents), 1.2 (APIs), 1.3 (WebSocket), 1.4 (Database)
+- **Design Reference:** Story 2.2 (UX Design Specifications)
+- **Backend Compatibility:** Must maintain existing API contracts
+
+### Success Criteria
+- Complete Intelligence Theater user experience implemented
+- Real-time 3-agent progress visualization
+- CIA-style dossier presentation
+- Mobile-responsive design
+- Full integration with existing backend infrastructure

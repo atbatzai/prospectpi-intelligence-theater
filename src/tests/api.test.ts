@@ -49,6 +49,12 @@ describe('ProspectPI API Integration Tests', () => {
         companyName: 'OpenAI',
         companyUrl: 'https://openai.com',
         linkedinUrl: 'https://linkedin.com/company/openai',
+        // NEW REQUIRED FIELDS for solution-relevance
+        vendorName: 'Microsoft',
+        productName: 'Azure OpenAI Service',
+        industry: 'Technology',
+        primaryPainPoint: 'Scaling AI capabilities for enterprise applications',
+        // EXISTING OPTIONAL FIELDS
         crmNotes: 'Interested in AI integration',
         organizationFocus: 'AI Research Division',
         locationOfInterest: 'San Francisco',
@@ -70,6 +76,10 @@ describe('ProspectPI API Integration Tests', () => {
     test('should reject invalid LinkedIn URL format', async () => {
       const invalidPayload = {
         companyName: 'TestCorp',
+        vendorName: 'Test Vendor',
+        productName: 'Test Product',
+        industry: 'Technology',
+        primaryPainPoint: 'Test pain point',
         linkedinUrl: 'https://facebook.com/testcorp' // Wrong domain
       };
 
@@ -85,6 +95,10 @@ describe('ProspectPI API Integration Tests', () => {
       const longText = 'a'.repeat(2001);
       const invalidPayload = {
         companyName: 'TestCorp',
+        vendorName: 'Test Vendor',
+        productName: 'Test Product',
+        industry: 'Technology',
+        primaryPainPoint: 'Test pain point',
         additionalContext: longText
       };
 
@@ -97,7 +111,13 @@ describe('ProspectPI API Integration Tests', () => {
     });
 
     test('should handle rate limiting', async () => {
-      const validPayload = { companyName: 'TestCorp' };
+      const validPayload = { 
+        companyName: 'TestCorp',
+        vendorName: 'Test Vendor',
+        productName: 'Test Product',
+        industry: 'Technology',
+        primaryPainPoint: 'Test pain point'
+      };
       
       // Make multiple requests to trigger rate limit
       const requests = Array(12).fill(null).map(() =>

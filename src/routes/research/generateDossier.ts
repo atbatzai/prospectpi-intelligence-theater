@@ -17,16 +17,38 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-// Validation schema for ProspectResearchInput
+// ENHANCED: Validation schema for Solution-Relevance Research
 const researchInputSchema = Joi.object({
+  // Company being researched
   companyName: Joi.string().required().max(200).trim(),
   companyUrl: Joi.string().uri().optional(),
   linkedinUrl: Joi.string().uri().pattern(/linkedin\.com\/company\//).optional(),
+  
+  // CRITICAL: Solution Context - REQUIRED FIELDS
+  vendorName: Joi.string().required().max(100).trim()
+    .messages({'any.required': 'Vendor name is required (e.g. IBM, Microsoft, Dell, Adobe)'}),
+  productName: Joi.string().required().max(100).trim()
+    .messages({'any.required': 'Product name is required (e.g. Apptio, Office365, PowerEdge)'}),
+  productCategory: Joi.string().max(100).optional(),
+  
+  // CRITICAL: Industry & Pain Point Context - REQUIRED FIELDS  
+  industry: Joi.string().required().max(100).trim()
+    .messages({'any.required': 'Target company industry is required'}),
+  primaryPainPoint: Joi.string().required().max(500).trim()
+    .messages({'any.required': 'Primary pain point/challenge is required'}),
+  secondaryPainPoints: Joi.array().items(Joi.string().max(200)).max(3).optional(),
+  
+  // Enhanced Context Fields
   crmNotes: Joi.string().max(1000).optional(),
   organizationFocus: Joi.string().max(100).optional(),
   locationOfInterest: Joi.string().max(100).optional(),
   contextLinks: Joi.array().items(Joi.string().uri()).max(5).optional(),
-  additionalContext: Joi.string().max(2000).optional()
+  additionalContext: Joi.string().max(2000).optional(),
+  
+  // Solution-Relevance Analysis Flags
+  competitorAnalysis: Joi.boolean().optional(),
+  budgetIntelligence: Joi.boolean().optional(),
+  technologyStackFocus: Joi.boolean().optional()
 });
 
 export const generateDossierHandler = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {

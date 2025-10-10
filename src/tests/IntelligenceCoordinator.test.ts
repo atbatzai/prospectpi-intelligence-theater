@@ -22,6 +22,12 @@ describe('IntelligenceCoordinator', () => {
     
     mockUserInput = {
       companyName: 'Test Company Inc',
+      // NEW REQUIRED FIELDS
+      vendorName: 'Microsoft',
+      productName: 'Azure Services',
+      industry: 'Technology',
+      primaryPainPoint: 'Cloud migration complexity',
+      // EXISTING FIELDS  
       additionalContext: 'Software development company',
       priority: 'standard',
       outputFormat: 'full',

@@ -1,0 +1,59 @@
+﻿/* Mobile Performance Optimizations for ProspectPI Intelligence Theater */
+/* Addresses QA findings for mobile render performance and touch targets */
+
+/* Task: Mobile Performance - Reduce Layout Shifts */
+.intelligence-theater-mobile {
+  contain: layout style paint;
+  will-change: auto;
+}
+
+/* Task: WCAG 2.1 AA Touch Targets - Minimum 48px */
+.mobile-touch-target {
+  min-height: 48px !important;
+  min-width: 48px !important;
+  touch-action: manipulation;
+}
+
+/* Task: Mobile Performance - Optimize Animations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Task: Mobile Battery Optimization */
+.mobile-optimized-animation {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Task: Mobile Performance - Optimize for Smaller Viewports */
+@media (max-width: 768px) {
+  .shadow-lg {
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .shadow-2xl {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .rounded-lg {
+    border-radius: 0.5rem !important;
+  }
+}
+
+/* Task: Touch Interaction Improvements */
+.mobile-button {
+  padding: 12px 16px;
+  min-height: 48px;
+  border-radius: 8px;
+  font-size: 16px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
