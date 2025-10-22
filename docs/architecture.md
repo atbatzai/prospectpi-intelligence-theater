@@ -903,7 +903,7 @@ class IntelligenceCoordinator:
     def __init__(self):
         self.model = "claude-3-5-sonnet-20241022"  # Story 1.1 spec
         self.temperature = 0.1                     # Conservative quality
-        self.api_key = "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"
+        self.api_key = "sk-YOUR_OPENAI_API_KEY_HERE"
         
     async def orchestrate_research(self, request: ProspectResearchInput) -> ResearchPlan:
         # Story 1.1: Workflow planning + quality gates + user interaction
@@ -921,7 +921,7 @@ class FieldIntelligenceResearcher:
             "theirstack": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",  # Story 1.1
             "marketaux": "SDHJm2cJJmNaLBYREcEPWl0vkx3pb0AwyrOldDQU",   # Story 1.1  
             "coresignal": "d6JxXWhii1LRK6oTOQPihCAWrCEJoRBz",          # Story 1.1
-            "perplexity": "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" # Story 1.1
+            "perplexity": "pplx-YOUR_PERPLEXITY_API_KEY_HERE" # Story 1.1
         }
         
     async def gather_intelligence(self, company: str) -> pd.DataFrame:
@@ -936,7 +936,7 @@ class IntelligenceDetective:
     def __init__(self):
         self.model = "claude-3-5-sonnet-20241022"  # Story 1.1 spec
         self.temperature = 0.1                     # Evidence validation
-        self.api_key = "sk-ant-api03-oRJGXPfD3qe2sLDD17Dbx_7USPSxgKPWVGqafJrBaipV0tX6c8QZ-NKnkLUBapVx4o7FG6Zd0vaH0LLKf6gjw-_F_rEgAA"
+        self.api_key = "sk-YOUR_OPENAI_API_KEY_HERE"
         
     async def synthesize_dossier(self, raw_data: pd.DataFrame) -> IntelligenceDossier:
         # Story 1.1: Triangulation + confidence scoring + CIA-format output
@@ -995,8 +995,8 @@ services:
   dossier-service:
     build: ./apps/dossier-service       # Story 1.1 agents
     environment:
-      - ANTHROPIC_API_KEY=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
-      - OPENAI_API_KEY=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
+      - ANTHROPIC_API_KEY=sk-YOUR_OPENAI_API_KEY_HERE
+      - OPENAI_API_KEY=sk-YOUR_OPENAI_API_KEY_HERE
       - DEEPSEEK_API_KEY=sk-c5f01f01f3ef4c5ba694aeb8ce3da07a  
     volumes:
       - ./data:/app/data

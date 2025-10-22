@@ -53,7 +53,7 @@ Agent 1: Intelligence Coordinator (Claude Sonnet 4)
 Agent 2: Field Intelligence Researcher (Production Configured)
 - Role: Data collection from 4 premium sources + real-time web
 - APIs: TheirStack (21K+ techs), MarketAux (financial), Coresignal MCP (professional), Perplexity (real-time)
-- Tokens: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..., SDHJm2cJJmNaLBYREcEPWl0vkx3pb0AwyrOldDQU, d6JxXWhii1LRK6oTOQPihCAWrCEJoRBz, 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
+- Tokens: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..., SDHJm2cJJmNaLBYREcEPWl0vkx3pb0AwyrOldDQU, d6JxXWhii1LRK6oTOQPihCAWrCEJoRBz, pplx-YOUR_PERPLEXITY_API_KEY_HERE
 - Output: Raw data + source metadata + confidence scoring  
 - Model: DeepSeek (cost-optimized) + GPT-4o-mini (fallback)
 - Cost: $0.70/dossier (vs $4-7 with placeholders)
@@ -195,11 +195,11 @@ Enterprise Intelligence Stack:
 - TheirStack JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZWZmLnR1cm5lckBhdGJhdHouYWkiLCJwZXJtaXNzaW9ucyI6InVzZXIiLCJjcmVhdGVkX2F0IjoiMjAyNS0xMC0wMVQyMjoyNDoyNy4zNDkxMDArMDA6MDAifQ.zqo5J7SxE5KvouPmzW0bovKAg9VSCIbLWWOAFQV0r9c
 - MarketAux Token: SDHJm2cJJmNaLBYREcEPWl0vkx3pb0AwyrOldDQU
 - Coresignal MCP: d6JxXWhii1LRK6oTOQPihCAWrCEJoRBz
-- Perplexity Real-Time: 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
+- Perplexity Real-Time: pplx-YOUR_PERPLEXITY_API_KEY_HERE
 
 Multi-AI Processing Pipeline:
-- Claude 3.5 Sonnet: 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
-- OpenAI GPT-4o-mini: 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
+- Claude 3.5 Sonnet: sk-YOUR_OPENAI_API_KEY_HERE
+- OpenAI GPT-4o-mini: sk-YOUR_OPENAI_API_KEY_HERE
 - DeepSeek Cost-Optimized: sk-c5f01f01f3ef4c5ba694aeb8ce3da07a
 - Google Gemini: AIzaSyB8IheEO8fHh9ryGV11w-uyKh1f4dPxJbY
 
