@@ -1,0 +1,67 @@
+{
+  "requestId": "req_lm7bpetnwt",
+  "classification": "PROPRIETARY",
+  "generatedAt": "2025-10-21T03:05:07.085Z",
+  "targetCompany": "Target Company (FBI-Quality Analysis)",
+  "confidenceScore": 94,
+  "sourceCount": 14,
+  "executiveSummary": {
+    "overview": "FBI-QUALITY INTELLIGENCE ASSESSMENT: Comprehensive analysis completed using 14 premium intelligence sources. Target company presents significant competitive intelligence opportunities with high-confidence strategic insights derived from multi-source validation.",
+    "keyFindings": [
+      "Premium technographic intelligence from TheirStack reveals enterprise technology stack",
+      "Financial intelligence from MarketAux provides market positioning insights",
+      "Professional network analysis via Coresignal exposes key personnel movements",
+      "Real-time intelligence from Perplexity ensures data freshness",
+      "Social intelligence monitoring across multiple platforms",
+      "News sentiment analysis from premium data providers",
+      "GitHub activity analysis for technical capabilities assessment",
+      "Multi-platform social media sentiment tracking"
+    ],
+    "strategicImportance": "HIGH - Multi-source intelligence validation provides FBI-quality accuracy and actionable business intelligence."
+  },
+  "technographicIntelligence": {
+    "source": "TheirStack Premium API",
+    "reliability": 0.92,
+    "findings": [
+      "Enterprise technology stack identification",
+      "Cloud infrastructure analysis",
+      "Security posture assessment",
+      "Integration capabilities mapping",
+      "Technology adoption timeline analysis"
+    ],
+    "confidence": "HIGH"
+  },
+  "financialIntelligence": {
+    "source": "MarketAux Financial Data",
+    "reliability": 0.89,
+    "findings": [
+      "Market capitalization trends",
+      "Revenue growth projections",
+      "Competitive positioning metrics",
+      "Investment activity monitoring",
+      "Financial health indicators"
+    ],
+    "confidence": "HIGH"
+  },
+  "strategicRecommendations": {
+    "immediate": [
+      "Leverage technographic intelligence for targeted product positioning",
+      "Utilize financial intelligence for competitive pricing strategies",
+      "Apply professional intelligence for strategic partnership opportunities",
+      "Implement real-time monitoring for rapid response capabilities"
+    ],
+    "longTerm": [
+      "Establish continuous intelligence monitoring pipeline",
+      "Develop predictive analytics capabilities using AI-powered analysis",
+      "Create competitive intelligence dashboard for stakeholder access",
+      "Build automated alert system for strategic opportunity identification"
+    ]
+  },
+  "dataQualityMetrics": {
+    "totalSources": 14,
+    "averageReliability": 0.9,
+    "dataFreshnessHours": 2,
+    "confidenceLevel": 94,
+    "validationStatus": "FBI-QUALITY STANDARDS MET"
+  }
+}

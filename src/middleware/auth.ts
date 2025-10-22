@@ -6,6 +6,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { CustomError } from './errorHandler';
+import { UserService } from '../models/User';
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -49,9 +50,10 @@ export const optionalAuth = (req: AuthenticatedRequest, _res: Response, next: Ne
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    // No token provided, use demo user
+    // 🚀 PRODUCTION-READY: Create a persistent demo user for development
+    console.log('🔑 No token provided - using persistent demo user for dossier access');
     req.user = {
-      id: 'demo-user-id',
+      id: 'demo-user-persistent', // Consistent ID for database queries
       email: 'demo@prospectpi.com'
     };
     next();
@@ -75,5 +77,46 @@ export const optionalAuth = (req: AuthenticatedRequest, _res: Response, next: Ne
       email: 'demo@prospectpi.com'
     };
     next();
+  }
+};
+
+/**
+ * Middleware to check if user can generate dossiers (subscription limits)
+ */
+export const checkDossierLimits = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if (!req.user?.id) {
+    res.status(401).json({
+      success: false,
+      error: 'Authentication required',
+      code: 'AUTH_REQUIRED'
+    });
+    return;
+  }
+
+  try {
+    const userService = new UserService();
+    const canGenerate = await userService.canGenerateDossier(req.user.id);
+    
+    if (!canGenerate.canGenerate) {
+      res.status(402).json({
+        success: false,
+        error: canGenerate.reason || 'Cannot generate dossier',
+        code: 'SUBSCRIPTION_LIMIT_EXCEEDED',
+        details: {
+          reason: canGenerate.reason,
+          upgradeRequired: true
+        }
+      });
+      return;
+    }
+
+    next();
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check subscription limits',
+      code: 'INTERNAL_ERROR'
+    });
+    return;
   }
 };

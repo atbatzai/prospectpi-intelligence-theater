@@ -16,6 +16,22 @@ export interface User {
   last_name: string;
   role: string;
   organization_id: string | null;
+  // PHASE 1: Organization Structure Enhancement
+  department_id: string | null;
+  organization_role: string | null; // 'org_admin' | 'dept_manager' | 'team_lead' | 'member' | 'viewer'
+  hire_date: string | null;
+  manager_user_id: string | null;
+  // SaaS Subscription Fields
+  subscription_plan: 'starter' | 'professional' | 'enterprise';
+  subscription_status: 'active' | 'cancelled' | 'past_due' | 'trial' | 'unpaid';
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  trial_ends_at: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  dossiers_used_this_month: number;
+  dossier_limit: number;
+  // End SaaS Fields
   created_at: string;
   updated_at: string;
   last_login: string | null;
@@ -29,15 +45,49 @@ export interface User {
 export interface Organization {
   id: string;
   name: string;
+  domain: string; // PHASE 1: Email domain for automatic user association
   slug: string;
   subscription_tier: string;
   max_users: number;
+  max_teams: number; // PHASE 1: Team limit
   max_requests_per_month: number;
   created_at: string;
   updated_at: string;
   is_active: boolean;
   billing_email: string | null;
   salesforce_org_id: string | null;
+  // PHASE 1: Enterprise settings
+  settings: OrganizationSettings;
+}
+
+// PHASE 1: Organization settings for consultation and collaboration
+export interface OrganizationSettings {
+  allow_external_sharing: boolean;
+  require_approval_for_sharing: boolean;
+  consultation_default_enabled: boolean;
+  data_retention_days: number;
+}
+
+// PHASE 1: Department structure
+export interface Department {
+  id: string;
+  organization_id: string;
+  name: string;
+  description: string | null;
+  manager_user_id: string | null;
+  created_at: string;
+}
+
+// PHASE 1: Team structure for consultation workflows
+export interface Team {
+  id: string;
+  organization_id: string;
+  department_id: string | null;
+  name: string;
+  description: string | null;
+  team_lead_user_id: string | null;
+  team_type: 'sales' | 'marketing' | 'research' | 'executive' | 'custom';
+  created_at: string;
 }
 
 export interface UserSession {
@@ -86,6 +136,7 @@ export interface JWTPayload {
 
 export interface CreateOrgInput {
   name: string;
+  domain: string; // PHASE 1: Email domain for automatic user association  
   slug: string;
   subscription_tier?: string;
   billing_email?: string;
@@ -106,18 +157,24 @@ export class UserService {
     const now = new Date().toISOString();
     const emailVerificationToken = uuidv4();
 
+    // Set default subscription values for new users (7-day trial)
+    const trialEndDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    
     const user = await this.dbManager.queryOne(`
       INSERT INTO users (
         id, email, password_hash, first_name, last_name, 
-        organization_id, created_at, updated_at, 
-        email_verification_token, is_active, email_verified
+        organization_id, department_id, organization_role, hire_date, manager_user_id,
+        subscription_plan, subscription_status,
+        trial_ends_at, dossiers_used_this_month, dossier_limit,
+        created_at, updated_at, email_verification_token, is_active, email_verified
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING *
     `, [
       id, input.email, password_hash, input.first_name, input.last_name,
-      input.organization_id || null, now, now, 
-      emailVerificationToken, true, false
+      input.organization_id || null, null, 'member', null, null,
+      'starter', 'trial', 
+      trialEndDate, 0, 3, now, now, emailVerificationToken, true, false
     ]);
 
     if (!user) {
@@ -130,6 +187,21 @@ export class UserService {
         last_name: input.last_name,
         role: 'user',
         organization_id: input.organization_id || null,
+        // PHASE 1: Organization fields
+        department_id: null,
+        organization_role: 'member',
+        hire_date: null,
+        manager_user_id: null,
+        // End Phase 1 fields
+        subscription_plan: 'starter',
+        subscription_status: 'trial',
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        trial_ends_at: trialEndDate,
+        current_period_start: null,
+        current_period_end: null,
+        dossiers_used_this_month: 0,
+        dossier_limit: 3,
         created_at: now,
         updated_at: now,
         last_login: null,
@@ -202,6 +274,79 @@ export class UserService {
 
     const token = await this.generateJWT(user);
     return { success: true, user, token };
+  }
+
+  // SaaS Subscription Management Methods
+  async canGenerateDossier(userId: string): Promise<{ canGenerate: boolean; reason?: string }> {
+    const user = await this.getUserById(userId);
+    if (!user) {
+      return { canGenerate: false, reason: 'User not found' };
+    }
+
+    // Check subscription status
+    if (user.subscription_status === 'cancelled' || user.subscription_status === 'past_due') {
+      return { canGenerate: false, reason: 'Subscription inactive' };
+    }
+
+    // Check trial expiry
+    if (user.subscription_status === 'trial' && user.trial_ends_at) {
+      const trialEnd = new Date(user.trial_ends_at);
+      if (trialEnd < new Date()) {
+        return { canGenerate: false, reason: 'Trial expired' };
+      }
+    }
+
+    // Check monthly limits
+    if (user.dossiers_used_this_month >= user.dossier_limit) {
+      return { canGenerate: false, reason: 'Monthly limit reached' };
+    }
+
+    return { canGenerate: true };
+  }
+
+  async incrementDossierUsage(userId: string): Promise<void> {
+    await this.dbManager.execute(
+      'UPDATE users SET dossiers_used_this_month = dossiers_used_this_month + 1 WHERE id = ?',
+      [userId]
+    );
+  }
+
+  async updateSubscription(userId: string, subscription: {
+    plan: 'starter' | 'professional' | 'enterprise';
+    status: 'active' | 'cancelled' | 'past_due' | 'trial' | 'unpaid';
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    currentPeriodStart?: string;
+    currentPeriodEnd?: string;
+  }): Promise<void> {
+    const dossierLimits = {
+      starter: 10,
+      professional: 100, 
+      enterprise: 1000
+    };
+
+    await this.dbManager.execute(`
+      UPDATE users SET 
+        subscription_plan = ?,
+        subscription_status = ?,
+        stripe_customer_id = ?,
+        stripe_subscription_id = ?,
+        current_period_start = ?,
+        current_period_end = ?,
+        dossier_limit = ?,
+        updated_at = ?
+      WHERE id = ?
+    `, [
+      subscription.plan,
+      subscription.status,
+      subscription.stripeCustomerId || null,
+      subscription.stripeSubscriptionId || null,
+      subscription.currentPeriodStart || null,
+      subscription.currentPeriodEnd || null,
+      dossierLimits[subscription.plan],
+      new Date().toISOString(),
+      userId
+    ]);
   }
 
   async generateJWT(user: User): Promise<string> {
@@ -299,14 +444,21 @@ export class OrganizationService {
 
     const organization = await this.dbManager.queryOne(`
       INSERT INTO organizations (
-        id, name, slug, subscription_tier, billing_email, created_at, updated_at
+        id, name, domain, slug, subscription_tier, max_teams, billing_email, 
+        settings, created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING *
     `, [
-      id, orgData.name, orgData.slug, 
-      orgData.subscription_tier || 'starter',
+      id, orgData.name, orgData.domain, orgData.slug, 
+      orgData.subscription_tier || 'starter', 3,
       orgData.billing_email || null,
+      JSON.stringify({
+        allow_external_sharing: false,
+        require_approval_for_sharing: true,
+        consultation_default_enabled: true,
+        data_retention_days: 365
+      }),
       now, now
     ]);
 
@@ -315,15 +467,24 @@ export class OrganizationService {
       return {
         id,
         name: orgData.name,
+        domain: orgData.domain || `${orgData.slug}.company.com`,
         slug: orgData.slug,
         subscription_tier: orgData.subscription_tier || 'starter',
         max_users: 5,
+        max_teams: 3, // PHASE 1: Default team limit
         max_requests_per_month: 100,
         created_at: now,
         updated_at: now,
         is_active: true,
         billing_email: orgData.billing_email || null,
-        salesforce_org_id: null
+        salesforce_org_id: null,
+        // PHASE 1: Default organization settings
+        settings: {
+          allow_external_sharing: false,
+          require_approval_for_sharing: true,
+          consultation_default_enabled: true,
+          data_retention_days: 365
+        }
       };
     }
 
@@ -332,6 +493,86 @@ export class OrganizationService {
 
   async getOrganizationById(id: string): Promise<Organization | null> {
     return this.dbManager.queryOne('SELECT * FROM organizations WHERE id = ?', [id]);
+  }
+
+  // PHASE 1: Department Management
+  async createDepartment(orgId: string, name: string, description?: string, managerId?: string): Promise<Department> {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    const department = await this.dbManager.queryOne(`
+      INSERT INTO departments (id, organization_id, name, description, manager_user_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+      RETURNING *
+    `, [id, orgId, name, description || null, managerId || null, now]);
+
+    if (!department) {
+      return {
+        id,
+        organization_id: orgId,
+        name,
+        description: description ?? null,
+        manager_user_id: managerId || null,
+        created_at: now
+      };
+    }
+
+    return department;
+  }
+
+  async getDepartmentsByOrganization(orgId: string): Promise<Department[]> {
+    return this.dbManager.query('SELECT * FROM departments WHERE organization_id = ? ORDER BY name', [orgId]);
+  }
+
+  // PHASE 1: Team Management 
+  async createTeam(
+    orgId: string, 
+    name: string, 
+    options: {
+      departmentId?: string;
+      description?: string;
+      teamLeadId?: string;
+      teamType?: 'sales' | 'marketing' | 'research' | 'executive' | 'custom';
+    } = {}
+  ): Promise<Team> {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    const team = await this.dbManager.queryOne(`
+      INSERT INTO teams (
+        id, organization_id, department_id, name, description, 
+        team_lead_user_id, team_type, created_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING *
+    `, [
+      id, orgId, options.departmentId || null, name, 
+      options.description || null, options.teamLeadId || null,
+      options.teamType || 'custom', now
+    ]);
+
+    if (!team) {
+      return {
+        id,
+        organization_id: orgId,
+        department_id: options.departmentId ?? null,
+        name,
+        description: options.description ?? null,
+        team_lead_user_id: options.teamLeadId || null,
+        team_type: options.teamType || 'custom',
+        created_at: now
+      };
+    }
+
+    return team;
+  }
+
+  async getTeamsByOrganization(orgId: string): Promise<Team[]> {
+    return this.dbManager.query('SELECT * FROM teams WHERE organization_id = ? ORDER BY name', [orgId]);
+  }
+
+  async getUsersByOrganization(orgId: string): Promise<User[]> {
+    return this.dbManager.query('SELECT * FROM users WHERE organization_id = ? ORDER BY first_name, last_name', [orgId]);
   }
 
   async getOrganizationBySlug(slug: string): Promise<Organization | null> {
@@ -373,5 +614,25 @@ export class OrganizationService {
       'SELECT * FROM users WHERE organization_id = ? AND is_active = true',
       [orgId]
     );
+  }
+
+  // PHASE 1: Additional methods for organization management API
+  async getOrganizationMembers(organizationId: string): Promise<User[]> {
+    return this.dbManager.query(`
+      SELECT 
+        id, email, first_name, last_name, role, organization_role, 
+        department_id, hire_date, manager_user_id, created_at, last_login
+      FROM users 
+      WHERE organization_id = ? AND is_active = true
+      ORDER BY first_name, last_name
+    `, [organizationId]);
+  }
+
+  async getTeamsByDepartment(departmentId: string): Promise<Team[]> {
+    return this.dbManager.query(`
+      SELECT * FROM teams 
+      WHERE department_id = ? AND status = 'active'
+      ORDER by name
+    `, [departmentId]);
   }
 }

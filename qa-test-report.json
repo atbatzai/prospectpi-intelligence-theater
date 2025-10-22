@@ -1,0 +1,343 @@
+{
+  "executionTime": 349,
+  "successRate": 93.6,
+  "performanceGrade": "A",
+  "summary": {
+    "totalTests": 47,
+    "passed": 44,
+    "failed": 3
+  },
+  "categories": {
+    "apiConfiguration": {
+      "passed": 16,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "ANTHROPIC_API_KEY Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.842Z"
+        },
+        {
+          "name": "OPENAI_API_KEY Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.844Z"
+        },
+        {
+          "name": "DEEPSEEK_API_KEY Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.844Z"
+        },
+        {
+          "name": "GOOGLE_GEMINI_API_KEY Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.845Z"
+        },
+        {
+          "name": "PERPLEXITY_API_KEY Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.845Z"
+        },
+        {
+          "name": "THEIRSTACK_JWT Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.846Z"
+        },
+        {
+          "name": "MARKETAUX_TOKEN Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.846Z"
+        },
+        {
+          "name": "CORESIGNAL_MCP_AUTH Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.846Z"
+        },
+        {
+          "name": "NEWSDATA_API_KEY Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.846Z"
+        },
+        {
+          "name": "GITHUB_TOKEN Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.847Z"
+        },
+        {
+          "name": "YOUTUBE_API_KEY Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.847Z"
+        },
+        {
+          "name": "REDDIT_CLIENT_ID Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.847Z"
+        },
+        {
+          "name": "TWITTER_BEARER_TOKEN Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.847Z"
+        },
+        {
+          "name": "DISCORD_BOT_TOKEN Configuration",
+          "status": "PASSED",
+          "details": "API key properly configured",
+          "timestamp": "2025-10-22T03:34:02.847Z"
+        },
+        {
+          "name": "API Completeness",
+          "status": "PASSED",
+          "details": "100.0% APIs configured",
+          "timestamp": "2025-10-22T03:34:02.848Z"
+        },
+        {
+          "name": "Security Storage",
+          "status": "PASSED",
+          "details": "Environment variables securely stored",
+          "timestamp": "2025-10-22T03:34:02.848Z"
+        }
+      ]
+    },
+    "databaseOperations": {
+      "passed": 2,
+      "failed": 1,
+      "tests": [
+        {
+          "name": "Database File",
+          "status": "PASSED",
+          "details": "SQLite database file exists",
+          "timestamp": "2025-10-22T03:34:02.850Z"
+        },
+        {
+          "name": "Database Size",
+          "status": "PASSED",
+          "details": "Database size: 440KB",
+          "timestamp": "2025-10-22T03:34:02.851Z"
+        },
+        {
+          "name": "Schema Validation",
+          "status": "FAILED",
+          "details": "Database access error: no such column: \"table\" - should this be a string literal in single-quotes?",
+          "timestamp": "2025-10-22T03:34:02.877Z"
+        }
+      ]
+    },
+    "backendServer": {
+      "passed": 2,
+      "failed": 2,
+      "tests": [
+        {
+          "name": "Health Endpoint",
+          "status": "PASSED",
+          "details": "Server healthy (74ms)",
+          "timestamp": "2025-10-22T03:34:02.952Z"
+        },
+        {
+          "name": "Database Health",
+          "status": "FAILED",
+          "details": "Database connection issues",
+          "timestamp": "2025-10-22T03:34:02.952Z"
+        },
+        {
+          "name": "WebSocket Health",
+          "status": "PASSED",
+          "details": "WebSocket server active",
+          "timestamp": "2025-10-22T03:34:02.953Z"
+        },
+        {
+          "name": "Research Endpoint",
+          "status": "FAILED",
+          "details": "Dossier generation failed",
+          "timestamp": "2025-10-22T03:34:03.007Z"
+        }
+      ]
+    },
+    "frontendIntegration": {
+      "passed": 6,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Frontend Directory",
+          "status": "PASSED",
+          "details": "Frontend directory exists",
+          "timestamp": "2025-10-22T03:34:03.010Z"
+        },
+        {
+          "name": "Package Configuration",
+          "status": "PASSED",
+          "details": "Frontend package.json exists",
+          "timestamp": "2025-10-22T03:34:03.010Z"
+        },
+        {
+          "name": "Dev Script",
+          "status": "PASSED",
+          "details": "Frontend dev script configured",
+          "timestamp": "2025-10-22T03:34:03.011Z"
+        },
+        {
+          "name": "Next.js Framework",
+          "status": "PASSED",
+          "details": "Next.js framework detected",
+          "timestamp": "2025-10-22T03:34:03.011Z"
+        },
+        {
+          "name": "Source Files",
+          "status": "PASSED",
+          "details": "Frontend source directory exists",
+          "timestamp": "2025-10-22T03:34:03.012Z"
+        },
+        {
+          "name": "WebSocket Connection",
+          "status": "PASSED",
+          "details": "WebSocket connection established",
+          "timestamp": "2025-10-22T03:34:03.139Z"
+        }
+      ]
+    },
+    "agentOrchestration": {
+      "passed": 9,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Agents Directory",
+          "status": "PASSED",
+          "details": "Agents directory exists",
+          "timestamp": "2025-10-22T03:34:03.038Z"
+        },
+        {
+          "name": "Agent: IntelligenceCoordinator.ts",
+          "status": "PASSED",
+          "details": "Agent file exists",
+          "timestamp": "2025-10-22T03:34:03.039Z"
+        },
+        {
+          "name": "IntelligenceCoordinator.ts Implementation",
+          "status": "PASSED",
+          "details": "Agent appears fully implemented",
+          "timestamp": "2025-10-22T03:34:03.039Z"
+        },
+        {
+          "name": "Agent: FieldIntelligenceResearcher.ts",
+          "status": "PASSED",
+          "details": "Agent file exists",
+          "timestamp": "2025-10-22T03:34:03.040Z"
+        },
+        {
+          "name": "FieldIntelligenceResearcher.ts Implementation",
+          "status": "PASSED",
+          "details": "Agent appears fully implemented",
+          "timestamp": "2025-10-22T03:34:03.041Z"
+        },
+        {
+          "name": "Agent: ProspectIntelligenceDetective.ts",
+          "status": "PASSED",
+          "details": "Agent file exists",
+          "timestamp": "2025-10-22T03:34:03.042Z"
+        },
+        {
+          "name": "ProspectIntelligenceDetective.ts Implementation",
+          "status": "PASSED",
+          "details": "Agent appears fully implemented",
+          "timestamp": "2025-10-22T03:34:03.042Z"
+        },
+        {
+          "name": "Agent Orchestrator",
+          "status": "PASSED",
+          "details": "AgentOrchestrator service exists",
+          "timestamp": "2025-10-22T03:34:03.043Z"
+        },
+        {
+          "name": "Agent Interfaces",
+          "status": "PASSED",
+          "details": "Agent type definitions exist",
+          "timestamp": "2025-10-22T03:34:03.043Z"
+        }
+      ]
+    },
+    "performance": {
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "API Response Time",
+          "status": "PASSED",
+          "details": "Excellent: 80ms",
+          "timestamp": "2025-10-22T03:34:03.124Z"
+        },
+        {
+          "name": "Memory Usage",
+          "status": "PASSED",
+          "details": "Efficient: 10MB",
+          "timestamp": "2025-10-22T03:34:03.125Z"
+        },
+        {
+          "name": "File System I/O",
+          "status": "PASSED",
+          "details": "Fast: 1ms",
+          "timestamp": "2025-10-22T03:34:03.127Z"
+        }
+      ]
+    },
+    "security": {
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Environment Security",
+          "status": "PASSED",
+          "details": "Environment variables properly configured",
+          "timestamp": "2025-10-22T03:34:03.131Z"
+        },
+        {
+          "name": "File Protection",
+          "status": "PASSED",
+          "details": "Sensitive files properly managed",
+          "timestamp": "2025-10-22T03:34:03.131Z"
+        },
+        {
+          "name": "API Key Format",
+          "status": "PASSED",
+          "details": "API keys appear to have secure format",
+          "timestamp": "2025-10-22T03:34:03.132Z"
+        }
+      ]
+    },
+    "errorHandling": {
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "Invalid Request",
+          "status": "PASSED",
+          "details": "Server properly rejected invalid request",
+          "timestamp": "2025-10-22T03:34:03.168Z"
+        },
+        {
+          "name": "Non-existent Endpoint",
+          "status": "PASSED",
+          "details": "Server properly returned 404",
+          "timestamp": "2025-10-22T03:34:03.181Z"
+        },
+        {
+          "name": "Server Recovery",
+          "status": "PASSED",
+          "details": "Server maintains availability after error tests",
+          "timestamp": "2025-10-22T03:34:03.186Z"
+        }
+      ]
+    }
+  },
+  "timestamp": "2025-10-22T03:34:03.196Z"
+}

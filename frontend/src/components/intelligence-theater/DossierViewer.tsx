@@ -52,6 +52,9 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [renderStartTime] = useState(Date.now());
   
+  // Safe sections array to prevent undefined access
+  const safeSections = dossier?.sections || [];
+  
   // Initialize performance detection and track render time
   useEffect(() => {
     const initializePerformance = async () => {
@@ -105,10 +108,11 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
   
   // Task 2.3: Progressive Loading Configuration (moved before early return)
   const maxSectionsPerBatch = useMemo(() => {
-    if (!isMobile) return dossier.sections.length; // Load all on desktop
+    if (!safeSections.length) return 0; // Safety check
+    if (!isMobile) return safeSections.length; // Load all on desktop
     if (deviceCapabilities?.performanceTier === 'low') return 2; // Load 2 at a time on low-end mobile
     return 3; // Load 3 at a time on standard mobile
-  }, [isMobile, deviceCapabilities, dossier.sections.length]);
+  }, [isMobile, deviceCapabilities, safeSections.length]);
   
   // Task 2.3: Mobile Device Detection
   useEffect(() => {
@@ -121,10 +125,11 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
       // Load initial sections based on device capability
       if (!mobile) {
         // Desktop: Load all sections immediately
-        setLoadedSections(new Set(['executive-summary', ...dossier.sections.map(s => s.id)]));
+        const allSections = safeSections.map(s => s.id);
+        setLoadedSections(new Set(['executive-summary', ...allSections]));
       } else {
         // Mobile: Load executive summary + first batch
-        const initialSections = ['executive-summary', ...dossier.sections.slice(0, maxSectionsPerBatch).map(s => s.id)];
+        const initialSections = ['executive-summary', ...safeSections.slice(0, maxSectionsPerBatch).map(s => s.id)];
         setLoadedSections(new Set(initialSections));
         
         // Track mobile dossier load
@@ -135,7 +140,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, [dossier.sections, maxSectionsPerBatch, deviceCapabilities, performanceMonitor]);
+  }, [safeSections, maxSectionsPerBatch, deviceCapabilities, performanceMonitor]);
 
   // Task 2.3: Progressive Section Loading Function
   const loadMoreSections = async () => {
@@ -148,7 +153,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
     await new Promise(resolve => setTimeout(resolve, 100));
     
     const currentlyLoaded = Array.from(loadedSections).filter(id => id !== 'executive-summary');
-    const remainingSections = dossier.sections
+    const remainingSections = safeSections
       .filter(section => !loadedSections.has(section.id))
       .slice(0, maxSectionsPerBatch)
       .map(section => section.id);
@@ -168,8 +173,8 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
 
   // Task 2.3: Check if more sections are available to load
   const hasMoreSections = useMemo(() => {
-    return isMobile && dossier.sections.some(section => !loadedSections.has(section.id));
-  }, [isMobile, dossier.sections, loadedSections]);
+    return isMobile && safeSections.some(section => !loadedSections.has(section.id));
+  }, [isMobile, safeSections, loadedSections]);
   const getConfidenceBadge = useCallback((confidence: 'high' | 'medium' | 'limited') => {
     const config = {
       high: { color: 'bg-green-100 text-green-800 border-green-300', icon: '🟢' },
@@ -370,7 +375,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
           
           {/* Emergency mode sections - text only */}
           <div className="space-y-3" role="region" aria-label="Intelligence sections - emergency mode">
-            {dossier.sections
+            {safeSections
               .filter(section => loadedSections.has(section.id))
               .map((section) => (
                 <div key={section.id} className="border-l-2 border-slate-300 pl-3" role="article" aria-labelledby={`emergency-section-${section.id}`}>
@@ -390,9 +395,9 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
               onClick={loadMoreSections}
               disabled={isLoading}
               className="mt-4 w-full p-2 text-sm bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded"
-              aria-label={isLoading ? 'Loading more sections' : `Load ${Math.min(maxSectionsPerBatch, dossier.sections.filter(s => !loadedSections.has(s.id)).length)} more intelligence sections`}
+              aria-label={isLoading ? 'Loading more sections' : `Load ${Math.min(maxSectionsPerBatch, safeSections.filter(s => !loadedSections.has(s.id)).length)} more intelligence sections`}
             >
-              {isLoading ? 'Loading...' : `Load ${Math.min(maxSectionsPerBatch, dossier.sections.filter(s => !loadedSections.has(s.id)).length)} More Sections`}
+              {isLoading ? 'Loading...' : `Load ${Math.min(maxSectionsPerBatch, safeSections.filter(s => !loadedSections.has(s.id)).length)} More Sections`}
             </button>
           )}
           
@@ -479,7 +484,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
         {isEmergencyMode() ? (
           // Emergency mode: Simple text-only sections
           <div className="space-y-3">
-            {dossier.sections
+            {safeSections
               .filter(section => loadedSections.has(section.id))
               .map((section, index) => (
                 <div key={section.id} className="bg-gray-50 p-4 rounded border">
@@ -491,7 +496,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
           </div>
         ) : (
           // Use optimized mobile section renderer
-          dossier.sections
+          safeSections
             .filter(section => loadedSections.has(section.id))
             .map((section, index) => (
               <MobileSectionRenderer 
@@ -513,7 +518,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
             size="lg"
             className={`${isMobile ? 'w-full py-3 min-h-[48px]' : 'px-8 py-2'} border-2 border-blue-300 text-blue-700 hover:bg-blue-50 active:bg-blue-100 transition-colors duration-200`}
             aria-describedby="load-more-help"
-            aria-label={isLoading ? 'Loading more sections in progress' : `Load ${Math.min(maxSectionsPerBatch, dossier.sections.filter(s => !loadedSections.has(s.id)).length)} more intelligence sections`}
+            aria-label={isLoading ? 'Loading more sections in progress' : `Load ${Math.min(maxSectionsPerBatch, safeSections.filter(s => !loadedSections.has(s.id)).length)} more intelligence sections`}
           >
             {isLoading ? (
               <>
@@ -523,7 +528,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
             ) : (
               <>
                 <Eye className="h-4 w-4 mr-2" aria-hidden="true" />
-                Load {Math.min(maxSectionsPerBatch, dossier.sections.filter(s => !loadedSections.has(s.id)).length)} More Section{Math.min(maxSectionsPerBatch, dossier.sections.filter(s => !loadedSections.has(s.id)).length) !== 1 ? 's' : ''}
+                Load {Math.min(maxSectionsPerBatch, safeSections.filter(s => !loadedSections.has(s.id)).length)} More Section{Math.min(maxSectionsPerBatch, safeSections.filter(s => !loadedSections.has(s.id)).length) !== 1 ? 's' : ''}
               </>
             )}
           </Button>
@@ -531,7 +536,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
           {/* Task 2.3: Mobile Performance Indicator */}
           {isMobile && (
             <p id="load-more-help" className="text-xs text-slate-500 mt-2" aria-live="polite">
-              Showing {loadedSections.size - 1} of {dossier.sections.length} sections
+              Showing {loadedSections.size - 1} of {safeSections.length} sections
               {deviceCapabilities?.performanceTier === 'low' && ' • Optimized for your device'}
             </p>
           )}

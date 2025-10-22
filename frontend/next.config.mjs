@@ -121,12 +121,12 @@ const nextConfig = {
   },
 
   // Task 5.2: Compile and minification optimization
-  compiler: {
-    // Remove console statements in production
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn'] // Keep error and warning logs
-    } : false
-  },
+  // Note: compiler.removeConsole disabled for Turbopack compatibility
+  // compiler: {
+  //   removeConsole: process.env.NODE_ENV === 'production' ? {
+  //     exclude: ['error', 'warn']
+  //   } : false
+  // },
 
   // Task 5.2: Image optimization for mobile performance
   images: {

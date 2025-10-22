@@ -2,19 +2,19 @@
  * ProspectPI Intelligence Theater - Main Entry Point
  * Story 1.1: Three-Agent Orch      console.log('\n📄 EXECUTIVE SUMMARY:');
       console.log('-'.repeat(40));
-      console.log(result.dossier.sections.executiveSummary.summary);
+      console.log(result.dossier.structuredSections.executiveSummary.summary);
       
       console.log('\n📊 STRATEGIC RECOMMENDATIONS:');
       console.log('-'.repeat(40));
-      console.log(result.dossier.sections.strategicRecommendations.approachStrategy.substring(0, 1000) + '...');on System
+      console.log(result.dossier.structuredSections.strategicRecommendations.approachStrategy.substring(0, 1000) + '...');on System
  * 
  * Main application entry point for the three-agent intelligence system
  */
 
-import { AgentOrchestrator } from '@services/AgentOrchestrator';
+import { AgentOrchestrator } from './services/AgentOrchestrator';
 import { ApiConnectivityTest } from './utils/ApiConnectivityTest';
-import { OptimizedUserInput, AgentProgress } from '@interfaces/AgentTypes';
-import { ApiConfig } from '@config/ApiConfig';
+import { OptimizedUserInput, AgentProgress } from './interfaces/AgentTypes';
+import { ApiConfig } from './config/ApiConfig';
 
 /**
  * Demo function to test the complete three-agent system
@@ -96,11 +96,11 @@ async function demoIntelligenceMission(): Promise<void> {
       
       console.log('\n📄 EXECUTIVE SUMMARY:');
       console.log('-'.repeat(40));
-      console.log(result.dossier.sections.executiveSummary.summary);
+      console.log(result.dossier.structuredSections.executiveSummary.summary);
       
       console.log('\n📑 STRATEGIC RECOMMENDATIONS:');
       console.log('-'.repeat(40));
-      console.log(result.dossier.sections.strategicRecommendations.approachStrategy.substring(0, 1000) + '...');
+      console.log(result.dossier.structuredSections.strategicRecommendations.approachStrategy.substring(0, 1000) + '...');
       
       console.log('\n🔍 RESEARCH SOURCES:');
       result.dossier.sources.forEach((source, i) => {
@@ -151,7 +151,7 @@ if (require.main === module) {
 }
 
 export { demoIntelligenceMission, testApiOnly };
-export { AgentOrchestrator } from '@services/AgentOrchestrator';
-export { IntelligenceCoordinator } from '@agents/IntelligenceCoordinator';
-export { FieldIntelligenceResearcher } from '@agents/FieldIntelligenceResearcher';
-export { ProspectIntelligenceDetective } from '@agents/ProspectIntelligenceDetective';
+export { AgentOrchestrator } from './services/AgentOrchestrator';
+export { IntelligenceCoordinator } from './agents/IntelligenceCoordinator';
+export { FieldIntelligenceResearcher } from './agents/FieldIntelligenceResearcher';
+export { ProspectIntelligenceDetective } from './agents/ProspectIntelligenceDetective';

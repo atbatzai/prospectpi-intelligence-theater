@@ -10,9 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Shield, Plus, X, Smartphone, Zap, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { Search, Shield, Plus, X, Smartphone, Zap, ChevronDown, ChevronUp, AlertCircle, Users, MessageCircle } from 'lucide-react';
 import { usePerformanceStore } from '@/store/intelligenceStore';
 import type { DeviceCapabilities } from '@/types';
+import { MackConsultation } from '@/components/consultation/MackConsultation';
 
 // Performance monitoring (restored)
 let performanceMonitor: any;
@@ -28,7 +29,8 @@ if (typeof window !== 'undefined') {
 interface ProspectResearchInput {
   companyName: string;                    // Required
   companyUrl?: string;                    // Optional
-  linkedinUrl?: string;                   // Optional  
+  linkedinUrl?: string;                   // Optional - LinkedIn company page
+  linkedinUserUrl?: string;               // Optional - LinkedIn user/executive profile
   crmNotes?: string;                      // Optional - max 1000 chars
   organizationFocus?: string;             // Optional
   locationOfInterest?: string;            // Optional
@@ -51,6 +53,7 @@ interface CompanyInputFormProps {
   isGenerating?: boolean;
   isLoading?: boolean; // Legacy support
   previousCompanies?: string[]; // For test compatibility
+  consultationMode?: 'form' | 'consultation' | 'hybrid'; // New Mack integration
 }
 
 export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
@@ -58,16 +61,43 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
   onSubmit, // Legacy support for tests
   isGenerating = false,
   isLoading = false,
-  previousCompanies = []
+  previousCompanies = [],
+  consultationMode = 'hybrid' // Default to hybrid experience
 }) => {
   // Handle both new and legacy interfaces
   const handleSubmit = onGenerate || onSubmit || (() => {});
   const loading = isGenerating || isLoading;
 
+  // Mack consultation handlers
+  const handleConsultationComplete = (optimizedInput: any) => {
+    // Auto-populate form fields from Mack's consultation
+    if (optimizedInput.companyName) setCompanyName(optimizedInput.companyName);
+    if (optimizedInput.vendorName) setVendorName(optimizedInput.vendorName);
+    if (optimizedInput.productName) setProductName(optimizedInput.productName);
+    if (optimizedInput.industry) setIndustry(optimizedInput.industry);
+    if (optimizedInput.primaryPainPoint) setPrimaryPainPoint(optimizedInput.primaryPainPoint);
+    if (optimizedInput.additionalContext) setAdditionalContext(optimizedInput.additionalContext);
+
+    setConsultationCompleted(true);
+    setActiveMode('form');
+
+    // Immediately proceed to research generation
+    handleSubmit(optimizedInput);
+  };
+
+  const handleFallbackToForm = () => {
+    setActiveMode('form');
+  };
+
+  const handleSwitchToConsultation = () => {
+    setActiveMode('consultation');
+  };
+
   // Required Research Inputs from Lovable prompt
   const [companyName, setCompanyName] = useState('');
   const [companyUrl, setCompanyUrl] = useState('');
   const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [linkedinUserUrl, setLinkedinUserUrl] = useState('');
   const [crmNotes, setCrmNotes] = useState('');
   const [organizationFocus, setOrganizationFocus] = useState('');
   const [locationOfInterest, setLocationOfInterest] = useState('');
@@ -90,6 +120,12 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
   const [showAdditionalContext, setShowAdditionalContext] = useState(false);
   const [showValidationHelper, setShowValidationHelper] = useState(false);
   
+  // Mack Consultation state
+  const [activeMode, setActiveMode] = useState<'form' | 'consultation'>(
+    consultationMode === 'consultation' ? 'consultation' : 'form'
+  );
+  const [consultationCompleted, setConsultationCompleted] = useState(false);
+  
   // Validation state for accessibility
   const [validationErrors, setValidationErrors] = useState<{[key: string]: boolean}>({});
   const [validationMessage, setValidationMessage] = useState('');
@@ -98,6 +134,10 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
   // Mobile Performance State
   const [isMobile, setIsMobile] = useState(false);
   const [renderTime, setRenderTime] = useState(0);
+  
+  // Epic 2.5.3 Task 4.1: Solution-Relevance Score Visual State
+  const [solutionRelevanceScore, setSolutionRelevanceScore] = useState<number | null>(null);
+  const [showSolutionScore, setShowSolutionScore] = useState(false);
   
   // Use performance store for device capabilities and animations
   const performanceStore = usePerformanceStore();
@@ -221,6 +261,7 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
       companyName: companyName.trim(),
       companyUrl: companyUrl.trim() || undefined,
       linkedinUrl: linkedinUrl.trim() || undefined,
+      linkedinUserUrl: linkedinUserUrl.trim() || undefined,
       crmNotes: crmNotes.trim() || undefined,
       organizationFocus: organizationFocus.trim() || undefined,
       locationOfInterest: locationOfInterest.trim() || undefined,
@@ -301,16 +342,43 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Company Website (Optional)</label>
-              <input
-                type="url"
-                value={companyUrl}
-                onChange={(e) => setCompanyUrl(e.target.value)}
-                placeholder="https://company.com"
-                className="w-full p-2 border border-gray-300 rounded text-sm"
-                disabled={loading}
-              />
+            {/* Company URLs Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company Website</label>
+                <input
+                  type="url"
+                  value={companyUrl}
+                  onChange={(e) => setCompanyUrl(e.target.value)}
+                  placeholder="https://company.com"
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn Company Page</label>
+                <input
+                  type="url"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/company/..."
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn User Profile</label>
+                <input
+                  type="url"
+                  value={linkedinUserUrl}
+                  onChange={(e) => setLinkedinUserUrl(e.target.value)}
+                  placeholder="https://linkedin.com/in/..."
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
+                  disabled={loading}
+                />
+              </div>
             </div>
             
             <div>
@@ -337,6 +405,16 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
           <p className="mt-2 text-xs text-gray-500">Emergency Mode - Optimized for low-bandwidth devices</p>
         </div>
       </div>
+    );
+  }
+
+  // Mack Consultation Mode
+  if (activeMode === 'consultation') {
+    return (
+      <MackConsultation
+        onConsultationComplete={handleConsultationComplete}
+        onFallbackToForm={handleFallbackToForm}
+      />
     );
   }
 
@@ -377,18 +455,89 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
 
       <Card className={`border-2 border-gray-200 shadow-xl ${isMobile ? 'mx-1' : ''}`}>
         <CardHeader className={`text-center bg-gradient-to-r from-navy-900 to-violet-600 text-white rounded-t-lg ${isMobile ? 'pb-3 px-4' : 'pb-6'}`}>
-          <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold flex items-center justify-center gap-2 tracking-tight`}>
-            <Search className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />
-            Solution Context
-          </h2>
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex-1" />
+            <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold flex items-center gap-2 tracking-tight`}>
+              <Search className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />
+              Solution Context
+            </h2>
+            <div className="flex-1 flex justify-end">
+              {consultationMode === 'hybrid' && !consultationCompleted && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSwitchToConsultation}
+                  className="text-white hover:bg-white/20 text-xs"
+                >
+                  <MessageCircle className="h-4 w-4 mr-1" />
+                  Chat with Mack
+                </Button>
+              )}
+            </div>
+          </div>
           {!isMobile && (
             <p className="text-violet-100 mt-2">
-              Generate comprehensive intelligence dossiers for Fortune 500 prospects
+              {consultationCompleted 
+                ? "Research plan ready - review and launch investigation"
+                : "Generate comprehensive intelligence dossiers for Fortune 500 prospects"
+              }
             </p>
           )}
         </CardHeader>
         
         <CardContent className={`${isMobile ? 'p-4 space-y-4' : 'p-8 space-y-6'}`}>
+          {/* Epic 2.5.3 Task 4.3: Section Navigation Enhancement */}
+          {!isMobile && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Form Sections</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {[
+                  { id: 'companyName', label: 'Company Info', priority: 'high', completed: companyName.trim().length > 0 },
+                  { id: 'companyUrl', label: 'Company URL', priority: 'medium', completed: companyUrl.trim().length > 0 },
+                  { id: 'vendorName', label: 'Solution Context', priority: 'high', completed: vendorName.trim().length > 0 && productName.trim().length > 0 },
+                  { id: 'industry', label: 'Industry Focus', priority: 'high', completed: industry.length > 0 },
+                  { id: 'painPoint', label: 'Pain Points', priority: 'high', completed: primaryPainPoint.trim().length > 0 },
+                  { id: 'priority', label: 'Research Priority', priority: 'medium', completed: priority !== 'standard' }
+                ].map((section) => (
+                  <Button
+                    key={section.id}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={`justify-start text-xs p-2 h-auto ${
+                      section.completed 
+                        ? 'text-green-700 bg-green-50 border border-green-200 hover:bg-green-100' 
+                        : section.priority === 'high'
+                          ? 'text-red-700 bg-red-50 border border-red-200 hover:bg-red-100'
+                          : 'text-gray-600 bg-white border border-gray-200 hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      const element = document.getElementById(section.id);
+                      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      element?.focus();
+                    }}
+                  >
+                    <div className="flex items-center gap-1">
+                      {section.completed ? (
+                        <Shield className="h-3 w-3 text-green-600" />
+                      ) : section.priority === 'high' ? (
+                        <AlertCircle className="h-3 w-3 text-red-500" />
+                      ) : (
+                        <div className="h-3 w-3 rounded-full bg-gray-400" />
+                      )}
+                      <span className="truncate">{section.label}</span>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                <span className="text-red-600">● High Priority</span> | 
+                <span className="text-gray-600 ml-1">● Optional</span> | 
+                <span className="text-green-600 ml-1">● Completed</span>
+              </p>
+            </div>
+          )}
+
           {/* Validation Helper */}
           {showValidationHelper && validationMessage && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
@@ -485,162 +634,421 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
               <p className="text-sm text-gray-500">Large, prominent input for the target company to research</p>
             </div>
 
-            {/* 2. Your Vendor/Company */}
+            {/* 2. Target Company Website URL (Optional) */}
             <div className="space-y-2">
-              <Label htmlFor="vendorName" className="text-base font-semibold text-gray-900">
-                2. Your Vendor/Company *
+              <Label htmlFor="companyUrl" className="text-base font-semibold text-gray-900">
+                2. Target Company Website URL
+                <span className="text-sm text-gray-500 font-normal ml-2">(Optional)</span>
               </Label>
-              <Input
-                id="vendorName"
-                type="text"
-                value={vendorName}
-                onChange={(e) => setVendorName(e.target.value)}
-                className={`${isMobile ? 'min-h-12 text-base py-3' : 'min-h-12 text-lg py-3'} border-2 border-gray-300 focus:border-violet-500 focus:ring-violet-500`}
-                placeholder="e.g., Your Company Name"
-                autoComplete="organization"
-                autoCapitalize="words"
-                disabled={loading}
-                aria-required="true"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="companyUrl"
+                  type="url"
+                  value={companyUrl}
+                  onChange={(e) => {
+                    setCompanyUrl(e.target.value);
+                    // Validate URL format in real-time
+                    if (e.target.value && !e.target.value.match(/^https?:\/\/.+\..+/)) {
+                      setValidationErrors(prev => ({ ...prev, companyUrl: true }));
+                    } else {
+                      setValidationErrors(prev => ({ ...prev, companyUrl: false }));
+                    }
+                  }}
+                  onBlur={() => {
+                    // Validate URL format on blur
+                    if (companyUrl && !companyUrl.match(/^https?:\/\/.+\..+/)) {
+                      setValidationErrors(prev => ({ ...prev, companyUrl: true }));
+                    } else {
+                      setValidationErrors(prev => ({ ...prev, companyUrl: false }));
+                    }
+                  }}
+                  className={`${isMobile ? 'min-h-12 text-base py-3' : 'min-h-12 text-lg py-3'} pl-12 pr-4 border-2 ${
+                    validationErrors.companyUrl ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-violet-500'
+                  } focus:ring-violet-500`}
+                  placeholder={isMobile ? "https://company.com" : "https://www.company.com (helps with data collection)"}
+                  autoComplete="url"
+                  disabled={loading}
+                  aria-invalid={validationErrors.companyUrl ? 'true' : 'false'}
+                  aria-describedby="companyUrl-help"
+                />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                
+                {validationErrors.companyUrl && (
+                  <div className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    Please enter a valid URL (e.g., https://company.com)
+                  </div>
+                )}
+              </div>
+              <p id="companyUrl-help" className="text-sm text-gray-500">
+                💡 Website URL helps improve data collection accuracy and discover additional insights
+              </p>
             </div>
 
-            {/* 3. Your Product/Solution */}
+            {/* 3. LinkedIn Company Page URL (Optional) */}
             <div className="space-y-2">
-              <Label htmlFor="productName" className="text-base font-semibold text-gray-900">
-                3. Your Product/Solution *
+              <Label htmlFor="linkedinUrl" className="text-base font-semibold text-gray-900">
+                3. LinkedIn Company Page
+                <span className="text-sm text-gray-500 font-normal ml-2">(Optional)</span>
               </Label>
-              <Input
-                id="productName"
-                type="text"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                className={`${isMobile ? 'min-h-12 text-base py-3' : 'min-h-12 text-lg py-3'} border-2 border-gray-300 focus:border-violet-500 focus:ring-violet-500`}
-                placeholder="e.g., Cloud Platform, Analytics Tool"
-                autoComplete="off"
-                autoCapitalize="words"
-                disabled={loading}
-                aria-required="true"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="linkedinUrl"
+                  type="url"
+                  value={linkedinUrl}
+                  onChange={(e) => {
+                    setLinkedinUrl(e.target.value);
+                    // Validate LinkedIn URL format in real-time
+                    if (e.target.value && !e.target.value.match(/^https?:\/\/(www\.)?linkedin\.com\/company\/.+/)) {
+                      setValidationErrors(prev => ({ ...prev, linkedinUrl: true }));
+                    } else {
+                      setValidationErrors(prev => ({ ...prev, linkedinUrl: false }));
+                    }
+                  }}
+                  onBlur={() => {
+                    // Validate LinkedIn URL format on blur
+                    if (linkedinUrl && !linkedinUrl.match(/^https?:\/\/(www\.)?linkedin\.com\/company\/.+/)) {
+                      setValidationErrors(prev => ({ ...prev, linkedinUrl: true }));
+                    } else {
+                      setValidationErrors(prev => ({ ...prev, linkedinUrl: false }));
+                    }
+                  }}
+                  className={`${isMobile ? 'min-h-12 text-base py-3' : 'min-h-12 text-lg py-3'} pl-12 pr-4 border-2 ${
+                    validationErrors.linkedinUrl ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-violet-500'
+                  } focus:ring-violet-500`}
+                  placeholder={isMobile ? "https://linkedin.com/company/..." : "https://www.linkedin.com/company/example-company (professional insights)"}
+                  autoComplete="url"
+                  disabled={loading}
+                  aria-invalid={validationErrors.linkedinUrl ? 'true' : 'false'}
+                  aria-describedby="linkedinUrl-help"
+                />
+                <Users className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                
+                {validationErrors.linkedinUrl && (
+                  <div className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    Please enter a valid LinkedIn company URL (e.g., https://linkedin.com/company/example)
+                  </div>
+                )}
+              </div>
+              <p id="linkedinUrl-help" className="text-sm text-gray-500">
+                💡 LinkedIn company page provides professional network insights and employee intelligence
+              </p>
             </div>
 
-            {/* 4. Target Company Industry */}
+            {/* 4. LinkedIn User/Executive Profile URL (Optional) */}
             <div className="space-y-2">
+              <Label htmlFor="linkedinUserUrl" className="text-base font-semibold text-gray-900">
+                4. LinkedIn User/Executive Profile
+                <span className="text-sm text-gray-500 font-normal ml-2">(Optional)</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="linkedinUserUrl"
+                  type="url"
+                  value={linkedinUserUrl}
+                  onChange={(e) => {
+                    setLinkedinUserUrl(e.target.value);
+                    // Validate LinkedIn user URL format in real-time
+                    if (e.target.value && !e.target.value.match(/^https?:\/\/(www\.)?linkedin\.com\/in\/.+/)) {
+                      setValidationErrors(prev => ({ ...prev, linkedinUserUrl: true }));
+                    } else {
+                      setValidationErrors(prev => ({ ...prev, linkedinUserUrl: false }));
+                    }
+                  }}
+                  onBlur={() => {
+                    // Validate LinkedIn user URL format on blur
+                    if (linkedinUserUrl && !linkedinUserUrl.match(/^https?:\/\/(www\.)?linkedin\.com\/in\/.+/)) {
+                      setValidationErrors(prev => ({ ...prev, linkedinUserUrl: true }));
+                    } else {
+                      setValidationErrors(prev => ({ ...prev, linkedinUserUrl: false }));
+                    }
+                  }}
+                  className={`${isMobile ? 'min-h-12 text-base py-3' : 'min-h-12 text-lg py-3'} pl-12 pr-4 border-2 ${
+                    validationErrors.linkedinUserUrl ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-violet-500'
+                  } focus:ring-violet-500`}
+                  placeholder={isMobile ? "https://linkedin.com/in/..." : "https://www.linkedin.com/in/executive-name (target decision maker)"}
+                  autoComplete="url"
+                  disabled={loading}
+                  aria-invalid={validationErrors.linkedinUserUrl ? 'true' : 'false'}
+                  aria-describedby="linkedinUserUrl-help"
+                />
+                <Users className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                
+                {validationErrors.linkedinUserUrl && (
+                  <div className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    Please enter a valid LinkedIn user profile URL (e.g., https://linkedin.com/in/john-doe)
+                  </div>
+                )}
+              </div>
+              <p id="linkedinUserUrl-help" className="text-sm text-gray-500">
+                💡 Target specific executives or decision makers for personalized intelligence insights
+              </p>
+            </div>
+
+            {/* Epic 2.5.3 Task 4.2: Enhanced Solution Context Section */}
+            <div className="space-y-6 p-6 bg-gradient-to-r from-violet-50 to-blue-50 border border-violet-200 rounded-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <Shield className="h-6 w-6 text-violet-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Solution Context</h3>
+                  <p className="text-sm text-gray-600">Define your vendor and product for solution-focused intelligence</p>
+                </div>
+              </div>
+
+              {/* 2. Your Vendor/Company - Enhanced */}
+              <div className="space-y-3">
+                <Label htmlFor="vendorName" className="text-base font-semibold text-gray-900">
+                  2. Your Vendor/Company *
+                </Label>
+                <Input
+                  id="vendorName"
+                  type="text"
+                  value={vendorName}
+                  onChange={(e) => {
+                    setVendorName(e.target.value);
+                    // Task 4.1: Update solution relevance score dynamically
+                    if (e.target.value.trim() && productName.trim() && industry.trim()) {
+                      const mockScore = 45 + (e.target.value.length * 2) + (productName.length * 1.5);
+                      setSolutionRelevanceScore(Math.min(Math.round(mockScore), 100));
+                      setShowSolutionScore(true);
+                    }
+                  }}
+                  className={`${isMobile ? 'min-h-12 text-base py-3' : 'min-h-12 text-lg py-3'} border-2 border-violet-300 focus:border-violet-500 focus:ring-violet-500 bg-white`}
+                  placeholder="e.g., Microsoft, Salesforce, Adobe, IBM"
+                  autoComplete="organization"
+                  autoCapitalize="words"
+                  disabled={loading}
+                  aria-required="true"
+                  required
+                />
+                <div className="text-xs text-gray-500">
+                  💡 Tip: Enter your company name to enable solution-relevance scoring
+                </div>
+              </div>
+
+              {/* 3. Your Product/Solution - Enhanced */}
+              <div className="space-y-3">
+                <Label htmlFor="productName" className="text-base font-semibold text-gray-900">
+                  3. Your Product/Solution *
+                </Label>
+                <Input
+                  id="productName"
+                  type="text"
+                  value={productName}
+                  onChange={(e) => {
+                    setProductName(e.target.value);
+                    // Task 4.1: Update solution relevance score dynamically
+                    if (vendorName.trim() && e.target.value.trim() && industry.trim()) {
+                      const mockScore = 50 + (vendorName.length * 1.5) + (e.target.value.length * 2);
+                      setSolutionRelevanceScore(Math.min(Math.round(mockScore), 100));
+                      setShowSolutionScore(true);
+                    }
+                  }}
+                  className={`${isMobile ? 'min-h-12 text-base py-3' : 'min-h-12 text-lg py-3'} border-2 border-violet-300 focus:border-violet-500 focus:ring-violet-500 bg-white`}
+                  placeholder="e.g., Office 365, Salesforce CRM, Creative Cloud, Watson AI"
+                  autoComplete="off"
+                  autoCapitalize="words"
+                  disabled={loading}
+                  aria-required="true"
+                  required
+                />
+                <div className="text-xs text-gray-500">
+                  💡 Tip: Be specific about your product for better solution alignment analysis
+                </div>
+              </div>
+            </div>
+
+            {/* Epic 2.5.3 Task 4.2: Enhanced Industry Focus Section */}
+            <div className="space-y-4">
               <Label htmlFor="industry" className="text-base font-semibold text-gray-900">
                 4. Target Company Industry *
               </Label>
-              <Input
-                id="industry"
-                type="text"
-                value={industry}
-                onChange={(e) => setIndustry(e.target.value)}
-                className={`${isMobile ? 'min-h-12 text-base py-3' : 'min-h-12 text-lg py-3'} border-2 border-gray-300 focus:border-violet-500 focus:ring-violet-500`}
-                placeholder="e.g., Technology, Healthcare, Finance"
-                autoComplete="off"
-                autoCapitalize="words"
-                disabled={loading}
-                aria-required="true"
-                required
-              />
+              <div className="space-y-3 relative">
+                <Select
+                  value={industry}
+                  onValueChange={(value) => {
+                    setIndustry(value);
+                    // Task 4.1: Update solution relevance score dynamically
+                    if (vendorName.trim() && productName.trim() && value.trim()) {
+                      const industryBonus = value.includes('Technology') ? 15 : 
+                                          value.includes('Healthcare') ? 12 :
+                                          value.includes('Financial') ? 10 : 8;
+                      const mockScore = 40 + (vendorName.length * 1.5) + (productName.length * 1.8) + industryBonus;
+                      setSolutionRelevanceScore(Math.min(Math.round(mockScore), 100));
+                      setShowSolutionScore(true);
+                    }
+                  }}
+                  disabled={loading}
+                >
+                  <SelectTrigger className={`${isMobile ? 'min-h-12 text-base' : 'min-h-12 text-lg'} border-2 border-gray-300 focus:border-violet-500 bg-white`}>
+                    <SelectValue placeholder="Select target industry..." />
+                  </SelectTrigger>
+                  <SelectContent className="z-[10000]" sideOffset={4}>
+                    <SelectItem value="Technology">Technology & Software</SelectItem>
+                    <SelectItem value="Healthcare">Healthcare & Life Sciences</SelectItem>
+                    <SelectItem value="Financial Services">Financial Services & Banking</SelectItem>
+                    <SelectItem value="Manufacturing">Manufacturing & Industrial</SelectItem>
+                    <SelectItem value="Retail">Retail & E-commerce</SelectItem>
+                    <SelectItem value="Education">Education & Training</SelectItem>
+                    <SelectItem value="Government">Government & Public Sector</SelectItem>
+                    <SelectItem value="Energy">Energy & Utilities</SelectItem>
+                    <SelectItem value="Media">Media & Entertainment</SelectItem>
+                    <SelectItem value="Other">Other Industry</SelectItem>
+                  </SelectContent>
+                </Select>
+                {industry && (
+                  <div className="text-xs text-green-600 flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    Industry context will enhance solution-relevance analysis
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* 5. Primary Pain Point */}
-            <div className="space-y-2">
+            {/* Epic 2.5.3 Task 4.2: Enhanced Pain Point Section */}
+            <div className="space-y-4">
               <Label htmlFor="painPoint" className="text-base font-semibold text-gray-900">
-                5. Primary Pain Point *
+                5. Primary Pain Point & Challenge Focus *
               </Label>
-              <Textarea
-                id="painPoint"
-                value={primaryPainPoint}
-                onChange={(e) => setPrimaryPainPoint(e.target.value)}
-                className={`${isMobile ? 'min-h-[100px] text-base' : 'min-h-[120px] text-lg'} border-2 border-gray-300 focus:border-violet-500 focus:ring-violet-500 resize-none`}
-                placeholder="Describe the primary business challenge or pain point your solution addresses..."
-                disabled={loading}
-                aria-required="true"
-                required
-              />
+              <div className="space-y-3">
+                <Textarea
+                  id="painPoint"
+                  value={primaryPainPoint}
+                  onChange={(e) => {
+                    setPrimaryPainPoint(e.target.value);
+                    // Task 4.1: Update solution relevance score with pain point context
+                    if (vendorName.trim() && productName.trim() && industry.trim() && e.target.value.trim()) {
+                      const painPointBonus = e.target.value.length > 50 ? 20 : 
+                                           e.target.value.length > 25 ? 15 : 10;
+                      const mockScore = 35 + (vendorName.length * 1.3) + (productName.length * 1.5) + 
+                                      (industry.length * 0.8) + painPointBonus;
+                      setSolutionRelevanceScore(Math.min(Math.round(mockScore), 100));
+                      setShowSolutionScore(true);
+                    }
+                  }}
+                  className={`${isMobile ? 'min-h-[120px] text-base' : 'min-h-[140px] text-lg'} border-2 border-gray-300 focus:border-violet-500 focus:ring-violet-500 resize-none`}
+                  placeholder="Describe the specific business challenge your solution addresses:
+• What processes are inefficient?
+• What technology gaps exist?
+• What business outcomes are needed?"
+                  disabled={loading}
+                  aria-required="true"
+                  required
+                />
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs text-gray-500">Quick suggestions:</span>
+                  {[
+                    'Digital transformation needs',
+                    'Cost reduction requirements', 
+                    'Efficiency improvements',
+                    'Compliance challenges',
+                    'Scalability issues'
+                  ].map((suggestion) => (
+                    <Button
+                      key={suggestion}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-xs px-2 py-1 h-auto border-gray-300 hover:border-violet-400 hover:text-violet-700"
+                      onClick={() => {
+                        const currentText = primaryPainPoint.trim();
+                        const newText = currentText ? `${currentText}. ${suggestion}` : suggestion;
+                        setPrimaryPainPoint(newText);
+                      }}
+                      disabled={loading}
+                    >
+                      + {suggestion}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* Enhanced Analysis Options Section */}
-            <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-4">Enhanced Analysis Options</h3>
-            
-            {/* 6. Priority Selection */}
+            {/* Analysis Configuration */}
             <div className="space-y-4">
-              <Label id="priority-label" className="text-base font-semibold text-gray-900">
-                6. Analysis Priority
+              <Label className="text-base font-semibold text-gray-900">
+                6. Analysis Type
               </Label>
-              <RadioGroup
-                value={priority}
-                onValueChange={(value: 'standard' | 'express') => setPriority(value)}
-                className="space-y-2"
-                aria-labelledby="priority-label"
-                disabled={loading}
-              >
+              <div className="p-4 bg-violet-50 border border-violet-200 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <RadioGroupItem 
-                    value="standard" 
-                    id="priority-standard"
-                    aria-describedby="priority-standard-desc"
-                  />
-                  <Label htmlFor="priority-standard" className="flex-1 cursor-pointer">
-                    <div className="font-medium">Standard Analysis</div>
-                    <div id="priority-standard-desc" className="text-sm text-gray-500">
-                      Comprehensive research (5-8 minutes)
+                  <div className="w-2 h-2 bg-violet-500 rounded-full"></div>
+                  <div>
+                    <div className="font-medium text-gray-900">Full Intelligence Report</div>
+                    <div className="text-sm text-gray-600">
+                      Complete 7-section analysis with competitive intelligence and strategic recommendations (5-8 minutes)
                     </div>
-                  </Label>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <RadioGroupItem 
-                    value="express" 
-                    id="priority-express"
-                    aria-describedby="priority-express-desc"
-                  />
-                  <Label htmlFor="priority-express" className="flex-1 cursor-pointer">
-                    <div className="font-medium">Express (Faster)</div>
-                    <div id="priority-express-desc" className="text-sm text-gray-500">
-                      Accelerated research (2-3 minutes)
-                    </div>
-                  </Label>
-                </div>
-              </RadioGroup>
+              </div>
             </div>
 
-            {/* 7. Output Format Selection */}
-            <div className="space-y-4">
-              <Label id="format-label" className="text-base font-semibold text-gray-900">
-                7. Report Format
-              </Label>
-              <RadioGroup
-                value={outputFormat}
-                onValueChange={(value: 'full' | 'executive' | 'custom') => setOutputFormat(value)}
-                className="space-y-2"
-                aria-labelledby="format-label"
-                disabled={loading}
-              >
-                <div className="flex items-center space-x-3">
-                  <RadioGroupItem value="full" id="format-full" />
-                  <Label htmlFor="format-full" className="flex-1 cursor-pointer">
-                    <div className="font-medium">Full Intelligence Report</div>
-                    <div className="text-sm text-gray-500">Complete analysis with all sections</div>
-                  </Label>
+            {/* Epic 2.5.3 Task 4.1 & 4.4: Solution-Relevance Score Visual (Mobile Optimized) */}
+            {showSolutionScore && solutionRelevanceScore !== null && (
+              <div className="space-y-4 border-t border-gray-100 pt-6">
+                <Label className="text-base font-semibold text-gray-900">
+                  7. Solution-Relevance Assessment
+                </Label>
+                <div className={`${isMobile ? 'p-4' : 'p-6'} bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg`}>
+                  <div className={`${isMobile ? 'flex-col space-y-3' : 'flex items-center justify-between'} mb-4`}>
+                    <div className={isMobile ? 'text-center' : ''}>
+                      <div className={`${isMobile ? 'text-lg' : 'text-lg'} font-bold text-gray-900`}>
+                        Product-Market Fit Score
+                      </div>
+                      <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 ${isMobile ? 'mt-1' : ''}`}>
+                        Based on vendor context and pain point alignment
+                      </div>
+                    </div>
+                    <div className={`${isMobile ? 'text-center mt-2' : 'text-right'}`}>
+                      <div className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text`}>
+                        {Math.round(solutionRelevanceScore)}/100
+                      </div>
+                      <div className={`${isMobile ? 'text-xs' : 'text-xs'} text-gray-500 uppercase tracking-wide ${isMobile ? 'mt-1' : ''}`}>
+                        {solutionRelevanceScore >= 80 ? 'Excellent Fit' :
+                         solutionRelevanceScore >= 60 ? 'Good Fit' :
+                         solutionRelevanceScore >= 40 ? 'Moderate Fit' : 'Limited Fit'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+                    <div 
+                      className={`h-3 rounded-full transition-all duration-1000 ease-out ${
+                        solutionRelevanceScore >= 80 ? 'bg-gradient-to-r from-green-500 to-green-600' :
+                        solutionRelevanceScore >= 60 ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
+                        solutionRelevanceScore >= 40 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                        'bg-gradient-to-r from-red-400 to-red-500'
+                      }`}
+                      style={{ width: `${Math.max(solutionRelevanceScore, 5)}%` }}
+                    ></div>
+                  </div>
+                  
+                  {/* Quick Insights - Mobile Optimized */}
+                  <div className={`${isMobile ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-3 gap-4'} text-sm`}>
+                    <div className={`flex items-center ${isMobile ? 'justify-center' : ''} gap-2`}>
+                      <Shield className="h-4 w-4 text-blue-600" />
+                      <span className="text-gray-700">
+                        {vendorName || 'Your'} Solution Alignment
+                      </span>
+                    </div>
+                    <div className={`flex items-center ${isMobile ? 'justify-center' : ''} gap-2`}>
+                      <Zap className="h-4 w-4 text-purple-600" />
+                      <span className="text-gray-700">
+                        {industry || 'Target'} Industry Relevance
+                      </span>
+                    </div>
+                    <div className={`flex items-center ${isMobile ? 'justify-center' : ''} gap-2`}>
+                      <AlertCircle className="h-4 w-4 text-orange-600" />
+                      <span className="text-gray-700">
+                        Pain Point Match: {primaryPainPoint ? 'Identified' : 'Needs Input'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <RadioGroupItem value="executive" id="format-executive" />
-                  <Label htmlFor="format-executive" className="flex-1 cursor-pointer">
-                    <div className="font-medium">Executive Summary</div>
-                    <div className="text-sm text-gray-500">Key insights and recommendations only</div>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <RadioGroupItem value="custom" id="format-custom" />
-                  <Label htmlFor="format-custom" className="flex-1 cursor-pointer">
-                    <div className="font-medium">Custom Report</div>
-                    <div className="text-sm text-gray-500">Tailored to your specific needs</div>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
+              </div>
+            )}
 
             {/* 8. Additional Context & Focus Areas (Expandable) */}
             <div className="space-y-4 border-t border-gray-100 pt-6">

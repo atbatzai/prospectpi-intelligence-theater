@@ -67,11 +67,76 @@ export const useDossierData = () => {
     return {
       id: `dossier-${Date.now()}`,
       companyName,
+      vendorName: 'Demo Vendor',
+      productName: 'Demo Product',
+      industry: 'Technology',
+      primaryPainPoint: 'Digital transformation',
       classification: 'BUSINESS INTELLIGENCE',
       generatedAt: new Date().toISOString(),
       confidence: 87,
       sourceCount: 12,
+      solutionRelevanceScore: 75,
       executiveSummary: `Comprehensive intelligence analysis of ${companyName} reveals a technology-forward organization with strong market positioning and growth trajectory. Key findings indicate strategic focus on innovation, competitive advantages in core markets, and emerging expansion opportunities.`,
+      structuredSections: {
+        executiveSummary: {
+          summary: `Comprehensive intelligence analysis of ${companyName} reveals a technology-forward organization with strong market positioning and growth trajectory.`,
+          solutionRelevanceScore: 75,
+          keyOpportunities: ['Digital transformation initiatives', 'Market expansion potential', 'Technology modernization'],
+          criticalRisks: ['Market competition', 'Technology disruption', 'Implementation complexity']
+        },
+        painPointAlignment: {
+          primaryPainPoint: {
+            challenge: 'Digital transformation',
+            evidence: ['Technology gaps identified', 'Process inefficiencies noted', 'Legacy system constraints'],
+            solutionFit: 'High alignment with vendor capabilities',
+            confidence: 'high'
+          }
+        },
+        competitiveIntelligence: {
+          currentVendors: [
+            { vendor: 'Competitor A', products: ['Legacy Solution'], relationship: 'competitor' }
+          ],
+          competitorThreat: 'medium',
+          competitiveAdvantages: ['Innovation focus', 'Customer satisfaction', 'Proven implementation'],
+          threats: ['Market competition', 'Price pressure']
+        },
+        budgetIntelligence: {
+          estimatedBudget: '500K-1M',
+          budgetCycle: 'Q1 planning cycle',
+          spendingPatterns: ['Technology modernization', 'Operational efficiency', 'Digital initiatives'],
+          budgetFitAnalysis: 'Strong budget alignment with strategic priorities',
+          decisionMakers: [
+            { role: 'CTO', influence: 'high' },
+            { role: 'CFO', influence: 'medium' }
+          ]
+        },
+        technologyIntelligence: {
+          currentStack: [
+            { category: 'Infrastructure', technologies: ['Legacy systems', 'On-premise servers'] },
+            { category: 'Cloud', technologies: ['AWS migration in progress', 'Hybrid architecture'] }
+          ],
+          modernizationSignals: ['Cloud migration initiatives', 'API development projects', 'DevOps adoption'],
+          implementationReadiness: 'needs-prep',
+          technicalRequirements: ['Cloud infrastructure', 'API development', 'Integration capabilities']
+        },
+        marketPosition: {
+          industryContext: 'Leading position in technology sector with strong growth indicators',
+          marketTrends: ['Digital adoption', 'Automation trends', 'Cloud-first strategies'],
+          growthSignals: ['Revenue growth', 'Market expansion', 'Technology investments'],
+          riskFactors: ['Market competition', 'Technology disruption', 'Economic uncertainty'],
+          strategicInitiatives: ['Digital transformation', 'Market expansion', 'Innovation programs']
+        },
+        strategicRecommendations: {
+          approachStrategy: 'Executive-focused approach emphasizing ROI and strategic alignment',
+          keyMessaging: ['Focus on digital transformation ROI', 'Emphasize scalability benefits', 'Highlight competitive advantages'],
+          stakeholderStrategy: [
+            { role: 'CTO', approach: 'Technical deep dive', keyPoints: ['Architecture alignment', 'Implementation roadmap'] },
+            { role: 'CFO', approach: 'Business case focus', keyPoints: ['ROI projections', 'Cost optimization'] }
+          ],
+          timeline: '30-60 days for decision cycle',
+          nextSteps: ['Executive presentation', 'Technical deep dive', 'Proof of concept']
+        }
+      },
       sections: [
         {
           id: 'company-overview',

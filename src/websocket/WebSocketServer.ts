@@ -11,7 +11,7 @@ import { URL } from 'url';
 import winston from 'winston';
 import { ConnectionManager } from './ConnectionManager';
 import { MessageBroker } from './MessageBroker';
-import { WebSocketMessage, ErrorInfo } from '@interfaces/AgentTypes';
+import { WebSocketMessage, ErrorInfo } from '../interfaces/AgentTypes';
 
 export class WebSocketServer {
   private wss: WSServer;
@@ -38,14 +38,16 @@ export class WebSocketServer {
     try {
       const url = new URL(info.req.url!, `http://${info.req.headers.host}`);
       const requestId = this.extractRequestId(url.pathname);
+      const isDevelopment = process.env.NODE_ENV !== 'production';
       
       this.logger.debug('WebSocket connection verification', {
         path: url.pathname,
         requestId,
-        origin: info.origin
+        origin: info.origin,
+        isDevelopment
       });
       
-      if (!requestId) {
+      if (!requestId && !isDevelopment) {
         this.logger.warn('WebSocket connection rejected: missing requestId', {
           path: url.pathname,
           origin: info.origin
@@ -75,10 +77,11 @@ export class WebSocketServer {
   private async handleConnection(ws: WebSocket, req: IncomingMessage): Promise<void> {
     try {
       const url = new URL(req.url!, `http://${req.headers.host}`);
-      const requestId = this.extractRequestId(url.pathname);
+      const requestId = this.extractRequestId(url.pathname) || 'dev-request';
       const token = url.searchParams.get('token') || this.extractTokenFromHeaders(req.headers);
+      const isDevelopment = process.env.NODE_ENV !== 'production';
 
-      if (!requestId) {
+      if (!requestId && !isDevelopment) {
         this.sendErrorAndClose(ws, 'INVALID_REQUEST', 'Missing requestId in URL path');
         return;
       }
@@ -179,9 +182,20 @@ export class WebSocketServer {
   }
 
   private extractRequestId(pathname: string): string | null {
-    // Extract requestId from path like /ws/research/{requestId}
-    const match = pathname.match(/^\/ws\/research\/([^/?]+)/);
-    return match ? match[1] : null;
+    // Extract requestId from path like /ws/research/{requestId} or /ws/{requestId}
+    let match = pathname.match(/^\/ws\/research\/([^/?]+)/);
+    if (match) return match[1];
+    
+    // Also try /ws/{requestId} format
+    match = pathname.match(/^\/ws\/([^/?]+)/);
+    if (match) return match[1];
+    
+    // Development mode: accept /ws path and generate requestId
+    if (pathname === '/ws' && process.env.NODE_ENV !== 'production') {
+      return `dev_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+    
+    return null;
   }
 
   private extractTokenFromHeaders(headers: any): string | undefined {

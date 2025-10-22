@@ -23,7 +23,8 @@ export interface ProspectResearchInput {
   // CRITICAL: Company being researched
   companyName: string;                    // Required
   companyUrl?: string;                    // Optional
-  linkedinUrl?: string;                   // Optional  
+  linkedinUrl?: string;                   // Optional - LinkedIn company page
+  linkedinUserUrl?: string;               // Optional - LinkedIn user/executive profile
   
   // CRITICAL: Solution Context - The vendor/product being sold
   vendorName: string;                     // Required - e.g. IBM, Microsoft, Dell, Adobe
@@ -98,6 +99,9 @@ export interface ResearchApiResponse {
 export interface OptimizedUserInput {
   // Company being researched
   companyName: string;
+  companyUrl?: string;                    // Optional - Company website
+  linkedinUrl?: string;                   // Optional - LinkedIn company page
+  linkedinUserUrl?: string;               // Optional - LinkedIn user/executive profile
   
   // CRITICAL: Solution Context
   vendorName: string;                     // The vendor/company selling (e.g. IBM, Microsoft)
@@ -117,6 +121,14 @@ export interface OptimizedUserInput {
   priority: 'standard' | 'express';
   outputFormat: 'full' | 'executive' | 'custom';
   confidenceThreshold: 'high' | 'medium' | 'all';
+  
+  // Phase 2: Consultation Integration Fields
+  consultation_derived_context?: string;     // Rich context from Mack consultation
+  strategic_research_focus?: string[];       // Areas identified during consultation  
+  priority_intelligence_areas?: string[];    // High-value intelligence targets
+  mack_briefing_summary?: string;           // Mack's strategic briefing for agents
+  business_context_signals?: string[];       // Key business signals discovered
+  consultation_session_id?: string;         // Reference to consultation session
 }
 
 export interface AgentContext {
@@ -136,11 +148,12 @@ export interface QualityGate {
 }
 
 export interface ResearchData {
-  source: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity';
+  source: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'newsdata' | 'reddit' | 'twitter' | 'github' | 'youtube' | 'discord';
   data: any;
   confidence: number;
   timestamp: Date;
   cost: number;
+  responseTime?: number;
 }
 
 export interface DossierResult {
@@ -154,7 +167,42 @@ export interface DossierResult {
   primaryPainPoint: string;
   
   // ENHANCED: PRD-Inspired Structured Intelligence Analysis
-  sections: {
+  structuredSections: {
+    dealWinningIntelligence?: {
+      dealProbabilityScore: number;
+      goNoGoRecommendation: 'GO' | 'NO-GO' | 'CONDITIONAL';
+      resourceInvestment: 'HIGH' | 'MEDIUM' | 'LOW';
+      immediateRedFlags: string[];
+      strongBuyingSignals: string[];
+      winningStrategy: {
+        primaryApproach: string;
+        keyStakeholders: Array<{
+          name?: string;
+          role: string;
+          influence: 'HIGH' | 'MEDIUM' | 'LOW';
+          priorities: string[];
+          approachStrategy: string;
+          keyMessages: string[];
+        }>;
+        competitiveDifferentiation: string[];
+        messagingStrategy: string[];
+        timingRecommendation: string;
+        proofPointsNeeded: string[];
+      };
+      agentReasoning: {
+        coordinatorHunches: string[];
+        researcherInsights: string[];
+        detectiveHypotheses: string[];
+        confidenceReasons: Array<{
+          insight: string;
+          confidence: number;
+          reasoning: string;
+        }>;
+        patternRecognition: string[];
+        stealthOpportunities: string[];
+      };
+    };
+    
     executiveSummary: {
       summary: string;
       solutionRelevanceScore: number;      // 0-100 score of product-market fit
@@ -231,6 +279,24 @@ export interface DossierResult {
       }>;
       timeline: string;
       nextSteps: string[];
+    };
+    
+    // Phase 4: Social & Community Intelligence Enhancement
+    socialIntelligence: {
+      communitySentiment: string;
+      executiveCommunications: string[];
+      developerSentiment: string;
+      brandPerception: string;
+      socialProofSignals: string[];
+      reputationRisks: string[];
+    };
+    
+    enterpriseReadiness: {
+      socialProofScore: number;
+      communityHealthScore: number;
+      executivePresenceScore: number;
+      developerExperienceScore: number;
+      overallSocialIntelligenceScore: number;
     };
   };
   

@@ -5,7 +5,7 @@
  * Tests all API connections to ensure services are ready
  */
 
-import { ApiConfig } from '@config/ApiConfig';
+import { ApiConfig } from '../config/ApiConfig';
 import axios from 'axios';
 
 export interface ConnectivityResult {

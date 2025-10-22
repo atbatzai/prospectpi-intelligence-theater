@@ -1,6 +1,6 @@
 /**
- * Simple test script for ProspectPI REST API
- * Story 1.2: REST API Endpoints & Request Handling
+ * Phase 3: AI-Enhanced Consultation Service Test
+ * Testing OpenAI + Claude integration with analytics
  */
 
 const http = require('http');

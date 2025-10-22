@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { StopCircle, Eye, Activity, Database } from 'lucide-react';
+import { StopCircle, Eye, Activity, Database, Clock, Zap, CheckCircle, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { 
   useAdaptivePerformance, 
@@ -13,6 +13,15 @@ import {
   useAdaptiveRendering, 
   useAdaptiveLoading 
 } from '@/lib/adaptive-performance';
+
+interface AgentStage {
+  id: string;
+  name: string;
+  progress: number;
+  status: 'pending' | 'active' | 'completed' | 'error';
+  estimatedDuration: number;
+  startTime?: number;
+}
 
 /**
  * Task 5.1: Enhanced Adaptive Agent Progress Theater with Performance Architecture
@@ -42,6 +51,91 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
   const [renderCount, setRenderCount] = useState(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState(Date.now());
   
+  // Enhanced progress simulation for better UX feedback
+  const [detailedStages, setDetailedStages] = useState<AgentStage[]>([
+    { id: 'planning', name: '🎯 Mission Planning', progress: 0, status: 'pending', estimatedDuration: 30 },
+    { id: 'theirstack', name: '🔧 TheirStack Analysis', progress: 0, status: 'pending', estimatedDuration: 45 },
+    { id: 'marketaux', name: '📊 MarketAux Intelligence', progress: 0, status: 'pending', estimatedDuration: 35 },
+    { id: 'coresignal', name: '🌐 Coresignal Networks', progress: 0, status: 'pending', estimatedDuration: 40 },
+    { id: 'perplexity', name: '🔍 Perplexity Research', progress: 0, status: 'pending', estimatedDuration: 25 },
+    { id: 'analysis', name: '🧩 Intelligence Analysis', progress: 0, status: 'pending', estimatedDuration: 60 },
+    { id: 'synthesis', name: '📋 Dossier Synthesis', progress: 0, status: 'pending', estimatedDuration: 45 }
+  ]);
+  
+  const [missionStarted, setMissionStarted] = useState(false);
+  const [overallProgress, setOverallProgress] = useState(0);
+  
+  // Real-time progress updates from WebSocket data
+  useEffect(() => {
+    if (!progress || progress.length === 0) return;
+    
+    // Start mission when we receive first progress updates
+    if (!missionStarted) {
+      setMissionStarted(true);
+    }
+    
+    // Get the latest progress update
+    const latestProgress = progress[progress.length - 1];
+    console.log('🎭 AgentProgressTheater received:', latestProgress);
+    
+    // Map agent names to stage IDs
+    const agentToStageMap: { [key: string]: string } = {
+      'coordinator': 'planning',
+      'intelligence-coordinator': 'planning',
+      'researcher': 'theirstack',
+      'field-researcher': 'theirstack',
+      'detective': 'analysis',
+      'intelligence-detective': 'analysis',
+      'system': 'synthesis'
+    };
+    
+    // Update stages based on real agent progress
+    setDetailedStages(prevStages => {
+      const newStages = [...prevStages];
+      const agentName = latestProgress.agent?.toLowerCase() || 'system';
+      const stageId = agentToStageMap[agentName] || 'analysis';
+      
+      // Find the corresponding stage
+      const stageIndex = newStages.findIndex(stage => stage.id === stageId);
+      if (stageIndex !== -1) {
+        const stage = { ...newStages[stageIndex] };
+        
+        // Update stage status based on agent activity
+        if (latestProgress.stage === 'complete' || latestProgress.message?.includes('completed')) {
+          stage.status = 'completed';
+          stage.progress = 100;
+        } else if (latestProgress.stage === 'working' || latestProgress.stage === 'active') {
+          stage.status = 'active';
+          // Use confidence as progress indicator (0.6-1.0 confidence = 60-100% progress)
+          stage.progress = Math.round((latestProgress.confidence || 0.7) * 100);
+        } else {
+          stage.status = 'active';
+          stage.progress = Math.min(stage.progress + 10, 95); // Incremental progress
+        }
+        
+        newStages[stageIndex] = stage;
+        
+        // Mark previous stages as completed if current stage is active
+        for (let i = 0; i < stageIndex; i++) {
+          if (newStages[i].status === 'pending') {
+            newStages[i].status = 'completed';
+            newStages[i].progress = 100;
+          }
+        }
+      }
+      
+      return newStages;
+    });
+    
+    // Calculate overall progress based on actual progress data
+    const completedStages = detailedStages.filter(s => s.status === 'completed').length;
+    const activeStage = detailedStages.find(s => s.status === 'active');
+    const activeProgress = activeStage ? activeStage.progress / 100 : 0;
+    const newOverallProgress = Math.round(((completedStages + activeProgress) / detailedStages.length) * 100);
+    setOverallProgress(newOverallProgress);
+    
+  }, [progress, missionStarted, detailedStages.length]);
+
   // Optimize progress updates to reduce re-renders
   useEffect(() => {
     const now = Date.now();
@@ -195,6 +289,90 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
         </CardHeader>
         
         <CardContent className="space-y-6">
+          {/* Enhanced Progress Bar with Real-Time Updates */}
+          <div className="space-y-4">
+            {/* Overall Mission Progress */}
+            <div className="bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-blue-900 flex items-center">
+                  <Zap className="h-4 w-4 mr-2 text-blue-600" />
+                  Intelligence Mission Progress
+                </h3>
+                <div className="flex items-center text-sm text-gray-600">
+                  <Clock className="h-4 w-4 mr-1" />
+                  {estimatedCompletion > 0 ? 
+                    `${Math.ceil(estimatedCompletion / 60)}:${String(estimatedCompletion % 60).padStart(2, '0')} remaining` : 
+                    'Calculating...'
+                  }
+                </div>
+              </div>
+              
+              {/* Master Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Mission Status</span>
+                  <span>{overallProgress}% Complete</span>
+                </div>
+                <Progress 
+                  value={overallProgress} 
+                  className="h-3 bg-gray-200" 
+                />
+              </div>
+              
+              {/* Detailed Stage Progress */}
+              <div className="mt-4 space-y-1">
+                <h4 className="text-xs font-medium text-gray-700 mb-2">Current Operations:</h4>
+                <div className="max-h-24 overflow-y-auto space-y-1">
+                  {detailedStages.map((stage) => (
+                    <div key={stage.id} className="flex items-center justify-between text-xs py-1">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          stage.status === 'completed' ? 'bg-green-500' :
+                          stage.status === 'active' ? 'bg-blue-500 animate-pulse' :
+                          stage.status === 'error' ? 'bg-red-500' :
+                          'bg-gray-300'
+                        }`} />
+                        <span className={`${
+                          stage.status === 'active' ? 'text-blue-700 font-medium' :
+                          stage.status === 'completed' ? 'text-green-700' :
+                          'text-gray-500'
+                        }`}>
+                          {stage.name}
+                        </span>
+                      </div>
+                      <span className={`text-xs ${
+                        stage.status === 'active' ? 'text-blue-600 font-medium' :
+                        stage.status === 'completed' ? 'text-green-600' :
+                        'text-gray-400'
+                      }`}>
+                        {stage.status === 'active' ? `${Math.round(stage.progress)}%` :
+                         stage.status === 'completed' ? '✓' :
+                         stage.status === 'error' ? '✗' : '...'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Real-Time Status Indicators */}
+              <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
+                {progress.map((agent, index) => (
+                  <div key={agent.id || index} className="flex items-center justify-center p-1 bg-white rounded border">
+                    <span className="mr-1">{agent.avatar}</span>
+                    {agent.status === 'working' ? (
+                      <Activity className="h-3 w-3 text-green-500 animate-pulse" />
+                    ) : agent.status === 'completed' ? (
+                      <CheckCircle className="h-3 w-3 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-3 w-3 text-gray-400" />
+                    )}
+                    <span className="ml-1 text-gray-700 truncate">{agent.progress}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Task 5.1: Adaptive Agent Display with Enhanced Performance Architecture */}
           <div 
             className={`grid ${isMobileLayout ? 'grid-cols-1 gap-2' : 'md:grid-cols-3 gap-6'}`}

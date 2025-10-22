@@ -7,7 +7,7 @@
 
 import winston from 'winston';
 import { MessageBroker } from './MessageBroker';
-import { AgentProgress, ErrorInfo, CompletionInfo } from '@interfaces/AgentTypes';
+import { AgentProgress, ErrorInfo, CompletionInfo } from '../interfaces/AgentTypes';
 
 export class ProgressPublisher {
   private messageBroker: MessageBroker;

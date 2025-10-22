@@ -1,0 +1,61 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Create Backend Integration Sprint Plan",
+			"type": "shell",
+			"command": "echo '# Backend Integration Sprint Plan\n\n## Critical Backend Components Needed:\n\n### 1. API Endpoints\n- POST /api/v1/research/generate-dossier\n- WebSocket /ws/research/{requestId}\n- GET /api/v1/health\n\n### 2. Data Source Integration\n- TheirStack API integration\n- MarketAux financial data\n- Coresignal professional network\n- Perplexity real-time search\n\n### 3. 3-Agent System\n- Intelligence Coordinator\n- Field Researcher \n- Intelligence Detective\n\n### 4. Database Schema\n- Users, Organizations, Research Requests\n- Dossiers, Agent Progress, API Keys\n\n### 5. Authentication\n- User signup/login\n- API key management\n- Usage tracking\n\nNext Steps:\n1. Architect: Review existing backend code\n2. Architect: Implement missing API endpoints\n3. Test frontend integration\n4. Deploy staging environment' > docs/backend-integration-plan.md",
+			"group": "build"
+		},
+		{
+			"label": "BMad Orchestrator - Backend Integration Sprint Setup",
+			"type": "shell",
+			"command": "echo 'BMad Orchestrator Activating Backend Integration Sprint\n\n=== CRITICAL PATH ANALYSIS ===\n\n1. ARCHITECT (Marcus) - START TODAY:\n   - Wire TheirStack API integration\n   - Implement basic agent orchestration\n   - Connect WebSocket to real progress\n\n2. IMMEDIATE DELIVERABLE:\n   - One working dossier section with real data\n   - Frontend displays actual intelligence (not mock)\n   - WebSocket shows real agent updates\n\n3. SUCCESS CRITERIA:\n   - Research request → Real API call → Actual dossier content\n   - Agent Progress Theater shows live data gathering\n   - Prove end-to-end functionality\n\nExecuting BMad coordination protocol...'",
+			"group": "build"
+		},
+		{
+			"label": "Start Full Development Environment",
+			"type": "shell",
+			"command": "npm run dev",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"problemMatcher": [],
+			"isBackground": true
+		},
+		{
+			"label": "Start Backend Only",
+			"type": "shell",
+			"command": "npm run dev:api",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"isBackground": true
+		},
+		{
+			"label": "Start Frontend Only",
+			"type": "shell",
+			"command": "cd frontend && npm run dev",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"isBackground": true
+		},
+	]
+}

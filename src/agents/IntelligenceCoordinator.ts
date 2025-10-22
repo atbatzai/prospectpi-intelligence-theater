@@ -9,14 +9,14 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { ApiConfig } from '@config/ApiConfig';
+import { ApiConfig } from '../config/ApiConfig';
 import { 
   AgentProgress, 
   AgentContext, 
   QualityGate, 
   OptimizedUserInput,
   AgentError 
-} from '@interfaces/AgentTypes';
+} from '../interfaces/AgentTypes';
 import { v4 as uuidv4 } from 'uuid';
 
 export class IntelligenceCoordinator {

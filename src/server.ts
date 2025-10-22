@@ -14,6 +14,7 @@ import dotenv from 'dotenv';
 import winston from 'winston';
 
 import { apiRouter } from './routes';
+import consultationRouter from './routes/consultation/index';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { rateLimiter } from './middleware/rateLimiter';
@@ -204,6 +205,13 @@ class ApiServer {
     // API routes
     this.app.use('/api/v1', apiRouter);
 
+    // Mack Consultation Agent Routes
+    this.app.use('/api/v1/consultation', consultationRouter);
+
+    // PHASE 1: Organization Management Routes (temporarily commented out for consultation testing)
+    // const organizationRouter = require('./routes/organization');
+    // this.app.use('/api/v1/organization', organizationRouter);
+
     // Catch-all for undefined routes
     this.app.use('*', (req, res) => {
       res.status(404).json({
@@ -220,6 +228,9 @@ class ApiServer {
   private setupWebSocket(): void {
     this.server = createServer(this.app);
     this.wss = new WebSocketServer(this.server, logger);
+    
+    // Make message broker available to routes
+    this.app.set('messageBroker', this.wss.getMessageBroker());
   }
 
   private setupErrorHandling(): void {
@@ -293,23 +304,90 @@ class ApiServer {
 // Start server if this file is run directly
 if (require.main === module) {
   const server = new ApiServer();
+  let isShuttingDown = false;
   
-  // Graceful shutdown handling
-  process.on('SIGTERM', async () => {
-    logger.info('SIGTERM received, shutting down gracefully');
-    await server.stop();
-    process.exit(0);
+  // Enhanced graceful shutdown handling with timeout
+  const gracefulShutdown = async (signal: string) => {
+    if (isShuttingDown) {
+      logger.warn(`${signal} received during shutdown, forcing exit`);
+      process.exit(1);
+    }
+    
+    isShuttingDown = true;
+    logger.info(`${signal} received, shutting down gracefully`);
+    
+    // Set a timeout for forced shutdown
+    const shutdownTimeout = setTimeout(() => {
+      logger.error('Graceful shutdown timeout, forcing exit');
+      process.exit(1);
+    }, 10000); // 10 second timeout
+    
+    try {
+      await server.stop();
+      clearTimeout(shutdownTimeout);
+      logger.info('Server shut down successfully');
+      process.exit(0);
+    } catch (error: any) {
+      logger.error('Error during shutdown:', error);
+      clearTimeout(shutdownTimeout);
+      process.exit(1);
+    }
+  };
+
+  // Process signal handlers
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  
+  // Enhanced error handling
+  process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception:', error);
+    gracefulShutdown('UNCAUGHT_EXCEPTION');
+  });
+  
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    gracefulShutdown('UNHANDLED_REJECTION');
+  });
+  
+  // Memory monitoring
+  const memoryMonitor = setInterval(() => {
+    const memUsage = process.memoryUsage();
+    const memUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+    
+    if (memUsedMB > 512) { // Alert if using more than 512MB
+      logger.warn(`High memory usage detected: ${memUsedMB}MB`);
+    }
+  }, 60000); // Check every minute
+  
+  // Cleanup on shutdown
+  process.on('exit', () => {
+    clearInterval(memoryMonitor);
+    logger.info('Process exiting');
   });
 
-  process.on('SIGINT', async () => {
-    logger.info('SIGINT received, shutting down gracefully');
-    await server.stop();
-    process.exit(0);
-  });
-
-  // Start the server
-  server.start().catch((error) => {
-    logger.error('Failed to start server', error);
+  // Start the server with retry logic
+  const startWithRetry = async (retries = 3) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        logger.info(`Starting server (attempt ${attempt}/${retries})`);
+        await server.start();
+        return; // Success
+      } catch (error: any) {
+        logger.error(`Server start attempt ${attempt} failed:`, error);
+        
+        if (attempt === retries) {
+          logger.error('All server start attempts failed, exiting');
+          process.exit(1);
+        }
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+      }
+    }
+  };
+  
+  startWithRetry().catch((error) => {
+    logger.error('Failed to start server after retries', error);
     process.exit(1);
   });
 }

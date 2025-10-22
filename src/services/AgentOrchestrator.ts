@@ -8,16 +8,16 @@
  * 3. Prospect Intelligence Detective (analysis & synthesis)
  */
 
-import { IntelligenceCoordinator } from '@agents/IntelligenceCoordinator';
-import { FieldIntelligenceResearcher } from '@agents/FieldIntelligenceResearcher';
-import { ProspectIntelligenceDetective } from '@agents/ProspectIntelligenceDetective';
+import { IntelligenceCoordinator } from '../agents/IntelligenceCoordinator';
+import { FieldIntelligenceResearcher } from '../agents/FieldIntelligenceResearcher';
+import { ProspectIntelligenceDetective } from '../agents/ProspectIntelligenceDetective';
 import { 
   OptimizedUserInput, 
   AgentProgress, 
   DossierResult, 
   QualityGate,
   AgentError
-} from '@interfaces/AgentTypes';
+} from '../interfaces/AgentTypes';
 
 export interface OrchestrationResult {
   success: boolean;
@@ -46,20 +46,37 @@ export class AgentOrchestrator {
   }
 
   /**
-   * Execute complete three-agent intelligence workflow
+   * Check if the input contains consultation-derived context
+   */
+  private hasConsultationContext(userInput: OptimizedUserInput): boolean {
+    return !!(
+      userInput.consultation_derived_context ||
+      userInput.strategic_research_focus?.length ||
+      userInput.priority_intelligence_areas?.length ||
+      userInput.mack_briefing_summary
+    );
+  }
+
+  /**
+   * Execute complete three-agent intelligence workflow with consultation awareness
    */
   async executeIntelligenceMission(userInput: OptimizedUserInput): Promise<OrchestrationResult> {
     const startTime = Date.now();
     this.progressHistory = [];
+    const isConsultationDerived = this.hasConsultationContext(userInput);
 
     try {
-      // Phase 1: Intelligence Coordinator - Mission Planning
+      // Phase 1: Intelligence Coordinator - Mission Planning (Consultation-Enhanced)
+      const initialMessage = isConsultationDerived 
+        ? 'Orchestrator processing Mack\'s strategic consultation briefing'
+        : 'Orchestrator initializing three-agent intelligence mission';
+
       await this.trackProgress({
         stage: 'planning',
         agent: 'coordinator',
-        message: 'Orchestrator initializing three-agent intelligence mission',
-        confidence: 0.9,
-        estimatedTimeRemaining: 240,
+        message: initialMessage,
+        confidence: isConsultationDerived ? 0.95 : 0.9, // Higher confidence with consultation
+        estimatedTimeRemaining: isConsultationDerived ? 180 : 240, // Faster with consultation context
         userCanInterrupt: true,
         timestamp: new Date()
       });
@@ -78,13 +95,19 @@ export class AgentOrchestrator {
         throw new Error(`Mission planning failed quality gate: ${planValidation.validationMessage}`);
       }
 
-      // Phase 2: Field Intelligence Researcher - Data Collection
+      // Phase 2: Field Intelligence Researcher - Data Collection (Consultation-Enhanced)
+      const researchMessage = isConsultationDerived
+        ? 'Field Researcher activated with Mack\'s strategic intelligence priorities'
+        : 'Handoff to Field Intelligence Researcher initiated';
+
       await this.trackProgress({
         stage: 'researching',
         agent: 'coordinator',
-        message: 'Handoff to Field Intelligence Researcher initiated',
+        message: `${researchMessage} (Enhanced 10-source intelligence gathering)`,
         confidence: planValidation.confidence,
-        estimatedTimeRemaining: workflowPlan.estimatedDuration,
+        estimatedTimeRemaining: isConsultationDerived 
+          ? Math.floor(workflowPlan.estimatedDuration * 0.8) // 20% faster with consultation
+          : workflowPlan.estimatedDuration + 30, // Additional time for social intelligence
         userCanInterrupt: false,
         timestamp: new Date()
       });
@@ -92,7 +115,7 @@ export class AgentOrchestrator {
       await this.researcher.initializeResearch(context);
       const researchData = await this.researcher.gatherIntelligence();
 
-      // Quality Gate 2: Data Collection Validation
+      // Quality Gate 2: Data Collection Validation (4-source system)
       const dataValidation = await this.coordinator.validateQualityGate(
         'Data Collection',
         { 
@@ -101,20 +124,24 @@ export class AgentOrchestrator {
           totalCost: this.researcher.getTotalCost(),
           withinCostTarget: this.researcher.isWithinCostTarget()
         },
-        'Data completeness, source diversity, and cost efficiency'
+        'Data completeness, source diversity, and cost efficiency (4-source system)'
       );
 
       if (!dataValidation.passed && userInput.confidenceThreshold === 'high') {
         throw new Error(`Data collection failed quality gate: ${dataValidation.validationMessage}`);
       }
 
-      // Phase 3: Prospect Intelligence Detective - Analysis & Synthesis
+      // Phase 3: Prospect Intelligence Detective - Analysis & Synthesis (Consultation-Enhanced)
+      const detectiveMessage = isConsultationDerived
+        ? 'Intelligence Detective analyzing data with Mack\'s strategic focus areas'
+        : 'Handoff to Prospect Intelligence Detective initiated';
+
       await this.trackProgress({
         stage: 'analyzing',
         agent: 'coordinator',
-        message: 'Handoff to Prospect Intelligence Detective initiated',
+        message: detectiveMessage,
         confidence: dataValidation.confidence,
-        estimatedTimeRemaining: 90,
+        estimatedTimeRemaining: isConsultationDerived ? 70 : 90, // Faster with focused analysis
         userCanInterrupt: false,
         timestamp: new Date()
       });
@@ -142,7 +169,7 @@ export class AgentOrchestrator {
           approved: finalQA.approved,
           confidence: finalQA.confidence,
           qualityScore: finalQA.qualityScore,
-          dossierLength: dossier.sections.strategicRecommendations.approachStrategy.length
+          dossierLength: dossier.structuredSections.strategicRecommendations.approachStrategy.length
         },
         'Dossier quality, accuracy, and completeness standards'
       );

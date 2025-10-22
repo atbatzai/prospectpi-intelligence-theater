@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
+    "dev:stable": "next dev --turbo --no-open",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -12,7 +13,8 @@
     "analyze": "ANALYZE=true npm run build",
     "analyze:server": "BUNDLE_ANALYZE=server npm run build",
     "analyze:browser": "BUNDLE_ANALYZE=browser npm run build",
-    "build:production": "NODE_ENV=production npm run build"
+    "build:production": "NODE_ENV=production npm run build",
+    "health": "curl -f http://localhost:3000 || echo 'Frontend not running'"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
