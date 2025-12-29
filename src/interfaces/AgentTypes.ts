@@ -23,8 +23,6 @@ export interface ProspectResearchInput {
   // CRITICAL: Company being researched
   companyName: string;                    // Required
   companyUrl?: string;                    // Optional
-  linkedinUrl?: string;                   // Optional - LinkedIn company page
-  linkedinUserUrl?: string;               // Optional - LinkedIn user/executive profile
   
   // CRITICAL: Solution Context - The vendor/product being sold
   vendorName: string;                     // Required - e.g. IBM, Microsoft, Dell, Adobe
@@ -148,7 +146,7 @@ export interface QualityGate {
 }
 
 export interface ResearchData {
-  source: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'newsdata' | 'reddit' | 'twitter' | 'github' | 'youtube' | 'discord';
+  source: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'shodan' | 'bmad-enhancement' | 'reddit' | 'twitter' | 'github' | 'youtube' | 'discord';
   data: any;
   confidence: number;
   timestamp: Date;

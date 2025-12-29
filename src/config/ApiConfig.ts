@@ -308,15 +308,6 @@ export class ApiConfig {
   static readonly GOOGLE_GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY!;
   static readonly PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY!;
   
-  // Phase 4: Social & Community Intelligence API Keys
-  static readonly REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID!;
-  static readonly REDDIT_CLIENT_SECRET = process.env.REDDIT_CLIENT_SECRET!;
-  static readonly TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN!;
-  static readonly GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-  static readonly YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY!;
-  static readonly NEWSDATA_API_KEY = process.env.NEWSDATA_API_KEY!;
-  static readonly DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
-  
   /**
    * Epic 2.5.1: TheirStack Integration for Technographic Intelligence
    */
@@ -325,6 +316,10 @@ export class ApiConfig {
   static readonly THEIRSTACK_JWT = process.env.THEIRSTACK_JWT!;
   static readonly MARKETAUX_TOKEN = process.env.MARKETAUX_TOKEN!;
   static readonly CORESIGNAL_MCP_AUTH = process.env.CORESIGNAL_MCP_AUTH!;
+  
+  // Infrastructure Intelligence APIs  
+  static readonly SHODAN_API_KEY = process.env.SHODAN_API_KEY!;
+  // Note: Clearbit removed (acquired by HubSpot)
 
   // Agent Configuration
   static readonly INTELLIGENCE_COORDINATOR_MODEL = process.env.INTELLIGENCE_COORDINATOR_MODEL || 'claude-3-5-sonnet-20241022';
@@ -355,14 +350,10 @@ export class ApiConfig {
   static readonly MARKETAUX_BASE_URL = 'https://api.marketaux.com/v1';
   static readonly CORESIGNAL_MCP_URL = 'https://mcp.coresignal.com/sse';
   
-  // Social & Community Intelligence Base URLs (Phase 4 Enhancement)
-  static readonly REDDIT_BASE_URL = 'https://oauth.reddit.com';
-  static readonly TWITTER_BASE_URL = 'https://api.twitter.com/2';
-  static readonly GITHUB_BASE_URL = 'https://api.github.com';
-  static readonly YOUTUBE_BASE_URL = 'https://www.googleapis.com/youtube/v3';
-  static readonly DISCORD_BASE_URL = 'https://discord.com/api/v10';
-  static readonly NEWSDATA_BASE_URL = 'https://newsdata.io/api/1';
-
+  // Infrastructure Intelligence Base URLs
+  static readonly SHODAN_BASE_URL = 'https://api.shodan.io';
+  static readonly CLEARBIT_BASE_URL = 'https://person-stream.clearbit.com';
+  
   // Rate Limiting
   static readonly RATE_LIMIT_REQUESTS_PER_MINUTE = 60;
   static readonly RATE_LIMIT_REQUESTS_PER_SECOND = 2;
@@ -371,6 +362,16 @@ export class ApiConfig {
   static readonly DEFAULT_TIMEOUT_MS = 30000;
   static readonly STANDARD_TIMEOUT_MS = 30000;
   static readonly LONG_TIMEOUT_MS = 120000;
+
+  // Social Media Intelligence APIs (Phase 4 - Future Implementation)
+  static readonly REDDIT_BASE_URL = 'https://www.reddit.com';
+  static readonly TWITTER_BASE_URL = 'https://api.twitter.com/2';
+  static readonly GITHUB_BASE_URL = 'https://api.github.com';
+  static readonly YOUTUBE_BASE_URL = 'https://www.googleapis.com/youtube/v3';
+  static readonly DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || '';
+  static readonly TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN || '';
+  static readonly GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+  static readonly YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 
   static validateConfiguration(): void {
     const requiredKeys = [
@@ -389,6 +390,41 @@ export class ApiConfig {
     if (missing.length > 0) {
       throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
     }
+  }
+
+  /**
+   * Clean Separation: Check if we have real API keys for data sources
+   */
+  static hasRealDataSourceAPIs(): boolean {
+    const dataSourceKeys = [
+      'THEIRSTACK_JWT',
+      'MARKETAUX_TOKEN', 
+      'CORESIGNAL_MCP_AUTH',
+      'SHODAN_API_KEY',
+      'CLEARBIT_API_KEY'
+    ];
+    
+    return dataSourceKeys.some(key => {
+      const value = process.env[key];
+      return value && value.length > 20 && !value.includes('demo') && !value.includes('test') && !value.includes('YOUR_');
+    });
+  }
+
+  /**
+   * Clean Separation: Check if we should use mock mode
+   */
+  static shouldUseMockMode(): boolean {
+    return process.env.FORCE_MOCK_MODE === 'true' ||
+           !this.hasRealDataSourceAPIs();
+  }
+
+  /**
+   * Clean Separation: Get system mode for logging
+   */
+  static getSystemMode(): 'production' | 'development' | 'mock' {
+    if (process.env.FORCE_MOCK_MODE === 'true') return 'mock';
+    if (!this.hasRealDataSourceAPIs()) return 'mock';
+    return process.env.NODE_ENV === 'production' ? 'production' : 'development';
   }
 }
 

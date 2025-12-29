@@ -13,7 +13,15 @@ interface AuthenticatedRequest extends Request {
 }
 
 const router = express.Router();
-const consultationService = new MackConsultationService();
+// Lazy initialization to avoid database access before initialization
+let consultationService: MackConsultationService | null = null;
+
+function getConsultationService(): MackConsultationService {
+  if (!consultationService) {
+    consultationService = new MackConsultationService();
+  }
+  return consultationService;
+}
 
 /**
  * MACK CONSULTATION AGENT API ROUTES
@@ -38,7 +46,7 @@ router.post('/start', authenticateJWT, async (req: AuthenticatedRequest, res: Re
     
     console.log(`🎭 Mack: Starting consultation for user ${user.email}`);
     
-    const session = await consultationService.startConsultation(
+    const session = await getConsultationService().startConsultation(
       user.userId, 
       user.organizationId
     );
@@ -88,7 +96,7 @@ router.post('/:sessionId/respond', authenticateJWT, async (req: AuthenticatedReq
     
     console.log(`🎭 Mack: Processing response for session ${sessionId}: "${user_input}"`);
     
-    const result = await consultationService.processUserResponse(sessionId, user_input);
+    const result = await getConsultationService().processUserResponse(sessionId, user_input);
     
     res.json({
       success: true,
@@ -118,7 +126,7 @@ router.get('/:sessionId/status', authenticateJWT, async (req: AuthenticatedReque
   try {
     const { sessionId } = req.params;
     
-    const session = await consultationService.getConsultationSession(sessionId);
+    const session = await getConsultationService().getConsultationSession(sessionId);
     
     if (!session) {
       res.status(404).json({
@@ -176,7 +184,7 @@ router.get('/:sessionId/research-plan', authenticateJWT, async (req: Authenticat
   try {
     const { sessionId } = req.params;
     
-    const session = await consultationService.getConsultationSession(sessionId);
+    const session = await getConsultationService().getConsultationSession(sessionId);
     
     if (!session) {
       res.status(404).json({
@@ -240,7 +248,7 @@ router.post('/:sessionId/execute', authenticateJWT, async (req: AuthenticatedReq
     const { sessionId } = req.params;
     const user = req.user!;
     
-    const session = await consultationService.getConsultationSession(sessionId);
+    const session = await getConsultationService().getConsultationSession(sessionId);
     
     if (!session) {
       res.status(404).json({
@@ -279,7 +287,7 @@ router.post('/:sessionId/execute', authenticateJWT, async (req: AuthenticatedReq
     
     // Convert consultation OptimizedUserInput to AgentTypes OptimizedUserInput
     const consultationInput = session.research_plan.optimized_user_input;
-    const agentSystemInput = consultationService.convertToAgentSystemInput(consultationInput);
+    const agentSystemInput = getConsultationService().convertToAgentSystemInput(consultationInput);
     
     // Execute intelligence mission with consultation-aware orchestrator
     const orchestrator = new AgentOrchestrator();

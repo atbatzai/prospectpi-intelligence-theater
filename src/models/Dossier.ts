@@ -337,11 +337,20 @@ export class DossierService {
     const whereConditions = ['user_id = ?'];
     const whereParams = [userId];
     
+    // Validate userId parameter
+    if (!userId || typeof userId !== 'string') {
+      console.error('❌ Invalid userId parameter:', userId);
+      throw new Error(`Invalid userId parameter: ${userId}`);
+    }
+    
     if (!includeArchived) {
       whereConditions.push('is_archived = false');
     }
     
     const whereClause = whereConditions.join(' AND ');
+    
+    console.log('🔍 SQL Debug - WHERE clause:', whereClause);
+    console.log('🔍 SQL Debug - Parameters:', whereParams);
 
     // Get total count
     const countResult = await this.dbManager.queryOne(`

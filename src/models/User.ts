@@ -40,6 +40,14 @@ export interface User {
   email_verification_token: string | null;
   password_reset_token: string | null;
   password_reset_expires: string | null;
+  // GDPR Compliance Fields
+  consent_marketing: boolean;
+  consent_analytics: boolean;
+  data_processing_consent: boolean;
+  gdpr_consent_date: string | null;
+  data_region: 'US' | 'EU' | 'UK' | 'CA' | null;
+  gdpr_export_requested_at: string | null;
+  gdpr_deletion_requested_at: string | null;
 }
 
 export interface Organization {
@@ -108,6 +116,11 @@ export interface CreateUserInput {
   first_name: string;
   last_name: string;
   organization_id?: string;
+  // GDPR Consent
+  consent_marketing?: boolean;
+  consent_analytics?: boolean;
+  data_processing_consent?: boolean;
+  data_region?: 'US' | 'EU' | 'UK' | 'CA';
 }
 
 export interface UpdateUserInput {
@@ -115,6 +128,40 @@ export interface UpdateUserInput {
   last_name?: string;
   email?: string;
   role?: string;
+  // GDPR Consent Management
+  consent_marketing?: boolean;
+  consent_analytics?: boolean;
+  data_processing_consent?: boolean;
+  data_region?: 'US' | 'EU' | 'UK' | 'CA';
+}
+
+// GDPR Data Export Interface
+export interface UserDataExport {
+  user_profile: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    created_at: string;
+    last_login: string | null;
+    data_region: string | null;
+  };
+  consent_records: {
+    marketing: boolean;
+    analytics: boolean;
+    data_processing: boolean;
+    consent_date: string | null;
+  };
+  activity_log: any[];
+  dossier_requests: any[];
+  api_usage: any[];
+}
+
+// GDPR Consent Update Interface
+export interface ConsentUpdateInput {
+  consent_marketing: boolean;
+  consent_analytics: boolean;
+  data_processing_consent: boolean;
 }
 
 export interface AuthResult {
@@ -160,21 +207,29 @@ export class UserService {
     // Set default subscription values for new users (7-day trial)
     const trialEndDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     
+    // GDPR defaults based on user region
+    const gdpr_consent_date = input.data_processing_consent ? now : null;
+    const data_region = input.data_region || 'US';
+    
     const user = await this.dbManager.queryOne(`
       INSERT INTO users (
         id, email, password_hash, first_name, last_name, 
         organization_id, department_id, organization_role, hire_date, manager_user_id,
         subscription_plan, subscription_status,
         trial_ends_at, dossiers_used_this_month, dossier_limit,
-        created_at, updated_at, email_verification_token, is_active, email_verified
+        created_at, updated_at, email_verification_token, is_active, email_verified,
+        consent_marketing, consent_analytics, data_processing_consent, 
+        gdpr_consent_date, data_region, gdpr_export_requested_at, gdpr_deletion_requested_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING *
     `, [
       id, input.email, password_hash, input.first_name, input.last_name,
       input.organization_id || null, null, 'member', null, null,
       'starter', 'trial', 
-      trialEndDate, 0, 3, now, now, emailVerificationToken, true, false
+      trialEndDate, 0, 3, now, now, emailVerificationToken, true, false,
+      input.consent_marketing || false, input.consent_analytics || false, 
+      input.data_processing_consent || true, gdpr_consent_date, data_region, null, null
     ]);
 
     if (!user) {
@@ -209,7 +264,15 @@ export class UserService {
         email_verified: false,
         email_verification_token: emailVerificationToken,
         password_reset_token: null,
-        password_reset_expires: null
+        password_reset_expires: null,
+        // GDPR Compliance Fields
+        consent_marketing: input.consent_marketing || false,
+        consent_analytics: input.consent_analytics || false,
+        data_processing_consent: input.data_processing_consent || true,
+        gdpr_consent_date: input.data_processing_consent ? now : null,
+        data_region: input.data_region || 'US',
+        gdpr_export_requested_at: null,
+        gdpr_deletion_requested_at: null
       };
     }
 
@@ -426,6 +489,112 @@ export class UserService {
       [new Date().toISOString()]
     );
     return result.changes || result.rowCount || 0;
+  }
+
+  // GDPR Compliance Methods
+  
+  async updateUserConsent(userId: string, consent: ConsentUpdateInput): Promise<void> {
+    const now = new Date().toISOString();
+    await this.dbManager.execute(`
+      UPDATE users 
+      SET consent_marketing = ?, consent_analytics = ?, data_processing_consent = ?,
+          gdpr_consent_date = ?, updated_at = ?
+      WHERE id = ?
+    `, [
+      consent.consent_marketing,
+      consent.consent_analytics, 
+      consent.data_processing_consent,
+      now,
+      now,
+      userId
+    ]);
+  }
+
+  async exportUserData(userId: string): Promise<UserDataExport> {
+    // Update export request timestamp
+    await this.dbManager.execute(
+      'UPDATE users SET gdpr_export_requested_at = ? WHERE id = ?',
+      [new Date().toISOString(), userId]
+    );
+
+    // Get user profile
+    const user = await this.getUserById(userId);
+    if (!user) throw new Error('User not found');
+
+    // Get audit logs
+    const { AuditService } = await import('../services/AuditService');
+    const auditService = new AuditService();
+    const activityLog = await auditService.getUserActivity(userId, 1000);
+
+    // Get dossier requests
+    const dossierRequests = await this.dbManager.query(`
+      SELECT request_id, company_name, status, created_at
+      FROM research_requests 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC
+    `, [userId]);
+
+    // Get API usage
+    const apiUsage = await this.dbManager.query(`
+      SELECT endpoint, method, status_code, created_at
+      FROM api_usage 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC 
+      LIMIT 1000
+    `, [userId]);
+
+    return {
+      user_profile: {
+        id: user.id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        created_at: user.created_at,
+        last_login: user.last_login,
+        data_region: user.data_region
+      },
+      consent_records: {
+        marketing: user.consent_marketing,
+        analytics: user.consent_analytics,
+        data_processing: user.data_processing_consent,
+        consent_date: user.gdpr_consent_date
+      },
+      activity_log: activityLog,
+      dossier_requests: dossierRequests || [],
+      api_usage: apiUsage || []
+    };
+  }
+
+  async requestAccountDeletion(userId: string): Promise<void> {
+    const now = new Date().toISOString();
+    await this.dbManager.execute(`
+      UPDATE users 
+      SET gdpr_deletion_requested_at = ?, is_active = false, updated_at = ?
+      WHERE id = ?
+    `, [now, now, userId]);
+  }
+
+  async deleteUserAccount(userId: string, force: boolean = false): Promise<void> {
+    const user = await this.getUserById(userId);
+    if (!user) throw new Error('User not found');
+
+    if (!force && !user.gdpr_deletion_requested_at) {
+      throw new Error('Account deletion must be requested first');
+    }
+
+    // Delete in order to maintain referential integrity
+    await this.dbManager.execute('DELETE FROM user_sessions WHERE user_id = ?', [userId]);
+    await this.dbManager.execute('DELETE FROM api_usage WHERE user_id = ?', [userId]);
+    await this.dbManager.execute('UPDATE research_requests SET user_id = NULL WHERE user_id = ?', [userId]);
+    await this.dbManager.execute('UPDATE dossiers SET user_id = NULL WHERE user_id = ?', [userId]);
+    await this.dbManager.execute('DELETE FROM audit_log WHERE user_id = ?', [userId]);
+    await this.dbManager.execute('DELETE FROM users WHERE id = ?', [userId]);
+  }
+
+  async setUserDataRegion(userId: string, region: 'US' | 'EU' | 'UK' | 'CA'): Promise<void> {
+    await this.dbManager.execute(`
+      UPDATE users SET data_region = ?, updated_at = ? WHERE id = ?
+    `, [region, new Date().toISOString(), userId]);
   }
 }
 

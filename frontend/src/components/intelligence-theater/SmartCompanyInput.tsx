@@ -25,26 +25,39 @@ if (typeof window !== 'undefined') {
   };
 }
 
-// ProspectPI Research Input Interface - matches Lovable prompt specification
+// ProspectPI Research Input Interface - Enhanced for Solution-Relevance
 interface ProspectResearchInput {
+  // CRITICAL: Company being researched
   companyName: string;                    // Required
   companyUrl?: string;                    // Optional
   linkedinUrl?: string;                   // Optional - LinkedIn company page
   linkedinUserUrl?: string;               // Optional - LinkedIn user/executive profile
+  
+  // CRITICAL: Solution Context - The vendor/product being sold
+  vendorName: string;                     // Required - e.g. IBM, Microsoft, Dell, Adobe
+  productName: string;                    // Required - e.g. Apptio, Microsoft365, PowerEdge, PageMaker
+  productCategory?: string;               // Optional - e.g. Cloud Platform, ERP, Security, Analytics
+  
+  // CRITICAL: Industry & Pain Point Context
+  industry: string;                       // Required - target company's industry
+  primaryPainPoint: string;               // Required - specific challenge/focus area
+  secondaryPainPoints?: string[];         // Optional - additional challenges
+  
+  // Enhanced Context Fields
   crmNotes?: string;                      // Optional - max 1000 chars
   organizationFocus?: string;             // Optional
   locationOfInterest?: string;            // Optional
   contextLinks?: string[];                // Optional - array of URLs
   additionalContext?: string;             // Optional - max 2000 chars
-  // Solution-focused fields (restored)
-  vendorName?: string;                    // Optional - your company
-  productName?: string;                   // Optional - your product
-  industry?: string;                      // Optional - target industry
-  primaryPainPoint?: string;              // Optional - main challenge
+  
+  // Solution-Relevance Flags
+  competitorAnalysis?: boolean;           // Include competitor intelligence
+  budgetIntelligence?: boolean;           // Research spending patterns
+  technologyStackFocus?: boolean;         // Deep-dive on current tech stack
+  
+  // UI-specific fields
   priority?: 'standard' | 'express';     // Optional - analysis speed
   outputFormat?: 'full' | 'executive' | 'custom'; // Optional - report format
-  competitorAnalysis?: boolean;           // Optional - include competitors
-  budgetIntelligence?: boolean;          // Optional - budget analysis
 }
 
 interface CompanyInputFormProps {
@@ -113,6 +126,7 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
   const [outputFormat, setOutputFormat] = useState<'full' | 'executive' | 'custom'>('full');
   const [competitorAnalysis, setCompetitorAnalysis] = useState(false);
   const [budgetIntelligence, setBudgetIntelligence] = useState(false);
+  const [technologyStackFocus, setTechnologyStackFocus] = useState(false);
 
   // UI state
   const [showCompanyLogo, setShowCompanyLogo] = useState(false);
@@ -153,12 +167,22 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
   };
   const finalDeviceCapabilities = deviceCapabilities || defaultDeviceCapabilities;
 
-  // Sample companies for autocomplete
+  // Sample companies for autocomplete - Epic 2.1.1 Magic Entry Interface
   const sampleCompanies = [
-    'Snowflake', 'Databricks', 'MongoDB', 'Atlassian', 'ServiceNow', 
+    'Netflix', 'Snowflake', 'Databricks', 'MongoDB', 'Atlassian', 'ServiceNow', 
     'Stripe', 'Figma', 'Notion', 'Airtable', 'Microsoft', 'Apple', 'Tesla',
-    'TechCorp', 'TechSolutions', 'TechInnovate'
+    'Zoom', 'Slack', 'HubSpot', 'Salesforce', 'Adobe', 'Oracle'
   ];
+
+  // Epic 2.1.1: "Try Netflix" demo data for instant value demonstration
+  const netflixDemoData = {
+    companyName: 'Netflix',
+    vendorName: 'Microsoft',
+    productName: 'Teams Premium',
+    industry: 'Entertainment & Media',
+    primaryPainPoint: 'Remote collaboration inefficiencies across global content teams',
+    additionalContext: 'Demo: Analyzing Netflix for Microsoft Teams Premium sales opportunity'
+  };
 
   // Solution context data (restored)
   const popularVendors = ['IBM', 'Microsoft', 'Dell', 'Adobe', 'Oracle', 'Salesforce', 'SAP'];
@@ -246,11 +270,59 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
     setContextLinks(updated);
   };
 
+  // Epic 2.1.1: "Try Netflix" demo - instant value demonstration
+  const tryNetflixDemo = () => {
+    console.log('🎭 Magic Entry Interface: Try Netflix demo activated');
+    
+    // Auto-populate form with Netflix demo data
+    setCompanyName(netflixDemoData.companyName);
+    setVendorName(netflixDemoData.vendorName);
+    setProductName(netflixDemoData.productName);
+    setIndustry(netflixDemoData.industry);
+    setPrimaryPainPoint(netflixDemoData.primaryPainPoint);
+    setAdditionalContext(netflixDemoData.additionalContext);
+    
+    // Trigger generation immediately for <2 second intelligence theater start
+    setTimeout(() => {
+      handleSubmit(netflixDemoData);
+    }, 500); // 500ms delay for UI feedback
+  };
+
+  // Epic 2.1.1: Smart autocomplete with <300ms response time
+  const getAutocompleteMatches = (input: string) => {
+    if (input.length < 2) return [];
+    return sampleCompanies
+      .filter(company => company.toLowerCase().includes(input.toLowerCase()))
+      .slice(0, 5); // Limit for performance
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate required company name
     if (!companyName.trim()) {
+      return;
+    }
+
+    // Validation for required fields
+    if (!companyName.trim()) {
+      alert('Company name is required');
+      return;
+    }
+    if (!vendorName.trim()) {
+      alert('Vendor name is required');
+      return;
+    }
+    if (!productName.trim()) {
+      alert('Product name is required');
+      return;
+    }
+    if (!industry) {
+      alert('Industry is required');
+      return;
+    }
+    if (!primaryPainPoint.trim()) {
+      alert('Primary pain point is required');
       return;
     }
 
@@ -267,27 +339,28 @@ export const SmartCompanyInput: React.FC<CompanyInputFormProps> = ({
       locationOfInterest: locationOfInterest.trim() || undefined,
       contextLinks: validContextLinks.length > 0 ? validContextLinks : undefined,
       additionalContext: additionalContext.trim() || undefined,
-      // Solution-focused fields (restored)
-      vendorName: vendorName.trim() || undefined,
-      productName: productName.trim() || undefined,
-      industry: industry || undefined,
-      primaryPainPoint: primaryPainPoint.trim() || undefined,
+      // Required solution-focused fields
+      vendorName: vendorName.trim(),
+      productName: productName.trim(),
+      industry: industry,
+      primaryPainPoint: primaryPainPoint.trim(),
       priority,
       outputFormat,
       competitorAnalysis,
       budgetIntelligence,
+      technologyStackFocus,
     };
 
     // Legacy test compatibility - match expected test structure
     const testCompatibleData = {
       companyName: companyName.trim(),
-      vendorName: vendorName.trim() || undefined,
-      productName: productName.trim() || undefined,
-      industry: industry || undefined,
-      primaryPainPoint: primaryPainPoint.trim() || undefined,
+      vendorName: vendorName.trim(),
+      productName: productName.trim(),
+      industry: industry,
+      primaryPainPoint: primaryPainPoint.trim(),
       competitorAnalysis,
       budgetIntelligence,
-      technologyStackFocus: false, // Expected by test
+      technologyStackFocus, // Expected by test
       priority,
       outputFormat,
       confidenceThreshold: 'medium', // Expected by test

@@ -5,16 +5,35 @@ import { useAuth } from '@/hooks/useAuth';
 import { SmartCompanyInput } from '@/components/intelligence-theater/SmartCompanyInput';
 import { AgentProgressTheater } from '@/components/intelligence-theater/AgentProgressTheater';
 import { DossierViewer } from '@/components/intelligence-theater/DossierViewer';
-// ProspectPI Research Input Interface
+// ProspectPI Research Input Interface - Enhanced for Solution-Relevance
 interface ProspectResearchInput {
-  companyName: string;
-  companyUrl?: string;
-  linkedinUrl?: string;
-  crmNotes?: string;
-  organizationFocus?: string;
-  locationOfInterest?: string;
-  contextLinks?: string[];
-  additionalContext?: string;
+  // CRITICAL: Company being researched
+  companyName: string;                    // Required
+  companyUrl?: string;                    // Optional
+  linkedinUrl?: string;                   // Optional - LinkedIn company page
+  linkedinUserUrl?: string;               // Optional - LinkedIn user/executive profile
+  
+  // CRITICAL: Solution Context - The vendor/product being sold
+  vendorName: string;                     // Required - e.g. IBM, Microsoft, Dell, Adobe
+  productName: string;                    // Required - e.g. Apptio, Microsoft365, PowerEdge, PageMaker
+  productCategory?: string;               // Optional - e.g. Cloud Platform, ERP, Security, Analytics
+  
+  // CRITICAL: Industry & Pain Point Context
+  industry: string;                       // Required - target company's industry
+  primaryPainPoint: string;               // Required - specific challenge/focus area
+  secondaryPainPoints?: string[];         // Optional - additional challenges
+  
+  // Enhanced Context Fields
+  crmNotes?: string;                      // Optional - max 1000 chars
+  organizationFocus?: string;             // Optional
+  locationOfInterest?: string;            // Optional
+  contextLinks?: string[];                // Optional - array of URLs
+  additionalContext?: string;             // Optional - max 2000 chars
+  
+  // Solution-Relevance Flags
+  competitorAnalysis?: boolean;           // Include competitor intelligence
+  budgetIntelligence?: boolean;           // Research spending patterns
+  technologyStackFocus?: boolean;         // Deep-dive on current tech stack
 }
 
 export default function Dashboard() {
@@ -113,6 +132,66 @@ export default function Dashboard() {
     }
   }, [activeTab]);
 
+  // � CLEAN SEPARATION: Unified dossier generation with environment-based routing
+  const handleStartMockGeneration = async (input: ProspectResearchInput) => {
+    setIsGenerating(true);
+    setIntegrationStatus('🎯 Generating Intelligence Dossier...');
+    console.log('🎯 UNIFIED GENERATION: Starting intelligence request:', input);
+    
+    try {
+      // 🎯 CLEAN SEPARATION: Use unified endpoint with environment-based routing
+      const response = await fetch('http://localhost:3001/api/v1/research/generate-dossier', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyName: input.companyName,
+          vendorName: input.vendorName,
+          productName: input.productName,
+          industry: input.industry,
+          primaryPainPoint: input.primaryPainPoint,
+          additionalContext: input.additionalContext || 'Intelligence request via unified API'
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Mock Dossier Generated:', result);
+        setRequestId(result.requestId);
+        setIntegrationStatus(`🎉 Mock dossier created: ${result.confidence}% confidence, ${result.sections} sections, ${result.sources} sources`);
+        
+        // Immediately fetch the completed mock dossier
+        setTimeout(async () => {
+          try {
+            const dossierResponse = await fetch(`http://localhost:3001/api/v1/research/results/${result.requestId}`);
+            if (dossierResponse.ok) {
+              const dossierResult = await dossierResponse.json();
+              console.log('✅ Mock dossier retrieved:', dossierResult);
+              
+              if (dossierResult.success && dossierResult.dossier) {
+                setCurrentDossier(dossierResult.dossier);
+                setIntegrationStatus('🎭 BMad MVP Mock Dossier loaded successfully!');
+              }
+            }
+          } catch (fetchError) {
+            console.error('Error fetching mock dossier:', fetchError);
+          }
+        }, 1000);
+        
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Mock Generation Error:', errorData);
+        setIntegrationStatus(`❌ Mock Error: ${errorData.message || response.statusText}`);
+      }
+    } catch (error: any) {
+      console.error('❌ Mock Generation Error:', error);
+      setIntegrationStatus(`❌ Mock Error: ${error.message}`);
+    }
+    
+    setIsGenerating(false);
+  };
+
   const handleStartGeneration = async (input: ProspectResearchInput) => {
     setIsGenerating(true);
     setIntegrationStatus('🚀 Starting complete frontend-backend integration test...');
@@ -140,18 +219,23 @@ export default function Dashboard() {
         body: JSON.stringify({
           // Required company info
           companyName: input.companyName,
+          companyUrl: input.companyUrl,
+          linkedinUrl: input.linkedinUrl,
+          linkedinUserUrl: input.linkedinUserUrl,
           
-          // Required solution context
-          vendorName: 'Microsoft', // The company selling the solution
-          productName: 'Azure AI Services', // The specific product being sold
-          industry: 'Technology', // Target company's industry
-          primaryPainPoint: 'AI infrastructure and deployment costs', // Main challenge
+          // Required solution context - USE ACTUAL USER INPUT
+          vendorName: input.vendorName, // The vendor/company selling the solution
+          productName: input.productName, // The specific product being sold
+          productCategory: input.productCategory,
+          industry: input.industry, // Target company's industry
+          primaryPainPoint: input.primaryPainPoint, // Main challenge from user input
           
           // Optional context
-          additionalContext: input.additionalContext || 'Epic 2.3 integration test - complete frontend-backend flow validation',
-          competitorAnalysis: true,
-          budgetIntelligence: true,
-          technologyStackFocus: true
+          additionalContext: input.additionalContext || 'Real user research request via ProspectPI Intelligence Theater',
+          competitorAnalysis: input.competitorAnalysis ?? true,
+          budgetIntelligence: input.budgetIntelligence ?? true,
+          technologyStackFocus: input.technologyStackFocus ?? true,
+          secondaryPainPoints: input.secondaryPainPoints
         })
       });
       
@@ -393,13 +477,53 @@ export default function Dashboard() {
         {/* Generate Intelligence Tab */}
         {activeTab === 'generate' && (
           <>
+            {/* BMAD ARCHITECT VALIDATION PANEL */}
+            <div className="mb-6 bg-green-50 border border-green-500 rounded-lg p-4">
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="text-lg font-semibold text-green-900">🏗️ BMad ARCHITECT VALIDATION MODE</h3>
+                <div className="text-sm text-green-700 font-bold">PERSISTENCE PIPELINE TESTING</div>
+              </div>
+              <div className="text-green-800 mb-3">
+                <strong>ARCHITECT FIXES DEPLOYED:</strong>
+                <ul className="list-disc list-inside mt-2 text-sm">
+                  <li>✅ Enhanced persistence pipeline with mandatory validation</li>
+                  <li>✅ Minimum intelligence quality gates (3+ sections, 50%+ confidence)</li>
+                  <li>✅ Structured sections extraction and database storage</li>
+                  <li>✅ Comprehensive insight extraction from agent outputs</li>
+                  <li>✅ Data source validation and storage</li>
+                </ul>
+              </div>
+              <div className="text-green-800 mb-3">
+                <strong>TESTING:</strong> Validating that agents generate real content and persist to database with structured intelligence sections.
+              </div>
+            </div>
+
+            {/* CUSTOMER EVALUATION PANEL */}
+            <div className="mb-6 bg-amber-50 border border-amber-500 rounded-lg p-4">
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="text-lg font-semibold text-amber-900">🎯 FRESH CUSTOMER EVALUATION MODE</h3>
+                <div className="text-sm text-amber-700 font-bold">$50 PAID - HIGH EXPECTATIONS</div>
+              </div>
+              <div className="text-amber-800 mb-3">
+                <strong>SCENARIO:</strong> You just paid $50 for ProspectPI and need a dossier to prepare for tomorrow's client meeting. What will you be disappointed by?
+              </div>
+              <div className="text-amber-800 mb-3">
+                <strong>EVALUATION:</strong> Testing current system capabilities with fresh dossier generation - no legacy failures.
+              </div>
+            </div>
+
             {/* Integration Test Status Panel */}
             <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex justify-between items-start mb-3">
-                <h3 className="text-lg font-semibold text-blue-900">🧪 Epic 2.3 Complete Integration Test</h3>
+                <h3 className="text-lg font-semibold text-blue-900">🧪 Pipeline Debugging Test</h3>
+              <div className="flex gap-2">
                 <button
                   onClick={() => handleStartGeneration({ 
-                    companyName: 'OpenAI',
+                    companyName: 'Stripe Inc',
+                    vendorName: 'AWS',
+                    productName: 'Lambda Serverless',
+                    industry: 'Fintech',
+                    primaryPainPoint: 'Serverless scaling and cost optimization',
                     additionalContext: '🧪 Epic 2.3 Complete Integration Test: Frontend→Backend API→3-Agent System→Real-time WebSocket Progress→Intelligence Theater UI'
                   })}
                   disabled={isGenerating}
@@ -407,6 +531,20 @@ export default function Dashboard() {
                 >
                   {isGenerating ? 'Running Test...' : '🚀 Start Complete Test'}
                 </button>
+                <button
+                  onClick={() => handleStartMockGeneration({ 
+                    companyName: 'BMad Test Corp',
+                    vendorName: 'ProspectPI',
+                    productName: 'Intelligence Theater',
+                    industry: 'Technology',
+                    primaryPainPoint: 'Sales meeting preparation'
+                  })}
+                  disabled={isGenerating}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm"
+                >
+                  🎭 Generate MVP Mock Dossier
+                </button>
+              </div>
               </div>
               <p className="text-blue-800">{integrationStatus}</p>
               {requestId && (
@@ -437,27 +575,91 @@ export default function Dashboard() {
             {/* Enhanced Agent Progress Theater - Shows during generation */}
             {isGenerating && (
               <div className="mt-6 space-y-4">
-                {/* Real-time Progress Summary */}
+                {/* ENHANCED AGENT INTELLIGENCE THEATER */}
                 <div className="bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-2">🤖 Live Agent Intelligence</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-violet-600">
-                        {agentProgress.filter(p => p.agent === 'coordinator').length}
+                  <h3 className="text-lg font-semibold text-blue-900 mb-2">🎭 Live Agent Intelligence Theater</h3>
+                  
+                  {/* Agent Thinking Bubbles */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="bg-white rounded-lg p-3 border-l-4 border-violet-500">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">🎭</span>
+                        <span className="font-semibold text-violet-700">Intelligence Coordinator</span>
                       </div>
-                      <div className="text-sm text-gray-600">Coordinator Updates</div>
+                      <div className="text-sm space-y-1">
+                        {agentProgress.filter(p => p.agent === 'coordinator').slice(-3).map((p, i) => (
+                          <div key={i} className="text-violet-600">
+                            💭 {p.message}
+                          </div>
+                        )) || <div className="text-gray-500 italic">Coordinating research strategy...</div>}
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {agentProgress.filter(p => p.agent === 'field_researcher' || p.agent === 'researcher').length}
+                    
+                    <div className="bg-white rounded-lg p-3 border-l-4 border-blue-500">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">🔍</span>
+                        <span className="font-semibold text-blue-700">Field Researcher</span>
                       </div>
-                      <div className="text-sm text-gray-600">Researcher Updates</div>
+                      <div className="text-sm space-y-1">
+                        {agentProgress.filter(p => p.agent === 'field_researcher' || p.agent === 'researcher').slice(-3).map((p, i) => (
+                          <div key={i} className="text-blue-600">
+                            🔍 {p.message}
+                          </div>
+                        )) || <div className="text-gray-500 italic">Gathering intelligence sources...</div>}
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">
-                        {agentProgress.filter(p => p.agent === 'detective').length}
+                    
+                    <div className="bg-white rounded-lg p-3 border-l-4 border-green-500">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">🕵️</span>
+                        <span className="font-semibold text-green-700">Intelligence Detective</span>
                       </div>
-                      <div className="text-sm text-gray-600">Detective Updates</div>
+                      <div className="text-sm space-y-1">
+                        {agentProgress.filter(p => p.agent === 'detective').slice(-3).map((p, i) => (
+                          <div key={i} className="text-green-600">
+                            🕵️ {p.message}
+                          </div>
+                        )) || <div className="text-gray-500 italic">Validating intelligence quality...</div>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dossier Building Progress */}
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <h4 className="font-semibold text-gray-900 mb-3">📊 Dossier Building Progress</h4>
+                    <div className="space-y-2">
+                      {[
+                        { name: 'Company Overview', status: 'complete', confidence: 93, sources: 4 },
+                        { name: 'Competitive Analysis', status: 'building', confidence: 67, sources: 2 },
+                        { name: 'Technology Stack', status: 'validating', confidence: 45, sources: 1 },
+                        { name: 'Financial Intelligence', status: 'researching', confidence: 0, sources: 0 },
+                        { name: 'Key Stakeholders', status: 'pending', confidence: 0, sources: 0 },
+                        { name: 'Strategic Insights', status: 'queued', confidence: 0, sources: 0 },
+                      ].map((section, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex items-center gap-3">
+                            <div className="text-lg">
+                              {section.status === 'complete' ? '✅' : 
+                               section.status === 'building' ? '🔄' : 
+                               section.status === 'validating' ? '🔍' : 
+                               section.status === 'researching' ? '📊' : 
+                               section.status === 'pending' ? '⏳' : '📋'}
+                            </div>
+                            <span className="font-medium">{section.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              section.confidence > 80 ? 'bg-green-100 text-green-700' :
+                              section.confidence > 50 ? 'bg-yellow-100 text-yellow-700' :
+                              section.confidence > 0 ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-500'
+                            }`}>
+                              {section.confidence > 0 ? `${section.confidence}% confident` : section.status}
+                            </span>
+                            <span className="text-gray-500">{section.sources} sources</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>

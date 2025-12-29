@@ -114,12 +114,27 @@ export class MessageBroker {
       // Extract agent progress data if applicable
       const agentData = message.type === 'agent_progress' ? message.data as AgentProgress : null;
       
+      // Convert estimatedTimeRemaining to a simple integer value
+      let estimatedTime = null;
+      if (agentData?.estimatedTimeRemaining !== undefined && agentData?.estimatedTimeRemaining !== null) {
+        if (typeof agentData.estimatedTimeRemaining === 'number') {
+          estimatedTime = agentData.estimatedTimeRemaining;
+        } else if (typeof agentData.estimatedTimeRemaining === 'object' && 
+                   agentData.estimatedTimeRemaining !== null &&
+                   'totalSeconds' in agentData.estimatedTimeRemaining) {
+          estimatedTime = (agentData.estimatedTimeRemaining as any).totalSeconds;
+        } else if (typeof agentData.estimatedTimeRemaining === 'string') {
+          const parsed = parseInt(agentData.estimatedTimeRemaining);
+          estimatedTime = isNaN(parsed) ? null : parsed;
+        }
+      }
+
       await db.run(`
         INSERT INTO websocket_messages (
           request_id, message_type, agent, stage, message_content,
           confidence, estimated_time_remaining, data_sources_active,
           insights_discovered, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
         [
           message.requestId,
           message.type,
@@ -127,7 +142,7 @@ export class MessageBroker {
           agentData?.stage || null,
           agentData?.message || JSON.stringify(message.data),
           agentData?.confidence || null,
-          agentData?.estimatedTimeRemaining || null,
+          estimatedTime,
           agentData?.dataSourcesActive ? JSON.stringify(agentData.dataSourcesActive) : null,
           agentData?.insightsDiscovered || null,
           new Date().toISOString()

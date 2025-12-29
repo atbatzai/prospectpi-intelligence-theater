@@ -58,6 +58,29 @@ export class DatabaseManager {
   private loadConfig(): DatabaseConfig {
     // Check environment for PostgreSQL connection
     if (process.env.DATABASE_URL || process.env.PGHOST) {
+      // Parse DATABASE_URL if provided (e.g., postgresql://user:password@host:port/database)
+      if (process.env.DATABASE_URL) {
+        try {
+          const url = new URL(process.env.DATABASE_URL);
+          return {
+            type: 'postgresql',
+            postgresql: {
+              host: url.hostname,
+              port: parseInt(url.port) || 5432,
+              database: url.pathname.slice(1), // Remove leading slash
+              username: url.username,
+              password: url.password,
+              ssl: process.env.NODE_ENV === 'production',
+              max: 20 // Connection pool size
+            }
+          };
+        } catch (error) {
+          console.error('Invalid DATABASE_URL format:', error);
+          // Fallback to individual environment variables
+        }
+      }
+
+      // Use individual environment variables as fallback
       return {
         type: 'postgresql',
         postgresql: {
@@ -177,6 +200,21 @@ export class DatabaseManager {
         )
       `);
 
+      // PHASE 1: Department table (must come before users table)
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS departments (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+          name VARCHAR(100) NOT NULL,
+          description TEXT,
+          head_user_id UUID, -- Will add foreign key constraint later
+          budget_allocated DECIMAL(10,2) DEFAULT 0,
+          settings JSONB DEFAULT '{}',
+          created_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(organization_id, name)
+        )
+      `);
+
       // Users table with enhanced fields and SaaS subscription management
       await client.query(`
         CREATE TABLE IF NOT EXISTS users (
@@ -191,7 +229,7 @@ export class DatabaseManager {
           department_id UUID REFERENCES departments(id) ON DELETE SET NULL,
           organization_role VARCHAR(50) DEFAULT 'member',
           hire_date DATE,
-          manager_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+          manager_user_id UUID, -- Will add foreign key constraint later
           -- SaaS Subscription Fields
           subscription_plan VARCHAR(50) DEFAULT 'starter',
           subscription_status VARCHAR(50) DEFAULT 'trial',
@@ -210,7 +248,15 @@ export class DatabaseManager {
           email_verified BOOLEAN DEFAULT false,
           email_verification_token VARCHAR(255),
           password_reset_token VARCHAR(255),
-          password_reset_expires TIMESTAMP
+          password_reset_expires TIMESTAMP,
+          -- GDPR Compliance Fields
+          consent_marketing BOOLEAN DEFAULT false,
+          consent_analytics BOOLEAN DEFAULT false,
+          data_processing_consent BOOLEAN DEFAULT true,
+          gdpr_consent_date TIMESTAMP,
+          data_region VARCHAR(10) DEFAULT 'US',
+          gdpr_export_requested_at TIMESTAMP,
+          gdpr_deletion_requested_at TIMESTAMP
         )
       `);
 
@@ -364,19 +410,7 @@ export class DatabaseManager {
         )
       `);
 
-      // PHASE 1: Department and Team Management (PostgreSQL)
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS departments (
-          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-          organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-          name VARCHAR(100) NOT NULL,
-          description TEXT,
-          manager_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-          created_at TIMESTAMP DEFAULT NOW(),
-          UNIQUE(organization_id, name)
-        )
-      `);
-
+      // PHASE 1: Team Management (PostgreSQL) - departments already created above
       await client.query(`
         CREATE TABLE IF NOT EXISTS teams (
           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -384,8 +418,11 @@ export class DatabaseManager {
           department_id UUID REFERENCES departments(id) ON DELETE SET NULL,
           name VARCHAR(100) NOT NULL,
           description TEXT,
-          team_lead_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+          lead_user_id UUID, -- Will add foreign key constraint later
+          max_members INTEGER DEFAULT 10,
           team_type VARCHAR(20) NOT NULL DEFAULT 'custom' CHECK (team_type IN ('sales', 'marketing', 'research', 'executive', 'custom')),
+          status VARCHAR(20) DEFAULT 'active',
+          settings JSONB DEFAULT '{}',
           created_at TIMESTAMP DEFAULT NOW(),
           UNIQUE(organization_id, name)
         )
@@ -435,7 +472,7 @@ export class DatabaseManager {
           agent VARCHAR(50),
           stage VARCHAR(50),
           message_content TEXT NOT NULL,
-          confidence INTEGER,
+          confidence DECIMAL(3,2),
           estimated_time_remaining INTEGER,
           data_sources_active JSON,
           insights_discovered INTEGER,
@@ -443,6 +480,17 @@ export class DatabaseManager {
           delivered_at TIMESTAMP
         )
       `);
+
+      // Migration: Fix confidence column type to support decimal values
+      try {
+        await client.query(`
+          ALTER TABLE websocket_messages 
+          ALTER COLUMN confidence TYPE DECIMAL(3,2)
+        `);
+      } catch (error: any) {
+        // This might fail if the column is already the correct type or if there's data
+        console.log('Note: Confidence column migration skipped (table may already be correct)');
+      }
 
       // System performance monitoring
       await client.query(`
@@ -634,7 +682,15 @@ export class DatabaseManager {
         email_verified BOOLEAN DEFAULT 0,
         email_verification_token TEXT,
         password_reset_token TEXT,
-        password_reset_expires DATETIME
+        password_reset_expires DATETIME,
+        -- GDPR Compliance Fields
+        consent_marketing BOOLEAN DEFAULT 0,
+        consent_analytics BOOLEAN DEFAULT 0,
+        data_processing_consent BOOLEAN DEFAULT 1,
+        gdpr_consent_date DATETIME,
+        data_region TEXT DEFAULT 'US',
+        gdpr_export_requested_at DATETIME,
+        gdpr_deletion_requested_at DATETIME
       )
     `);
 
@@ -816,7 +872,7 @@ export class DatabaseManager {
         agent TEXT,
         stage TEXT,
         message_content TEXT NOT NULL,
-        confidence INTEGER,
+        confidence REAL,
         estimated_time_remaining INTEGER,
         data_sources_active TEXT,
         insights_discovered INTEGER,
@@ -957,7 +1013,13 @@ export class DatabaseManager {
       if (!this.pgPool) throw new Error('PostgreSQL not connected');
       const client = await this.pgPool.connect();
       try {
-        const result = await client.query(sql, params);
+        // Convert ? placeholders to $1, $2, etc. for PostgreSQL
+        let convertedSql = sql;
+        for (let i = 0; i < params.length; i++) {
+          convertedSql = convertedSql.replace('?', `$${i + 1}`);
+        }
+        
+        const result = await client.query(convertedSql, params);
         return result.rows;
       } finally {
         client.release();
@@ -978,7 +1040,13 @@ export class DatabaseManager {
       if (!this.pgPool) throw new Error('PostgreSQL not connected');
       const client = await this.pgPool.connect();
       try {
-        const result = await client.query(sql, params);
+        // Convert ? placeholders to $1, $2, etc. for PostgreSQL
+        let convertedSql = sql;
+        for (let i = 0; i < params.length; i++) {
+          convertedSql = convertedSql.replace('?', `$${i + 1}`);
+        }
+        
+        const result = await client.query(convertedSql, params);
         return result.rows[0] || null;
       } finally {
         client.release();
@@ -999,7 +1067,13 @@ export class DatabaseManager {
       if (!this.pgPool) throw new Error('PostgreSQL not connected');
       const client = await this.pgPool.connect();
       try {
-        const result = await client.query(sql, params);
+        // Convert ? placeholders to $1, $2, etc. for PostgreSQL
+        let convertedSql = sql;
+        for (let i = 0; i < params.length; i++) {
+          convertedSql = convertedSql.replace('?', `$${i + 1}`);
+        }
+        
+        const result = await client.query(convertedSql, params);
         return result;
       } finally {
         client.release();

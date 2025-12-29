@@ -51,15 +51,15 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
   const [renderCount, setRenderCount] = useState(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState(Date.now());
   
-  // Enhanced progress simulation for better UX feedback
+  // Enhanced progress simulation for better UX feedback - Epic 2.1.3
   const [detailedStages, setDetailedStages] = useState<AgentStage[]>([
-    { id: 'planning', name: '🎯 Mission Planning', progress: 0, status: 'pending', estimatedDuration: 30 },
-    { id: 'theirstack', name: '🔧 TheirStack Analysis', progress: 0, status: 'pending', estimatedDuration: 45 },
-    { id: 'marketaux', name: '📊 MarketAux Intelligence', progress: 0, status: 'pending', estimatedDuration: 35 },
-    { id: 'coresignal', name: '🌐 Coresignal Networks', progress: 0, status: 'pending', estimatedDuration: 40 },
-    { id: 'perplexity', name: '🔍 Perplexity Research', progress: 0, status: 'pending', estimatedDuration: 25 },
-    { id: 'analysis', name: '🧩 Intelligence Analysis', progress: 0, status: 'pending', estimatedDuration: 60 },
-    { id: 'synthesis', name: '📋 Dossier Synthesis', progress: 0, status: 'pending', estimatedDuration: 45 }
+    { id: 'planning', name: '🕵️ Detective Planning Mission', progress: 0, status: 'pending', estimatedDuration: 30 },
+    { id: 'theirstack', name: '🔍 Investigating Technology Stack', progress: 0, status: 'pending', estimatedDuration: 45 },
+    { id: 'marketaux', name: '💼 Gathering Financial Intelligence', progress: 0, status: 'pending', estimatedDuration: 35 },
+    { id: 'coresignal', name: '🌐 Analyzing Professional Networks', progress: 0, status: 'pending', estimatedDuration: 40 },
+    { id: 'perplexity', name: '📰 Real-time News Research', progress: 0, status: 'pending', estimatedDuration: 25 },
+    { id: 'analysis', name: '🧠 Cross-referencing Evidence', progress: 0, status: 'pending', estimatedDuration: 60 },
+    { id: 'synthesis', name: '📋 Compiling Intelligence Report', progress: 0, status: 'pending', estimatedDuration: 45 }
   ]);
   
   const [missionStarted, setMissionStarted] = useState(false);
@@ -258,6 +258,23 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
           <div 
             className={`flex items-center justify-center ${isMobileLayout ? 'gap-2 flex-col' : 'gap-4'} mt-2`}
             role="status"
+            aria-live="polite"
+          >
+            {/* Epic 2.1.3: Data source badges for credibility */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                <Database className="h-3 w-3 mr-1" />
+                12 Sources Active
+              </Badge>
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Activity className="h-3 w-3 mr-1" />
+                Live Intelligence
+              </Badge>
+              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                <Eye className="h-3 w-3 mr-1" />
+                Detective Mode
+              </Badge>
+            </div>
             aria-label="Theater status indicators"
           >
             <Badge 

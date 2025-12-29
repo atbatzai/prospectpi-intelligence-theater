@@ -279,26 +279,33 @@ export class IntelligenceCoordinator {
 
     Dossier Data: ${JSON.stringify(dossierData, null, 2)}
 
-    Quality Assurance Checklist:
-    1. Information accuracy and consistency
-    2. Source citation and verification
-    3. Completeness vs requirements
-    4. Professional presentation
-    5. Actionable insights provided
-    6. Confidence levels appropriate
-    7. Cost efficiency achieved
+    CRITICAL: This is REAL intelligence generation. Judge based on PRACTICAL business value, not perfection.
 
-    Target Standards:
-    - Confidence threshold: ${this.context?.userInput.confidenceThreshold || 'medium'}
-    - Output format: ${this.context?.userInput.outputFormat || 'full'}
-    - Cost target: $${ApiConfig.COST_TARGET_PER_DOSSIER}
+    Quality Standards for APPROVAL (confidence 0.6+):
+    - Has 3+ distinct intelligence sections with real content
+    - Provides actionable insights for sales/business use
+    - Contains specific company information (not generic templates)
+    - Shows clear value for sales meeting preparation
+    - Sources and confidence levels are reasonable
+
+    Quality Standards for HIGH CONFIDENCE (0.8+):
+    - Has 6+ comprehensive intelligence sections
+    - Rich, specific insights about company/industry/technology
+    - Clear competitive positioning and opportunities
+    - Detailed stakeholder and organizational intelligence
+    - Strong source diversity and validation
+
+    TARGET: ProspectPI customers pay $50+ and expect intelligence that helps them WIN DEALS.
+    REJECT only if dossier is truly empty, generic, or completely unusable.
+
+    Current dossier has ${Object.keys(dossierData).length} main sections. Judge accordingly.
 
     Respond in JSON format:
     {
       "approved": true/false,
       "confidence": 0.0-1.0,
       "qualityScore": 0.0-1.0,
-      "feedback": "detailed quality assessment",
+      "feedback": "detailed quality assessment focusing on business value",
       "improvements": ["suggestion1", "suggestion2"],
       "costEfficiency": "cost analysis vs target"
     }`;

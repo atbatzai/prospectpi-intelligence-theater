@@ -8,6 +8,7 @@ import { Router } from 'express';
 import { researchRouter } from './research';
 import { authRouter } from './auth';
 import { monitoringRouter } from './monitoring';
+import { privacyRouter } from './privacy';
 
 export const apiRouter = Router();
 
@@ -19,6 +20,9 @@ apiRouter.use('/auth', authRouter);
 
 // Epic 2.5.3: Monitoring & Cost Tracking endpoints
 apiRouter.use('/monitoring', monitoringRouter);
+
+// GDPR Privacy & Compliance endpoints
+apiRouter.use('/privacy', privacyRouter);
 
 // Additional route groups can be added here
 // apiRouter.use('/user', userRouter);

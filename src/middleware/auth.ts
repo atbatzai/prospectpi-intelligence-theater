@@ -45,16 +45,86 @@ export const authenticateJWT = (req: AuthenticatedRequest, _res: Response, next:
 };
 
 // Optional auth middleware - for demo purposes, creates a demo user
-export const optionalAuth = (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
+export const optionalAuth = async (req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
     // 🚀 PRODUCTION-READY: Create a persistent demo user for development
     console.log('🔑 No token provided - using persistent demo user for dossier access');
+    
+    // Ensure demo user exists in database
+    const demoUserId = '00000000-0000-0000-0000-000000000000';
+    const demoOrgId = '00000000-0000-0000-0000-000000000001';
+    const demoEmail = 'demo@prospectpi.com';
+    
+    try {
+      const { DatabaseManager } = require('../database/DatabaseManager');
+      const db = DatabaseManager.getInstance();
+      
+      // Check if demo organization exists
+      const existingOrg = await db.queryOne('SELECT id FROM organizations WHERE id = ?', [demoOrgId]);
+      
+      if (!existingOrg) {
+        // Create demo organization
+        await db.query(`
+          INSERT INTO organizations (
+            id, name, domain, slug, subscription_tier, max_users, max_teams,
+            max_requests_per_month, created_at, updated_at, is_active
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          demoOrgId,
+          'Demo Organization',
+          'demo.prospectpi.com',
+          'demo-org',
+          'enterprise', // Give demo org good limits
+          1000,
+          100,
+          10000,
+          new Date().toISOString(),
+          new Date().toISOString(),
+          true
+        ]);
+        console.log('✅ Demo organization created in database');
+      }
+      
+      // Check if demo user exists
+      const existingUser = await db.queryOne('SELECT id FROM users WHERE id = ?', [demoUserId]);
+      
+      if (!existingUser) {
+        // Create demo user
+        await db.query(`
+          INSERT INTO users (
+            id, email, password_hash, first_name, last_name,
+            organization_id, subscription_plan, subscription_status,
+            dossiers_used_this_month, dossier_limit, created_at, updated_at,
+            is_active, email_verified
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          demoUserId,
+          demoEmail,
+          'demo-hash', // Dummy password hash
+          'Demo',
+          'User',
+          demoOrgId, // Link to demo org
+          'enterprise', // Give demo user good plan
+          'active',
+          0,
+          999, // High limit for demo
+          new Date().toISOString(),
+          new Date().toISOString(),
+          true,
+          true
+        ]);
+        console.log('✅ Demo user created in database');
+      }
+    } catch (dbError) {
+      console.warn('⚠️ Failed to ensure demo user/org exists:', dbError);
+    }
+    
     req.user = {
-      id: 'demo-user-persistent', // Consistent ID for database queries
-      email: 'demo@prospectpi.com'
+      id: demoUserId,
+      email: demoEmail
     };
     next();
     return;

@@ -24,7 +24,7 @@ import {
  * Transforms generic form-filling into strategic P.I. consultation
  */
 export class MackConsultationService {
-  private dbManager = DatabaseManager.getInstance();
+  private dbManager: DatabaseManager | null = null;
   private openai: OpenAI;
   private anthropic: Anthropic;
   
@@ -37,6 +37,13 @@ export class MackConsultationService {
     this.anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder-key'
     });
+  }
+
+  private getDbManager(): DatabaseManager {
+    if (!this.dbManager) {
+      this.dbManager = DatabaseManager.getInstance();
+    }
+    return this.dbManager;
   }
   
   private readonly MACK_PERSONALITY_PROMPTS = {
@@ -162,7 +169,7 @@ export class MackConsultationService {
    * Get current consultation session
    */
   async getConsultationSession(sessionId: string): Promise<ConsultationSession | null> {
-    const result = await this.dbManager.queryOne(
+    const result = await this.getDbManager().queryOne(
       'SELECT * FROM consultation_sessions WHERE id = ?',
       [sessionId]
     );
@@ -675,10 +682,10 @@ Extract any new or updated business context. Return JSON with only fields that s
 
   // Database operations
   private async saveConsultationSession(session: ConsultationSession): Promise<void> {
-    const exists = await this.dbManager.queryOne('SELECT id FROM consultation_sessions WHERE id = ?', [session.id]);
+    const exists = await this.getDbManager().queryOne('SELECT id FROM consultation_sessions WHERE id = ?', [session.id]);
     
     if (exists) {
-      await this.dbManager.execute(`
+      await this.getDbManager().execute(`
         UPDATE consultation_sessions SET
           status = ?,
           conversation_context = ?,
@@ -697,7 +704,7 @@ Extract any new or updated business context. Return JSON with only fields that s
         session.id
       ]);
     } else {
-      await this.dbManager.execute(`
+      await this.getDbManager().execute(`
         INSERT INTO consultation_sessions (
           id, user_id, organization_id, team_id, status,
           conversation_context, business_context, research_plan,
@@ -890,7 +897,7 @@ Extract any new or updated business context. Return JSON with only fields that s
       };
       
       // Store analytics data
-      await this.dbManager.execute(`
+      await this.getDbManager().execute(`
         INSERT OR REPLACE INTO consultation_analytics (
           session_id, conversation_length, business_context_completeness,
           ai_interaction_count, research_relevance_score, user_satisfaction_predicted,
@@ -1096,7 +1103,7 @@ Extract any new or updated business context. Return JSON with only fields that s
 
   private async recordABTestAssignment(userId: string, testName: string, variant: string): Promise<void> {
     try {
-      await this.dbManager.execute(`
+      await this.getDbManager().execute(`
         INSERT OR REPLACE INTO ab_test_assignments (
           user_id, test_name, variant_name, assigned_at, session_count
         ) VALUES (?, ?, ?, datetime('now'), COALESCE(
@@ -1168,7 +1175,7 @@ Extract any new or updated business context. Return JSON with only fields that s
 
   private async getUserConsultationHistory(userId: string): Promise<ConsultationSession[]> {
     try {
-      const result = await this.dbManager.query(`
+      const result = await this.getDbManager().query(`
         SELECT * FROM consultation_sessions 
         WHERE user_id = ? AND status = 'completed'
         ORDER BY created_at DESC
@@ -1190,7 +1197,7 @@ Extract any new or updated business context. Return JSON with only fields that s
   // Phase 3 Week 7: Real-time Performance Monitoring
   async trackABTestPerformance(userId: string, testName: string, event: ABTestEvent): Promise<void> {
     try {
-      await this.dbManager.execute(`
+      await this.getDbManager().execute(`
         INSERT INTO ab_test_events (
           user_id, test_name, variant_name, event_type, event_data, 
           session_id, timestamp
@@ -1216,7 +1223,7 @@ Extract any new or updated business context. Return JSON with only fields that s
 
   private async updateConversionMetrics(testName: string, variantName: string): Promise<void> {
     try {
-      await this.dbManager.execute(`
+      await this.getDbManager().execute(`
         INSERT OR REPLACE INTO ab_test_metrics (
           test_name, variant_name, total_users, conversions, conversion_rate, last_updated
         ) SELECT 

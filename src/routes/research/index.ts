@@ -5,12 +5,38 @@
 
 import { Router } from 'express';
 import { generateDossierHandler } from './generateDossier';
+import { generateMockDossier } from './generateMockDossier';
 import { optionalAuth } from '../../middleware/auth';
+import { ApiConfig } from '../../config/ApiConfig';
+import { Request, Response } from 'express';
 
 export const researchRouter = Router();
 
-// POST /api/v1/research/generate-dossier - Testing mode (subscription limits disabled)
-researchRouter.post('/generate-dossier', optionalAuth, generateDossierHandler);
+/**
+ * 🎯 CLEAN SEPARATION: Environment-based routing
+ * Eliminates tech debt by routing to appropriate pipeline at entry point
+ */
+const routeToAppropriateHandler = async (req: Request, res: Response, next: any) => {
+  const systemMode = ApiConfig.getSystemMode();
+  
+  console.log(`🎯 System Mode: ${systemMode} | Real APIs: ${ApiConfig.hasRealDataSourceAPIs()}`);
+  
+  if (systemMode === 'mock') {
+    console.log('📋 Routing to MOCK pipeline - Clean separation active');
+    return await generateMockDossier(req, res);
+  } else {
+    console.log('🔥 Routing to REAL pipeline - Production intelligence active');
+    return await generateDossierHandler(req, res, next);
+  }
+};
+
+// POST /api/v1/research/generate-dossier - Clean environment-based routing
+researchRouter.post('/generate-dossier', optionalAuth, routeToAppropriateHandler);
+
+// Legacy mock endpoint for explicit mock requests (development only)
+if (process.env.NODE_ENV !== 'production') {
+  researchRouter.post('/generate-mock-dossier', optionalAuth, generateMockDossier);
+}
 
 // YOLO: User Dossier Management Routes
 import { DossierService } from '../../models/Dossier';

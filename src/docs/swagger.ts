@@ -58,13 +58,6 @@ const options = {
               description: 'Optional company website URL',
               example: 'https://openai.com'
             },
-            linkedinUrl: {
-              type: 'string',
-              format: 'uri',
-              pattern: 'linkedin\\.com\\/company\\/',
-              description: 'Optional LinkedIn company profile URL',
-              example: 'https://linkedin.com/company/openai'
-            },
             crmNotes: {
               type: 'string',
               maxLength: 1000,
