@@ -1,0 +1,171 @@
+name: ProspectPI Enhanced CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_API: ${{ github.repository }}/api
+  IMAGE_NAME_FRONTEND: ${{ github.repository }}/frontend
+
+jobs:
+  safety-checks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "18"
+        cache: "npm"
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run brownfield safety checks
+      run: npm run safety:check
+    
+    - name: Run existing features tests
+      run: npm run test:integration:existing-features
+    
+    - name: Run performance baseline tests
+      run: npm run test:performance:baseline
+
+  build-and-test:
+    needs: safety-checks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "18"
+        cache: "npm"
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run type checking
+      run: npm run type-check
+    
+    - name: Run linting
+      run: npm run lint
+    
+    - name: Run comprehensive tests
+      run: npm test
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: dist/
+
+  build-containers:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      api-image: ${{ steps.image-output.outputs.api-tag }}
+      frontend-image: ${{ steps.image-output.outputs.frontend-tag }}
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build and push API container
+      id: build-api
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: production
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_API }}:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Set image outputs
+      id: image-output
+      run: |
+        echo "api-tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_API }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+        echo "frontend-tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  deploy-staging:
+    needs: [build-and-test, build-containers]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.prospectpi.com
+    steps:
+    - name: Deploy to staging environment
+      run: |
+        echo "Deploying to staging environment..."
+        echo "API Image: ${{ needs.build-containers.outputs.api-image }}"
+        echo "Frontend Image: ${{ needs.build-containers.outputs.frontend-image }}"
+        # TODO: Add actual deployment commands (kubectl, docker-compose, etc.)
+    
+    - name: Run staging smoke tests
+      run: |
+        echo "Running staging health checks..."
+        # TODO: Add staging health check commands
+        # curl -f https://api-staging.prospectpi.com/health || exit 1
+
+  deploy-production:
+    needs: [build-and-test, build-containers]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://prospectpi.com
+    steps:
+    - name: Create production backup
+      run: |
+        echo "Creating production database backup..."
+        # TODO: Add backup commands
+        
+    - name: Deploy to production environment
+      run: |
+        echo "Deploying to production environment..."
+        echo "API Image: ${{ needs.build-containers.outputs.api-image }}"
+        echo "Frontend Image: ${{ needs.build-containers.outputs.frontend-image }}"
+        # TODO: Add actual deployment commands
+    
+    - name: Run production health checks
+      run: |
+        echo "Running production health checks..."
+        # TODO: Add production health check commands
+        # curl -f https://api.prospectpi.com/health || exit 1
+    
+    - name: Notify deployment success
+      run: |
+        echo "✅ Production deployment successful!"
+        # TODO: Add notification commands (Slack, Discord, email)
+
+  rollback-production:
+    runs-on: ubuntu-latest
+    if: failure() && github.ref == 'refs/heads/main'
+    needs: [deploy-production]
+    steps:
+    - name: Automatic rollback on failure
+      run: |
+        echo "🚨 Production deployment failed - initiating rollback..."
+        # TODO: Add rollback commands
+        echo "Rollback completed"

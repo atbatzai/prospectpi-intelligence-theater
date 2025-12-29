@@ -1,0 +1,215 @@
+import express, { Response, Request } from 'express';
+import { authenticateJWT } from '../middleware/auth';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    organizationId: string;
+    organizationRole: string;
+    email: string;
+  };
+}
+import { UserService } from '../models/User';
+
+const router = express.Router();
+const userService = new UserService();
+
+// PHASE 1: Organization Management API Routes
+
+// GET /api/v1/organization/departments - List departments in user's organization
+router.get('/departments', authenticateJWT, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const user = req.user!;
+    
+    if (!user.organizationId) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'NO_ORGANIZATION', message: 'User not associated with an organization' }
+      });
+      return;
+    }
+
+    const departments = await userService.getDepartmentsByOrganization(user.organizationId);
+    
+    res.json({
+      success: true,
+      data: { departments }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'FETCH_DEPARTMENTS_FAILED', message: error.message }
+    });
+  }
+});
+
+// POST /api/v1/organization/departments - Create new department
+router.post('/departments', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    const { name, description, headUserId } = req.body;
+    
+    if (!user.organizationId) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'NO_ORGANIZATION', message: 'User not associated with an organization' }
+      });
+    }
+
+    // Check if user has admin role
+    if (user.organizationRole !== 'admin' && user.organizationRole !== 'manager') {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only admins and managers can create departments' }
+      });
+    }
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MISSING_NAME', message: 'Department name is required' }
+      });
+    }
+
+    const department = await userService.createDepartment(
+      user.organizationId,
+      name,
+      description,
+      headUserId
+    );
+    
+    res.status(201).json({
+      success: true,
+      data: { department }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'CREATE_DEPARTMENT_FAILED', message: error.message }
+    });
+  }
+});
+
+// GET /api/v1/organization/departments/:departmentId/teams - List teams in a department
+router.get('/departments/:departmentId/teams', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { departmentId } = req.params;
+    const teams = await userService.getTeamsByDepartment(departmentId);
+    
+    res.json({
+      success: true,
+      data: { teams }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'FETCH_TEAMS_FAILED', message: error.message }
+    });
+  }
+});
+
+// POST /api/v1/organization/departments/:departmentId/teams - Create new team
+router.post('/departments/:departmentId/teams', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    const { departmentId } = req.params;
+    const { name, description, leadUserId, maxMembers, teamType } = req.body;
+    
+    // Check permissions
+    if (user.organizationRole !== 'admin' && user.organizationRole !== 'manager') {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'INSUFFICIENT_PERMISSIONS', message: 'Only admins and managers can create teams' }
+      });
+    }
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MISSING_NAME', message: 'Team name is required' }
+      });
+    }
+
+    const team = await userService.createTeam(
+      user.organizationId,
+      name,
+      {
+        departmentId,
+        description,
+        teamLeadId: leadUserId,
+        teamType: teamType || 'project'
+      }
+    );
+    
+    res.status(201).json({
+      success: true,
+      data: { team }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'CREATE_TEAM_FAILED', message: error.message }
+    });
+  }
+});
+
+// GET /api/v1/organization/profile - Get organization profile
+router.get('/profile', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    
+    if (!user.organizationId) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'NO_ORGANIZATION', message: 'User not associated with an organization' }
+      });
+    }
+
+    const organization = await userService.getOrganizationById(user.organizationId);
+    
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'ORGANIZATION_NOT_FOUND', message: 'Organization not found' }
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: { organization }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'FETCH_ORGANIZATION_FAILED', message: error.message }
+    });
+  }
+});
+
+// GET /api/v1/organization/members - List organization members
+router.get('/members', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    
+    if (!user.organizationId) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'NO_ORGANIZATION', message: 'User not associated with an organization' }
+      });
+    }
+
+    const members = await userService.getOrganizationMembers(user.organizationId);
+    
+    res.json({
+      success: true,
+      data: { members }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'FETCH_MEMBERS_FAILED', message: error.message }
+    });
+  }
+});
+
+export = router;

@@ -43,34 +43,38 @@ First Dossier Experience:
 
 ### Desktop-First UI/UX
 
-**Dossier Generation Interface**
+**Desktop Dossier Generation Interface (Primary Experience)**
 ```
-Layout: Clean, professional, CIA-inspired design
-- Header: ProspectPI logo, user menu, usage counter
-- Main Input: Large company name field + expandable context area
-- Progress: 3-stage agent visualization during generation
-- Output: Professional document viewer with export options
+Layout: Sophisticated, professional, CIA-inspired design optimized for detailed analysis
+- Header: ProspectPI logo, user menu, usage counter, quick actions
+- Main Input: Large company name field + rich context editor with suggestions
+- Progress: Full 3-agent Intelligence Theater with detailed real-time visualization
+- Output: Comprehensive document viewer with advanced export and collaboration options
 
 Visual Hierarchy:
-- Company name input: Large, prominent
-- Additional context: Subtle but discoverable  
-- Generate button: Clear call-to-action
-- Progress indicators: Informative but not intrusive
+- Company name input: Prominent with autocomplete and company detection
+- Additional context: Rich text editor with smart suggestions and templates
+- Generate button: Professional call-to-action with generation options
+- Progress Theater: Immersive 3-column agent dashboard with detailed status
+- Document Viewer: Multi-panel layout with sections, citations, and collaboration tools
 ```
 
-**Mobile Responsiveness**
+**Mobile Intelligence Theater (Highly Useful Experience)**
 ```
-Mobile Optimizations:
-- Stack components vertically
-- Larger touch targets (44px minimum)
-- Swipe navigation for dossier sections
-- Mobile-optimized PDF viewer
-- Simplified Salesforce integration (redirect flow)
+Mobile Optimizations (Maintains Core Value):
+- Streamlined single-column layout with smart navigation
+- Touch-optimized input with voice-to-text capability
+- Condensed but informative agent progress visualization
+- Mobile-optimized document viewer with swipe navigation
+- Essential sharing and export functions optimized for mobile workflow
+- Salesforce mobile app integration with native feel
 
-Desktop Priority:
-- Full feature set on desktop
-- 90% feature parity on mobile
-- Progressive enhancement approach
+Feature Parity Strategy:
+- Core dossier generation: 100% parity
+- Agent progress visualization: Optimized but complete
+- Document viewing: Mobile-optimized with full content access
+- Sharing capabilities: 95% parity with mobile-specific enhancements
+- Salesforce integration: Native mobile app experience
 ```
 
 ### CIA-Style Dossier Design

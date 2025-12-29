@@ -50,13 +50,12 @@ Agent 1: Intelligence Coordinator (Claude Sonnet 4)
 - User Interaction: Natural language progress updates, clarification requests
 - Best Practices: Conversational tone, transparent reasoning, error explanation
 
-Agent 2: Field Intelligence Researcher (Production Configured)
-- Role: Data collection from 4 premium sources + real-time web
-- APIs: TheirStack (21K+ techs), MarketAux (financial), Coresignal MCP (professional), Perplexity (real-time)
-- Tokens: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..., SDHJm2cJJmNaLBYREcEPWl0vkx3pb0AwyrOldDQU, d6JxXWhii1LRK6oTOQPihCAWrCEJoRBz, pplx-YOUR_PERPLEXITY_API_KEY_HERE
-- Output: Raw data + source metadata + confidence scoring  
-- Model: DeepSeek (cost-optimized) + GPT-4o-mini (fallback)
-- Cost: $0.70/dossier (vs $4-7 with placeholders)
+Agent 2: Field Intelligence Researcher (Cost-Optimized Model)
+- Role: Data collection from 20+ sources
+- APIs: BuiltWith, MarketAux, TheirStack, public sources
+- Output: Raw data + source metadata + confidence scoring
+- Model Selection: GPT-4o-mini or Claude Haiku for cost efficiency
+- Parallel Processing: Multiple API calls with rate limiting
 
 Agent 3: Prospect Intelligence Detective (Claude Sonnet 4)
 - Role: Triangulation + confidence scoring + final synthesis
@@ -189,27 +188,17 @@ class InputProcessor {
 
 ### Data Sources & API Integration
 
-**Production-Ready API Configuration (All Keys Available)**
+**MVP Data Sources (Starter Tier)**
 ```
-Enterprise Intelligence Stack:
-- TheirStack JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZWZmLnR1cm5lckBhdGJhdHouYWkiLCJwZXJtaXNzaW9ucyI6InVzZXIiLCJjcmVhdGVkX2F0IjoiMjAyNS0xMC0wMVQyMjoyNDoyNy4zNDkxMDArMDA6MDAifQ.zqo5J7SxE5KvouPmzW0bovKAg9VSCIbLWWOAFQV0r9c
-- MarketAux Token: SDHJm2cJJmNaLBYREcEPWl0vkx3pb0AwyrOldDQU
-- Coresignal MCP: d6JxXWhii1LRK6oTOQPihCAWrCEJoRBz
-- Perplexity Real-Time: pplx-YOUR_PERPLEXITY_API_KEY_HERE
+Required APIs:
+- BuiltWith (tech stack): $0.50-1.00/dossier
+- MarketAux (financial news): $0.10-0.20/dossier  
+- Public web search (news, company info): $2-4/dossier
+- AI inference (GPT-4o primary): $2-4/dossier
 
-Multi-AI Processing Pipeline:
-- Claude 3.5 Sonnet: sk-YOUR_OPENAI_API_KEY_HERE
-- OpenAI GPT-4o-mini: sk-YOUR_OPENAI_API_KEY_HERE
-- DeepSeek Cost-Optimized: sk-c5f01f01f3ef4c5ba694aeb8ce3da07a
-- Google Gemini: AIzaSyB8IheEO8fHh9ryGV11w-uyKh1f4dPxJbY
-
-Professional Document Services:
-- Google Cloud Vision: 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
-- Adobe PDF Services: 5216ec5d545f4de1ae5a9a4feaaffed1
-
-Optimized COGS: $2.55/dossier (70% cost reduction)
-Revenue per dossier: $50-200
-Gross margin: 95-98% (industry-leading)
+Total COGS: $4.70-9.20/dossier
+Starter revenue per dossier: $50
+Gross margin: 82-91%
 ```
 
 **API Documentation Requirements for Launch**
@@ -271,4 +260,4 @@ SOC 2 Preparation:
 ```
 
 ---
-
+

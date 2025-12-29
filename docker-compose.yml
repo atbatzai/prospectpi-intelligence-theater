@@ -1,0 +1,110 @@
+# ProspectPI Intelligence Theater - FRESH Development Environment  
+# Docker Compose configuration for clean containerized development
+# WINSTON'S CLEAN SLATE ARCHITECTURE - October 2025
+
+name: prospectpi-fresh-2025
+
+services:
+  # Backend API Service - Fresh Instance
+  api:
+    build:
+      context: .
+      target: development
+    container_name: prospectpi-fresh-api
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://prospectpi:intelligence2025@postgres:5432/prospectpi_fresh
+      - REDIS_URL=redis://redis:6379
+      - THEIRSTACK_JWT=${THEIRSTACK_JWT}
+      - MARKETAUX_TOKEN=${MARKETAUX_TOKEN}
+      - CORESIGNAL_MCP_AUTH=${CORESIGNAL_MCP_AUTH}
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - prospectpi-fresh-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Service (Next.js) - Fresh Instance
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    container_name: prospectpi-fresh-frontend
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_WS_URL=ws://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+    networks:
+      - prospectpi-fresh-network
+
+  # PostgreSQL Database - Fresh Instance
+  postgres:
+    image: postgres:15-alpine
+    container_name: prospectpi-fresh-postgres
+    environment:
+      - POSTGRES_DB=prospectpi_fresh
+      - POSTGRES_USER=prospectpi
+      - POSTGRES_PASSWORD=intelligence2025
+    volumes:
+      - prospectpi_fresh_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"  # Unique port to avoid all conflicts
+    networks:
+      - prospectpi-fresh-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prospectpi -d prospectpi_fresh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache - Fresh Instance
+  redis:
+    image: redis:7-alpine
+    container_name: prospectpi-fresh-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6380:6379"  # Unique port to avoid conflicts
+    volumes:
+      - prospectpi_fresh_redis_data:/data
+    networks:
+      - prospectpi-fresh-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  prospectpi-fresh-network:
+    name: prospectpi-fresh-network-2025
+    driver: bridge
+
+volumes:
+  prospectpi_fresh_postgres_data:
+    name: prospectpi-fresh-postgres-2025
+    driver: local
+  prospectpi_fresh_redis_data:
+    name: prospectpi-fresh-redis-2025
+    driver: local

@@ -9,6 +9,9 @@ Dossier Generation:
 - Average Generation Time: <10 minutes (target: <7 minutes)
 - User Satisfaction: >4.5/5 rating per dossier
 - Citation Accuracy: >85% verified sources
+- Content Completeness: >90% of dossiers contain 6+ intelligence sections
+- Data Source Quality: Average 5+ verified sources per dossier
+- Real Intelligence Value: <5% of dossiers flagged as "insufficient detail"
 
 User Engagement:
 - Weekly Active Users: >60% of paid seats
@@ -16,6 +19,8 @@ User Engagement:
   * Starter: 2.5+ (approaching limit)
   * Professional: 8+ (healthy usage)
   * Enterprise: 25+ (power user adoption)
+- Customer Satisfaction: >4.2/5 overall platform rating
+- Renewal Rate: >85% at end of first billing cycle
 ```
 
 **Business Metrics**

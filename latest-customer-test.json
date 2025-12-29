@@ -1,0 +1,11 @@
+﻿{
+    "success":  false,
+    "status":  "processing",
+    "message":  "FBI-Quality dossier is still being generated",
+    "progress":  {
+                     "requestId":  "req_a7c5c8ba2050",
+                     "status":  "processing",
+                     "estimatedCompletion":  480,
+                     "websocketUrl":  "ws://localhost:3001/ws/research/req_a7c5c8ba2050"
+                 }
+}

@@ -1,0 +1,162 @@
+{
+  "timestamp": "2025-10-23T05:10:18.249Z",
+  "summary": {
+    "totalTests": 5,
+    "passedTests": 1,
+    "failedTests": 4,
+    "successRate": 20
+  },
+  "blockers": [],
+  "gaps": [
+    {
+      "type": "COMPLETENESS",
+      "severity": "HIGH",
+      "description": "Missing required sections. Found 0% of expected sections",
+      "company": "Netflix Inc"
+    },
+    {
+      "type": "CONTENT_DEPTH",
+      "severity": "MEDIUM",
+      "description": "Content sections are too shallow or lack detail",
+      "company": "Netflix Inc"
+    },
+    {
+      "type": "DATA_ACCURACY",
+      "severity": "HIGH",
+      "description": "Content appears generic or inaccurate",
+      "company": "Netflix Inc"
+    },
+    {
+      "type": "ACTIONABILITY",
+      "severity": "MEDIUM",
+      "description": "Lacks specific recommendations or next steps",
+      "company": "Netflix Inc"
+    },
+    {
+      "type": "COMPLETENESS",
+      "severity": "HIGH",
+      "description": "Missing required sections. Found 0% of expected sections",
+      "company": "Stripe Inc"
+    },
+    {
+      "type": "CONTENT_DEPTH",
+      "severity": "MEDIUM",
+      "description": "Content sections are too shallow or lack detail",
+      "company": "Stripe Inc"
+    },
+    {
+      "type": "DATA_ACCURACY",
+      "severity": "HIGH",
+      "description": "Content appears generic or inaccurate",
+      "company": "Stripe Inc"
+    },
+    {
+      "type": "ACTIONABILITY",
+      "severity": "MEDIUM",
+      "description": "Lacks specific recommendations or next steps",
+      "company": "Stripe Inc"
+    },
+    {
+      "type": "COMPLETENESS",
+      "severity": "HIGH",
+      "description": "Missing required sections. Found 0% of expected sections",
+      "company": "Zoom Video Communications"
+    },
+    {
+      "type": "CONTENT_DEPTH",
+      "severity": "MEDIUM",
+      "description": "Content sections are too shallow or lack detail",
+      "company": "Zoom Video Communications"
+    },
+    {
+      "type": "DATA_ACCURACY",
+      "severity": "HIGH",
+      "description": "Content appears generic or inaccurate",
+      "company": "Zoom Video Communications"
+    },
+    {
+      "type": "ACTIONABILITY",
+      "severity": "MEDIUM",
+      "description": "Lacks specific recommendations or next steps",
+      "company": "Zoom Video Communications"
+    },
+    {
+      "type": "COMPLETENESS",
+      "severity": "HIGH",
+      "description": "Missing required sections. Found 0% of expected sections",
+      "company": "Fictional Corp XYZ"
+    },
+    {
+      "type": "CONTENT_DEPTH",
+      "severity": "MEDIUM",
+      "description": "Content sections are too shallow or lack detail",
+      "company": "Fictional Corp XYZ"
+    },
+    {
+      "type": "DATA_ACCURACY",
+      "severity": "HIGH",
+      "description": "Content appears generic or inaccurate",
+      "company": "Fictional Corp XYZ"
+    },
+    {
+      "type": "ACTIONABILITY",
+      "severity": "MEDIUM",
+      "description": "Lacks specific recommendations or next steps",
+      "company": "Fictional Corp XYZ"
+    }
+  ],
+  "dossierResults": [
+    {
+      "company": "Netflix Inc",
+      "testId": "netflix_test",
+      "success": false,
+      "qualityScore": {
+        "completeness": 0,
+        "contentDepth": 0,
+        "dataAccuracy": 0.5,
+        "actionability": 0,
+        "overall": 0.125
+      },
+      "generationTime": 170812
+    },
+    {
+      "company": "Stripe Inc",
+      "testId": "stripe_test",
+      "success": false,
+      "qualityScore": {
+        "completeness": 0,
+        "contentDepth": 0,
+        "dataAccuracy": 0.5,
+        "actionability": 0,
+        "overall": 0.125
+      },
+      "generationTime": 160726
+    },
+    {
+      "company": "Zoom Video Communications",
+      "testId": "zoom_test",
+      "success": false,
+      "qualityScore": {
+        "completeness": 0,
+        "contentDepth": 0,
+        "dataAccuracy": 0.5,
+        "actionability": 0,
+        "overall": 0.125
+      },
+      "generationTime": 170732
+    },
+    {
+      "company": "Fictional Corp XYZ",
+      "testId": "fictional_test",
+      "success": false,
+      "qualityScore": {
+        "completeness": 0,
+        "contentDepth": 0,
+        "dataAccuracy": 0.5,
+        "actionability": 0,
+        "overall": 0.125
+      },
+      "generationTime": 160662
+    }
+  ]
+}
