@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Shield, MessageCircle, ArrowRight, CheckCircle, Clock, Brain } from 'lucide-react';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 interface ConversationMessage {
   id: string;
   role: 'mack' | 'user';
@@ -60,12 +62,15 @@ export const MackConsultation: React.FC<MackConsultationProps> = ({
   onFallbackToForm
 }) => {
   const [session, setSession] = useState<ConsultationSession | null>(null);
+  const [conversationId, setConversationId] = useState<string>('');
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [businessContext, setBusinessContext] = useState<BusinessContextUpdate>({});
+  const [extractedContext, setExtractedContext] = useState<any>({});
   const [isTyping, setIsTyping] = useState(false);
   const [completionScore, setCompletionScore] = useState(0);
+  const [stage, setStage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -83,7 +88,7 @@ export const MackConsultation: React.FC<MackConsultationProps> = ({
   const startConsultation = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/v1/consultation/start', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/consultation/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: 'user-session' })
@@ -92,7 +97,14 @@ export const MackConsultation: React.FC<MackConsultationProps> = ({
       const data = await response.json();
       
       if (data.success) {
-        setConversationId(data.data.conversationId);
+        const newConversationId = data.data.conversationId || '';
+        setConversationId(newConversationId);
+        setSession({ 
+          session_id: newConversationId,
+          status: 'active',
+          current_step: data.data.stage || 'initial',
+          mack_message: data.data.initialMessage?.content
+        });
         setMessages([data.data.initialMessage]);
         setStage(data.data.stage);
         setCompletionScore(data.data.completionScore);
@@ -120,7 +132,7 @@ export const MackConsultation: React.FC<MackConsultationProps> = ({
     setIsTyping(true);
 
     try {
-      const response = await fetch('/api/v1/consultation/message', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/consultation/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

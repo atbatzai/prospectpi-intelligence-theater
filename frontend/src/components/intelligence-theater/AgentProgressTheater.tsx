@@ -53,7 +53,7 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
   
   // Enhanced progress simulation for better UX feedback - Epic 2.1.3
   const [detailedStages, setDetailedStages] = useState<AgentStage[]>([
-    { id: 'planning', name: '🕵️ Detective Planning Mission', progress: 0, status: 'pending', estimatedDuration: 30 },
+    { id: 'planning', name: 'Detective Planning Mission', progress: 0, status: 'pending', estimatedDuration: 30 },
     { id: 'theirstack', name: '🔍 Investigating Technology Stack', progress: 0, status: 'pending', estimatedDuration: 45 },
     { id: 'marketaux', name: '💼 Gathering Financial Intelligence', progress: 0, status: 'pending', estimatedDuration: 35 },
     { id: 'coresignal', name: '🌐 Analyzing Professional Networks', progress: 0, status: 'pending', estimatedDuration: 40 },
@@ -157,21 +157,30 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
   }
 
   // Task 5.1: Adaptive animation configuration
-  const getAnimationClasses = () => {
-    if (isEmergencyMode()) return 'transition-none';
-    if (!shouldAnimate) return 'transition-none';
+  const getAnimationConfig = () => {
+    if (isEmergencyMode()) return { className: 'transition-none', style: {} };
+    if (!shouldAnimate) return { className: 'transition-none', style: {} };
     
     const baseDuration = getAnimationDuration(500); // 500ms base duration
     
     switch (performanceTier) {
       case 'low':
-        return `transition-opacity duration-[${Math.max(200, baseDuration)}ms]`;
+        return { 
+          className: 'transition-opacity', 
+          style: { transitionDuration: `${Math.max(200, baseDuration)}ms` }
+        };
       case 'medium':
-        return `transition-all duration-[${baseDuration}ms] ease-in-out`;
+        return { 
+          className: 'transition-all ease-in-out', 
+          style: { transitionDuration: `${baseDuration}ms` }
+        };
       case 'high':
-        return `transition-all duration-[${baseDuration}ms] ease-in-out hover:scale-105`;
+        return { 
+          className: 'transition-all ease-in-out hover:scale-105', 
+          style: { transitionDuration: `${baseDuration}ms` }
+        };
       default:
-        return 'transition-none';
+        return { className: 'transition-none', style: {} };
     }
   };
 
@@ -237,9 +246,12 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
     return null;
   }
 
+  const animationConfig = getAnimationConfig();
+
   return (
     <div 
-      className={`max-w-6xl mx-auto ${getAnimationClasses()}`}
+      className={`max-w-6xl mx-auto ${animationConfig.className}`}
+      style={animationConfig.style}
       role="main"
       aria-label="Intelligence Theater Operations"
     >
@@ -275,36 +287,9 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
                 Detective Mode
               </Badge>
             </div>
-            aria-label="Theater status indicators"
-          >
-            <Badge 
-              variant="outline" 
-              className="text-green-700 border-green-300"
-              aria-label={`${progress.length} agents currently active`}
-            >
-              <Eye className="h-3 w-3 mr-1" aria-hidden="true" />
-              {progress.length} Agents Active
-            </Badge>
-            <Badge 
-              variant="outline" 
-              className="text-blue-700 border-blue-300"
-              aria-label="Multi-source intelligence gathering active"
-            >
-              <Database className="h-3 w-3 mr-1" aria-hidden="true" />
-              Multi-Source Intel
-            </Badge>
-            {estimatedCompletion > 0 && (
-              <Badge 
-                variant="outline" 
-                className="text-purple-700 border-purple-300"
-                aria-label={`Estimated time to completion: ${Math.ceil(estimatedCompletion / 60)} minutes ${estimatedCompletion % 60} seconds`}
-              >
-                ETA: {Math.ceil(estimatedCompletion / 60)}m {estimatedCompletion % 60}s
-              </Badge>
-            )}
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           {/* Enhanced Progress Bar with Real-Time Updates */}
           <div className="space-y-4">
@@ -400,7 +385,8 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
           >
             {progress.map((agent, index) => {
               // Task 5.1: Use adaptive animation system
-              const cardAnimationClass = shouldAnimate ? `hover:shadow-md ${getAnimationClasses()}` : '';
+              const cardAnimation = getAnimationConfig();
+              const cardAnimationClass = shouldAnimate ? `hover:shadow-md ${cardAnimation.className}` : '';
               const animationDelay = shouldAnimate && enableProgressiveEnhancement ? index * 100 : 0;
               
               return (
@@ -408,6 +394,7 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
                   key={agent.id || `agent-${index}`} 
                   className={`border border-slate-200 ${cardAnimationClass} ${isMobileLayout ? 'mx-1' : ''}`}
                   style={{
+                    ...cardAnimation.style,
                     // Task 5.1: Progressive enhancement for animation delays
                     animationDelay: `${animationDelay}ms`
                   }}
@@ -507,7 +494,8 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
               <Button
                 variant="destructive"
                 onClick={onInterrupt}
-                className={`flex items-center gap-2 ${isMobileLayout ? 'w-full text-sm min-h-11' : ''} ${getAnimationClasses()}`}
+                className={`flex items-center gap-2 ${isMobileLayout ? 'w-full text-sm min-h-11' : ''} ${getAnimationConfig().className}`}
+                style={getAnimationConfig().style}
                 aria-label="Stop intelligence generation process"
                 aria-describedby="interrupt-help-text"
                 type="button"

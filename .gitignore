@@ -39,12 +39,61 @@ temp/
 .env
 .env.local
 .env.*.local
+.env.development
 
 # SQLite databases (if any local dev dbs are created)
 *.db
 *.sqlite
 *.sqlite3
 data/
+database/
+
+# Test output and reports
+*-dossier*.json
+*-test*.json
+*-validation*.json
+*-diagnostic*.json
+*-report*.json
+*-status*.json
+customer-*.json
+performance-*.json
+pipeline-*.json
+qa-*.json
+existing-*.json
+fbi-*.json
+latest-*.json
+demo-*.json
+dossier-*.json
+
+# Operational files
+100-PERCENT-OPERATIONAL.txt
+SESSION-SUMMARY.md
+DEPLOYMENT_STATUS.md
+PERSISTENCE_*.md
+PROJECT-INDEX.md
+
+# Test and diagnostic scripts
+*-check.js
+*-test.js
+*-validation.js
+*-diagnostic.js
+*-demo.js
+*-repair.js
+*-fix*.js
+*-migration.js
+comprehensive-*.js
+simple-*.js
+real-*.js
+quick_*.js
+show-*.js
+list-*.js
+generate-*.js
+check_*.js
+test_*.js
+create-*.js
+final-*.js
+phase*.js
+initialize-*.js
 
 # OS files
 .DS_Store
@@ -53,4 +102,32 @@ Thumbs.db
 # IDE/editor
 .idea/
 *.swp
+
+# Docker overrides
+docker-compose-backup.yml
+
+# Backup files
+*.backup
+*_clean.ts
+FieldIntelligenceResearcher.ts.backup
+
+# PM2 logs and ecosystem backups
+ecosystem.config.js.backup
+
+# Temporary PowerShell scripts (user-specific dev scripts)
+start-persistent.ps1
+start-ultra-persistent.ps1
+start-*.bat
+start-*.ps1
+
+# Frontend build artifacts
+frontend/public/sw.js
+frontend/public/workbox-*.js
+frontend/frontend/
+
+# MCP config (user-specific)
+mcp-config.json
+
+# QA gates directory (keep structure in docs/qa/gates but ignore root-level)
+/qa-gates/
 

@@ -59,17 +59,16 @@ export class ResearchRequestService {
 
     const request = await this.dbManager.queryOne(`
       INSERT INTO research_requests (
-        id, request_id, user_id, organization_id, company_name, company_url, linkedin_url,
+        id, request_id, user_id, organization_id, company_name, company_url,
         crm_notes, organization_focus, location_of_interest, context_links,
         additional_context, status, priority, created_at, estimated_completion, retry_count
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING *
     `, [
       id, requestId, userId, organizationId,
       input.companyName,
       input.companyUrl || null,
-      input.linkedinUrl || null,
       input.crmNotes || null,
       input.organizationFocus || null,
       input.locationOfInterest || null,
@@ -91,7 +90,6 @@ export class ResearchRequestService {
         organization_id: organizationId,
         company_name: input.companyName,
         company_url: input.companyUrl || null,
-        linkedin_url: input.linkedinUrl || null,
         crm_notes: input.crmNotes || null,
         organization_focus: input.organizationFocus || null,
         location_of_interest: input.locationOfInterest || null,

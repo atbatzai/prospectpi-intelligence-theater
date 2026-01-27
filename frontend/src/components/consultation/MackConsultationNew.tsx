@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Shield, MessageCircle, ArrowRight, CheckCircle, Clock, Brain, User } from 'lucide-react';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 interface ConversationMessage {
   id: string;
   role: 'mack' | 'user';
@@ -84,7 +86,7 @@ export const MackConsultation: React.FC<MackConsultationProps> = ({
     setIsLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/v1/consultation/start', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/consultation/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

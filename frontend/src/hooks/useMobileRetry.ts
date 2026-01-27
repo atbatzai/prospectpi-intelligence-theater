@@ -96,7 +96,7 @@ export function useMobileRetry<T>(
       const startTime = performance.now();
       
       // Quick network test with small payload
-      const testUrl = '/api/health'; // Assume we have a health endpoint
+      const testUrl = '/health'; // Assume we have a health endpoint
       const response = await Promise.race([
         fetch(testUrl, { 
           method: 'HEAD',

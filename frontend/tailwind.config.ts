@@ -50,12 +50,20 @@ const config: Config = {
   				foreground: 'hsl(var(--destructive-foreground))'
   			},
   			
-  			/* ProspectPI Brand Colors */
-  			'navy': {
-  				'900': '#0B2345'
+  			/* ProspectPI Brand Colors - Detective Intelligence Theme */
+  			prospectpi: {
+  				navy: '#1E3A8A',
+  				purple: '#8B5CF6',
+  				dark: '#0F172A',
+  				gray: '#64748B',
+  				light: '#F8FAFC'
   			},
-  			'violet': {
-  				'600': '#7B61FF'
+  			detective: {
+  				primary: '#1E3A8A',
+  				secondary: '#8B5CF6',
+  				accent: '#F59E0B',
+  				danger: '#EF4444',
+  				success: '#10B981'
   			},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',

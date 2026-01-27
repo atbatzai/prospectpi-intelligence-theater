@@ -1,218 +1,112 @@
-/**
- * ProspectPI Intelligence Theater - Monitoring & Cost Tracking Routes
- * Epic 2.5.3: Performance Optimization & External Validation
- * 
- * Task 2.3: Daily/weekly cost reporting dashboard for business stakeholders
- * Task 2.4: Research quality metrics tracking and reporting
+﻿/**
+ * Monitoring Routes - Health, Metrics, Alerts
+ * Story 5.3: Monitoring Platform
  */
 
 import { Router, Request, Response } from 'express';
-import { ApiCostTracker } from '../../config/ApiConfig';
+import { monitoringService } from '../../services/monitoring/MonitoringService';
+import { authMiddleware } from '../../middleware/authMiddleware';
+import { requirePermission } from '../../middleware/rbacMiddleware';
+import { Permission } from '../../services/auth/RBACService';
+import { ApiConnectivityTest } from '../../utils/ApiConnectivityTest';
 
-export const monitoringRouter = Router();
+const monitoringRouter = Router();
 
-/**
- * Epic 2.5.3 Task 2.3: Daily Cost Report
- * GET /api/monitoring/costs/daily?date=YYYY-MM-DD
- */
-monitoringRouter.get('/costs/daily', async (req: Request, res: Response) => {
+// Public health check (no auth required) - ENHANCED with API source status
+monitoringRouter.get('/health', async (req: Request, res: Response): Promise<void> => {
   try {
-    const date = req.query.date as string;
-    const costTracker = ApiCostTracker.getInstance();
+    const health = await monitoringService.checkHealth();
     
-    const report = costTracker.getDailyCostReport(date);
+    // Add API source connectivity status
+    const apiSources = await Promise.all([
+      ApiConnectivityTest.testTheirStackConnection().catch(e => ({ service: 'TheirStack', connected: false, responseTime: 0, error: e.message })),
+      ApiConnectivityTest.testMarketAuxConnection().catch(e => ({ service: 'MarketAux', connected: false, responseTime: 0, error: e.message })),
+      ApiConnectivityTest.testCoresignalConnection().catch(e => ({ service: 'Coresignal MCP', connected: false, responseTime: 0, error: e.message })),
+      ApiConnectivityTest.testPerplexityConnection().catch(e => ({ service: 'Perplexity', connected: false, responseTime: 0, error: e.message }))
+    ]);
     
-    res.json({
-      success: true,
-      data: report,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: `Failed to generate daily cost report: ${error.message}`
-    });
-  }
-});
-
-/**
- * Epic 2.5.3 Task 2.4: Research Quality Metrics
- * GET /api/monitoring/quality?days=7
- */
-monitoringRouter.get('/quality', async (req: Request, res: Response) => {
-  try {
-    const days = parseInt(req.query.days as string) || 7;
-    const costTracker = ApiCostTracker.getInstance();
+    const healthySourcesCount = apiSources.filter(s => s.connected).length;
+    const apiSourceStatus = healthySourcesCount >= 3 ? 'operational' : healthySourcesCount >= 2 ? 'degraded' : 'critical';
     
-    const metrics = costTracker.getValueMetrics(days);
-    
-    res.json({
-      success: true,
-      data: {
-        ...metrics,
-        periodDays: days,
-        reportDate: new Date().toISOString().split('T')[0]
-      },
-      timestamp: new Date().toISOString()
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: `Failed to generate quality metrics: ${error.message}`
-    });
-  }
-});
-
-/**
- * Epic 2.5.3: Business Dashboard Summary
- * GET /api/monitoring/dashboard
- */
-monitoringRouter.get('/dashboard', async (_req: Request, res: Response) => {
-  try {
-    const costTracker = ApiCostTracker.getInstance();
-    
-    // Current day cost report
-    const todayCosts = costTracker.getDailyCostReport();
-    
-    // Last 7 days quality metrics
-    const qualityMetrics = costTracker.getValueMetrics(7);
-    
-    // Last 30 days quality metrics for comparison
-    const monthlyMetrics = costTracker.getValueMetrics(30);
-    
-    const dashboardData = {
-      costs: {
-        today: todayCosts,
-        budgetStatus: todayCosts.utilizationPercent <= 100 ? 'on_track' : 
-                     todayCosts.utilizationPercent <= 120 ? 'warning' : 'over_budget'
-      },
-      quality: {
-        weekly: qualityMetrics,
-        monthly: monthlyMetrics,
-        trends: {
-          valueScoreImprovement: qualityMetrics.averageValueScore - monthlyMetrics.averageValueScore,
-          solutionFocusGrowth: qualityMetrics.solutionFocusedPercent - monthlyMetrics.solutionFocusedPercent
-        }
-      },
-      alerts: {
-        budgetWarning: todayCosts.utilizationPercent >= 120,
-        lowQualityScore: qualityMetrics.averageValueScore < 3.0,
-        insufficientSolutionFocus: qualityMetrics.solutionFocusedPercent < 60
+    const enhancedHealth = {
+      ...health,
+      apiSources: {
+        status: apiSourceStatus,
+        healthy: healthySourcesCount,
+        total: apiSources.length,
+        sources: apiSources.map(s => ({
+          name: s.service,
+          status: s.connected ? 'up' : 'down',
+          responseTime: s.responseTime,
+          error: s.error
+        }))
       }
     };
     
-    res.json({
-      success: true,
-      data: dashboardData,
-      timestamp: new Date().toISOString()
-    });
+    const statusCode = health.status === 'healthy' && apiSourceStatus !== 'critical' ? 200 : 
+                      (health.status === 'degraded' || apiSourceStatus === 'degraded' ? 503 : 500);
+    
+    res.status(statusCode).json(enhancedHealth);
   } catch (error: any) {
     res.status(500).json({
-      success: false,
-      error: `Failed to generate dashboard data: ${error.message}`
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });
 
-/**
- * Epic 2.5.3: Winston's Performance Requirements Status
- * GET /api/monitoring/performance/status
- */
-monitoringRouter.get('/performance/status', async (_req: Request, res: Response) => {
+// System metrics (requires admin permission)
+monitoringRouter.get('/metrics', authMiddleware, requirePermission(Permission.ADMIN_FULL), async (req: Request, res: Response): Promise<void> => {
   try {
-    const costTracker = ApiCostTracker.getInstance();
-    const circuitBreakerStatus = costTracker.getCircuitBreakerStatus();
-    
-    const performanceStatus = {
-      adaptiveApiStrategy: 'implemented',   // Task 3.1
-      performanceBudgets: 'implemented',     // Task 3.2  
-      circuitBreakers: 'implemented',       // Task 3.3 ✅ COMPLETE
-      qualityGates: 'implemented'           // Task 3.4 ✅ COMPLETE
-    };
-
-    const qualityGates = costTracker.validateQualityGates();
+    const metrics = monitoringService.getSystemMetrics();
     
     res.json({
       success: true,
-      data: {
-        epic: '2.5.3',
-        status: 'complete', // Task 3 fully implemented
-        winstonRequirements: performanceStatus,
-        circuitBreakers: circuitBreakerStatus,
-        qualityGates: qualityGates,
-        completionPercentage: 100, // All Winston's requirements implemented
-        nextPriority: 'Task 4: Sally\'s UX Requirements'
-      },
-      timestamp: new Date().toISOString()
+      data: metrics
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: `Failed to get performance status: ${error.message}`
+      error: 'Failed to retrieve system metrics'
     });
   }
 });
 
-/**
- * Epic 2.5.3 Task 3.3: Circuit Breaker Status Monitoring
- * GET /api/monitoring/circuit-breakers
- */
-monitoringRouter.get('/circuit-breakers', async (_req: Request, res: Response) => {
+// Active alerts (requires admin permission)
+monitoringRouter.get('/alerts', authMiddleware, requirePermission(Permission.ADMIN_FULL), async (req: Request, res: Response): Promise<void> => {
   try {
-    const costTracker = ApiCostTracker.getInstance();
-    const circuitBreakerStatus = costTracker.getCircuitBreakerStatus();
-    
-    const summary = {
-      totalServices: Object.keys(circuitBreakerStatus).length,
-      healthyServices: Object.values(circuitBreakerStatus).filter(cb => cb.state === 'closed').length,
-      degradedServices: Object.values(circuitBreakerStatus).filter(cb => cb.state === 'open').length,
-      recoveringServices: Object.values(circuitBreakerStatus).filter(cb => cb.state === 'half-open').length
-    };
+    const alerts = await monitoringService.getActiveAlerts();
     
     res.json({
       success: true,
-      data: {
-        summary,
-        services: circuitBreakerStatus,
-        systemHealth: summary.degradedServices === 0 ? 'healthy' : 
-                     summary.degradedServices < summary.totalServices / 2 ? 'degraded' : 'critical'
-      },
-      timestamp: new Date().toISOString()
+      data: alerts
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: `Failed to get circuit breaker status: ${error.message}`
+      error: 'Failed to retrieve alerts'
     });
   }
 });
 
-/**
- * Epic 2.5.3 Task 3.4: Quality Gates for Production Deployment Validation
- * GET /api/monitoring/quality-gates
- */
-monitoringRouter.get('/quality-gates', async (_req: Request, res: Response) => {
+// Resolve alert (requires admin permission)
+monitoringRouter.post('/alerts/:alertId/resolve', authMiddleware, requirePermission(Permission.ADMIN_FULL), async (req: Request, res: Response): Promise<void> => {
   try {
-    const costTracker = ApiCostTracker.getInstance();
-    const qualityGateResults = costTracker.validateQualityGates();
+    const { alertId } = req.params;
+    
+    await monitoringService.resolveAlert(alertId);
     
     res.json({
       success: true,
-      data: {
-        ...qualityGateResults,
-        deploymentReady: qualityGateResults.passed,
-        recommendations: qualityGateResults.passed 
-          ? ['System ready for production deployment']
-          : qualityGateResults.gates
-              .filter(g => !g.passed)
-              .map(g => `Address ${g.name}: ${g.details}`)
-      },
-      timestamp: new Date().toISOString()
+      message: 'Alert resolved successfully'
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: `Failed to validate quality gates: ${error.message}`
+      error: 'Failed to resolve alert'
     });
   }
 });
+
+export default monitoringRouter;

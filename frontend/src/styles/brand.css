@@ -1,0 +1,309 @@
+/* ProspectPI Brand Integration - Story 2.1.2 */
+/* Detective Theme with Navy/Purple Color Scheme */
+
+:root {
+  /* Primary Brand Colors - Navy/Purple Detective Theme */
+  --brand-navy-50: #f8fafc;
+  --brand-navy-100: #f1f5f9;
+  --brand-navy-200: #e2e8f0;
+  --brand-navy-300: #cbd5e1;
+  --brand-navy-400: #94a3b8;
+  --brand-navy-500: #64748b;
+  --brand-navy-600: #475569;
+  --brand-navy-700: #334155;
+  --brand-navy-800: #1e293b;
+  --brand-navy-900: #0f172a;
+
+  /* Purple Accent Colors */
+  --brand-purple-50: #faf5ff;
+  --brand-purple-100: #f3e8ff;
+  --brand-purple-200: #e9d5ff;
+  --brand-purple-300: #d8b4fe;
+  --brand-purple-400: #c084fc;
+  --brand-purple-500: #a855f7;
+  --brand-purple-600: #9333ea;
+  --brand-purple-700: #7c3aed;
+  --brand-purple-800: #6b21a8;
+  --brand-purple-900: #581c87;
+
+  /* Detective Theme Semantics */
+  --color-investigation: var(--brand-navy-700);
+  --color-evidence: var(--brand-purple-600);
+  --color-clue: var(--brand-navy-600);
+  --color-suspect: var(--brand-purple-500);
+  --color-case-closed: #059669;
+  --color-alert: #dc2626;
+
+  /* Typography */
+  --font-detective-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-detective-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-detective-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Shadows & Effects */
+  --shadow-detective: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
+  --shadow-investigation: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  
+  /* Gradients */
+  --gradient-detective-primary: linear-gradient(135deg, var(--brand-navy-600) 0%, var(--brand-purple-600) 100%);
+  --gradient-detective-secondary: linear-gradient(135deg, var(--brand-navy-50) 0%, var(--brand-purple-50) 100%);
+  --gradient-investigation-bg: linear-gradient(180deg, var(--brand-navy-50) 0%, #ffffff 100%);
+}
+
+/* Global Brand Classes */
+.brand-navy-50 { color: var(--brand-navy-50); }
+.brand-navy-100 { color: var(--brand-navy-100); }
+.brand-navy-200 { color: var(--brand-navy-200); }
+.brand-navy-300 { color: var(--brand-navy-300); }
+.brand-navy-400 { color: var(--brand-navy-400); }
+.brand-navy-500 { color: var(--brand-navy-500); }
+.brand-navy-600 { color: var(--brand-navy-600); }
+.brand-navy-700 { color: var(--brand-navy-700); }
+.brand-navy-800 { color: var(--brand-navy-800); }
+.brand-navy-900 { color: var(--brand-navy-900); }
+
+.bg-brand-navy-50 { background-color: var(--brand-navy-50); }
+.bg-brand-navy-100 { background-color: var(--brand-navy-100); }
+.bg-brand-navy-600 { background-color: var(--brand-navy-600); }
+.bg-brand-navy-700 { background-color: var(--brand-navy-700); }
+.bg-brand-navy-800 { background-color: var(--brand-navy-800); }
+.bg-brand-navy-900 { background-color: var(--brand-navy-900); }
+
+.brand-purple-400 { color: var(--brand-purple-400); }
+.brand-purple-500 { color: var(--brand-purple-500); }
+.brand-purple-600 { color: var(--brand-purple-600); }
+.brand-purple-700 { color: var(--brand-purple-700); }
+
+.bg-brand-purple-50 { background-color: var(--brand-purple-50); }
+.bg-brand-purple-100 { background-color: var(--brand-purple-100); }
+.bg-brand-purple-600 { background-color: var(--brand-purple-600); }
+.bg-brand-purple-700 { background-color: var(--brand-purple-700); }
+
+/* Detective Theme Components */
+.detective-card {
+  background: white;
+  border: 2px solid var(--brand-navy-200);
+  border-radius: 12px;
+  box-shadow: var(--shadow-detective);
+  transition: all 0.2s ease;
+}
+
+.detective-card:hover {
+  border-color: var(--brand-purple-300);
+  box-shadow: var(--shadow-investigation);
+  transform: translateY(-2px);
+}
+
+.investigation-header {
+  background: var(--gradient-detective-primary);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px 12px 0 0;
+  font-family: var(--font-detective-heading);
+  font-weight: 600;
+}
+
+.evidence-badge {
+  background: var(--brand-purple-100);
+  color: var(--brand-purple-700);
+  border: 1px solid var(--brand-purple-200);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.clue-indicator {
+  background: var(--brand-navy-600);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font-detective-mono);
+}
+
+.investigation-progress {
+  background: var(--gradient-investigation-bg);
+  border: 2px solid var(--brand-navy-100);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.detective-input {
+  border: 2px solid var(--brand-navy-200);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-detective-body);
+  transition: all 0.2s ease;
+}
+
+.detective-input:focus {
+  outline: none;
+  border-color: var(--brand-purple-500);
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+.detective-button-primary {
+  background: var(--gradient-detective-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-detective-heading);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-detective);
+}
+
+.detective-button-primary:hover {
+  box-shadow: var(--shadow-investigation);
+  transform: translateY(-1px);
+}
+
+.detective-button-primary:active {
+  transform: translateY(0);
+}
+
+.detective-button-secondary {
+  background: white;
+  color: var(--brand-navy-700);
+  border: 2px solid var(--brand-navy-200);
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-detective-heading);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.detective-button-secondary:hover {
+  border-color: var(--brand-purple-300);
+  background: var(--brand-purple-50);
+  color: var(--brand-purple-700);
+}
+
+/* ProspectPI Logo & Branding */
+.prospectpi-logo {
+  font-family: var(--font-detective-heading);
+  font-weight: 700;
+  font-size: 1.75rem;
+  background: var(--gradient-detective-primary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--brand-navy-800); /* fallback */
+}
+
+.prospectpi-tagline {
+  font-family: var(--font-detective-body);
+  color: var(--brand-navy-600);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+.investigation-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font-detective-mono);
+}
+
+.status-investigating {
+  background: var(--brand-navy-100);
+  color: var(--brand-navy-700);
+}
+
+.status-analyzing {
+  background: var(--brand-purple-100);
+  color: var(--brand-purple-700);
+}
+
+.status-complete {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.status-alert {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+/* Detective Theme Animations */
+@keyframes investigation-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes clue-discovered {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.investigating-animation {
+  animation: investigation-pulse 2s ease-in-out infinite;
+}
+
+.clue-animation {
+  animation: clue-discovered 0.6s ease-out;
+}
+
+/* Responsive Detective Theme */
+@media (max-width: 768px) {
+  .prospectpi-logo {
+    font-size: 1.5rem;
+  }
+  
+  .investigation-header {
+    padding: 1rem;
+  }
+  
+  .detective-button-primary,
+  .detective-button-secondary {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Dark Mode Support for Detective Theme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-investigation: var(--brand-navy-300);
+    --color-evidence: var(--brand-purple-400);
+    --color-clue: var(--brand-navy-400);
+  }
+  
+  .detective-card {
+    background: var(--brand-navy-900);
+    border-color: var(--brand-navy-700);
+    color: var(--brand-navy-100);
+  }
+  
+  .detective-input {
+    background: var(--brand-navy-800);
+    border-color: var(--brand-navy-600);
+    color: var(--brand-navy-100);
+  }
+}

@@ -47,6 +47,7 @@ describe('Database Integration Tests', () => {
       
       testOrg = await orgService.createOrganization({
         name: 'Test Organization',
+        domain: 'test.com',
         slug: testOrgSlug,
         subscription_tier: 'starter',
         billing_email: 'billing@test.com'
@@ -87,7 +88,6 @@ describe('Database Integration Tests', () => {
         {
           companyName: 'Acme Corp',
           companyUrl: 'https://acme.com',
-          linkedinUrl: 'https://linkedin.com/company/acme',
           // NEW REQUIRED FIELDS
           vendorName: 'TechSolutions Inc',
           productName: 'Enterprise Platform',

@@ -1,16 +1,18 @@
 /**
  * ProspectPI Intelligence Theater - Agent Orchestration Service
- * Story 1.1: Three-Agent Orchestration System
+ * Story 1.1: Three-Agent Orchestration System (Enhanced to 4-Agent for Epic 2.4)
  * 
- * Orchestrates the three-agent intelligence system:
+ * Orchestrates the four-agent intelligence system:
  * 1. Intelligence Coordinator (planning & QA)
  * 2. Field Intelligence Researcher (data collection)
  * 3. Prospect Intelligence Detective (analysis & synthesis)
+ * 4. Cultural Intelligence Agent (cultural adaptation)
  */
 
 import { IntelligenceCoordinator } from '../agents/IntelligenceCoordinator';
 import { FieldIntelligenceResearcher } from '../agents/FieldIntelligenceResearcher';
 import { ProspectIntelligenceDetective } from '../agents/ProspectIntelligenceDetective';
+import { CulturalIntelligenceAgent } from '../agents/CulturalIntelligenceAgent';
 import { 
   OptimizedUserInput, 
   AgentProgress, 
@@ -27,12 +29,14 @@ export interface OrchestrationResult {
   executionTime: number;
   qualityGates: QualityGate[];
   agentProgress: AgentProgress[];
+  culturalAdaptation?: any;
 }
 
 export class AgentOrchestrator {
   private coordinator: IntelligenceCoordinator;
   private researcher: FieldIntelligenceResearcher;
   private detective: ProspectIntelligenceDetective;
+  private culturalAgent: CulturalIntelligenceAgent;
   private progressHistory: AgentProgress[] = [];
   private progressCallback: ((progress: AgentProgress) => void) | undefined;
 
@@ -43,6 +47,7 @@ export class AgentOrchestrator {
     this.coordinator = new IntelligenceCoordinator(this.trackProgress.bind(this));
     this.researcher = new FieldIntelligenceResearcher(this.trackProgress.bind(this));
     this.detective = new ProspectIntelligenceDetective(this.trackProgress.bind(this));
+    this.culturalAgent = new CulturalIntelligenceAgent(this.trackProgress.bind(this));
   }
 
   /**
@@ -121,8 +126,8 @@ export class AgentOrchestrator {
         { 
           sourcesCount: researchData.length,
           averageConfidence: researchData.reduce((sum, r) => sum + r.confidence, 0) / researchData.length,
-          totalCost: this.researcher.getTotalCost(),
-          withinCostTarget: this.researcher.isWithinCostTarget()
+          totalCost: (this.researcher as any).getTotalCost(),
+          withinCostTarget: (this.researcher as any).isWithinCostTarget()
         },
         'Data completeness, source diversity, and cost efficiency (4-source system)'
       );
@@ -149,7 +154,32 @@ export class AgentOrchestrator {
       await this.detective.initializeAnalysis(context, researchData);
       const dossier = await this.detective.analyzeIntelligence(researchData);
 
-      // Phase 4: Intelligence Coordinator - Final Quality Assurance
+      // Phase 4: Cultural Intelligence Agent - Cultural Adaptation (Epic 2.4)
+      await this.trackProgress({
+        stage: 'analyzing',
+        agent: 'coordinator',
+        message: 'Cultural Intelligence Agent adapting dossier for target market...',
+        confidence: dossier.confidenceScore * 0.95, // Slight confidence adjustment for cultural processing
+        estimatedTimeRemaining: 25, // Cultural processing adds ~2 seconds as per requirement
+        userCanInterrupt: false,
+        timestamp: new Date()
+      });
+
+      // Initialize cultural processing
+      await this.culturalAgent.initializeCulturalProcessing(context);
+      
+      // Extract company domain from input or generate from company name
+      const companyDomain = userInput.companyName.toLowerCase().replace(/\s+/g, '') + '.com';
+      const culturalAdaptation = await this.culturalAgent.adaptDossierForCulture(dossier, companyDomain);
+
+      // Apply cultural adaptations to dossier
+      if (culturalAdaptation.adaptedSections) {
+        dossier.structuredSections.executiveSummary.summary = culturalAdaptation.adaptedSections.executiveSummary || dossier.structuredSections.executiveSummary.summary;
+        // Store cultural variant in metadata for A/B testing
+        (dossier as any).culturalAdaptation = culturalAdaptation;
+      }
+
+      // Phase 5: Intelligence Coordinator - Final Quality Assurance
       await this.trackProgress({
         stage: 'synthesizing',
         agent: 'coordinator',
@@ -198,7 +228,8 @@ export class AgentOrchestrator {
         totalCost: dossier.totalCost,
         executionTime,
         qualityGates: allQualityGates,
-        agentProgress: this.progressHistory
+        agentProgress: this.progressHistory,
+        culturalAdaptation
       };
 
     } catch (error: any) {
@@ -207,7 +238,7 @@ export class AgentOrchestrator {
       return {
         success: false,
         error: error.message,
-        totalCost: this.researcher.getTotalCost(),
+        totalCost: (this.researcher as any).getTotalCost(),
         executionTime: Date.now() - startTime,
         qualityGates: this.coordinator.getContext()?.qualityGates || [],
         agentProgress: this.progressHistory
@@ -265,8 +296,8 @@ export class AgentOrchestrator {
     return {
       coordinator: this.coordinator.getContext(),
       researcher: {
-        totalCost: this.researcher.getTotalCost(),
-        withinTarget: this.researcher.isWithinCostTarget()
+        totalCost: (this.researcher as any).getTotalCost(),
+        withinTarget: (this.researcher as any).isWithinCostTarget()
       },
       detective: { status: 'active' }, // Detective doesn't expose internal state
       overallProgress

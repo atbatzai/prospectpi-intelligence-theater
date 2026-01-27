@@ -3,8 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { SmartCompanyInput } from '@/components/intelligence-theater/SmartCompanyInput';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 import { AgentProgressTheater } from '@/components/intelligence-theater/AgentProgressTheater';
 import { DossierViewer } from '@/components/intelligence-theater/DossierViewer';
+import { ProgressiveDossierReveal } from '@/components/ProgressiveDossierReveal';
+import { MobileFirstInterface } from '@/components/MobileFirstInterface';
+import { ApiHealthIndicator } from '@/components/intelligence-theater/ApiHealthIndicator';
 // ProspectPI Research Input Interface - Enhanced for Solution-Relevance
 interface ProspectResearchInput {
   // CRITICAL: Company being researched
@@ -140,7 +145,7 @@ export default function Dashboard() {
     
     try {
       // 🎯 CLEAN SEPARATION: Use unified endpoint with environment-based routing
-      const response = await fetch('http://localhost:3001/api/v1/research/generate-dossier', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/research/generate-dossier`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +205,7 @@ export default function Dashboard() {
     try {
       // Step 1: Test Backend API Health
       setIntegrationStatus('✅ Step 1/4: Testing backend API health...');
-      const healthResponse = await fetch('http://localhost:3001/health');
+      const healthResponse = await fetch(`${API_BASE_URL}/health`);
       if (!healthResponse.ok) {
         throw new Error('Backend health check failed');
       }
@@ -211,7 +216,7 @@ export default function Dashboard() {
       
       // Step 2: Submit Dossier Generation Request
       setIntegrationStatus('🔄 Step 2/4: Submitting dossier generation request...');
-      const response = await fetch('http://localhost:3001/api/v1/research/generate-dossier', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/research/generate-dossier`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -398,49 +403,87 @@ export default function Dashboard() {
   
   if (!user && !isDevelopment) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 intelligence-theater-mobile">
-        <div className="text-center px-4 mobile-typography">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            ProspectPI Intelligence Theater
-          </h1>
-          <p className="text-gray-600 text-sm md:text-base">Please log in to access the intelligence dashboard.</p>
+      <div className="intelligence-theater-container intelligence-theater-mobile">
+        <div className="flex items-center justify-center min-h-screen px-4">
+          <div className="detective-card text-center p-8 max-w-md w-full mobile-typography">
+            <div className="flex items-center justify-center mb-6">
+              <div>
+                <h1 className="detective-text-primary text-2xl md:text-3xl mb-2">
+                  ProspectPI Intelligence Theater
+                </h1>
+                <div className="credibility-badge">
+                  🔒 Professional Intelligence Platform
+                </div>
+              </div>
+            </div>
+            <p className="detective-text-secondary text-sm md:text-base mb-4">
+              Access restricted to authorized intelligence professionals.
+            </p>
+            <div className="detective-button-primary inline-block px-6 py-3 rounded-lg">
+              <a href="/auth/login" className="text-white font-medium">
+                🔓 Access Intelligence Theater
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 intelligence-theater-mobile mobile-typography">
-      <header className="bg-white shadow">
+    <>
+      {/* Epic 2.1.5: Mobile-First Interface Detection */}
+      <div className="block md:hidden">
+        <MobileFirstInterface 
+          currentDossier={currentDossier}
+          isGenerating={isGenerating}
+          onGenerateIntelligence={(data: any) => {
+            console.log('🔍 Mobile intelligence generation:', data);
+            // Use existing handleStartGeneration function
+            handleStartGeneration(data);
+          }}
+        />
+      </div>
+
+      {/* Desktop Interface */}
+      <div className="hidden md:block intelligence-theater-container intelligence-theater-mobile mobile-typography">
+      <header className="intelligence-theater-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center py-4 md:py-6 relative">
-            {/* Centered ProspectPI Logo - 75% larger */}
-            <img 
-              src="/prospectpi-logo.svg" 
-              alt="ProspectPI Logo" 
-              className="h-14 md:h-18 w-auto"
-              onError={(e) => {
-                // Fallback to emoji if logo not found
-                e.currentTarget.style.display = 'none';
-                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                if (fallback) fallback.style.display = 'inline';
-              }}
-            />
-            <span className="text-4xl hidden">🎭</span>
+            {/* ProspectPI Detective Intelligence Theater Branding */}
+            <div className="flex items-center space-x-4">
+              <div className="text-center">
+                <img 
+                  src="/prospectpi-logo.svg" 
+                  alt="ProspectPI Logo" 
+                  className="h-12 md:h-14 w-auto mb-1"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'block';
+                  }}
+                />
+                <div className="detective-text-primary text-xl md:text-2xl font-bold" style={{display: 'none'}}>
+                  ProspectPI Intelligence Theater
+                </div>
+              </div>
+            </div>
             
-            {/* Development Mode Badge - Positioned absolute right */}
-            <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
+            {/* Status Badge - Positioned absolute right */}
+            <div className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10">
               {isDevelopment ? (
-                <div className="text-sm text-green-600 font-semibold">
-                  🔓 Development Mode
+                <div className="confidence-indicator">
+                  <span className="text-sm detective-text-secondary font-semibold">
+                    🔓 Development Mode
+                  </span>
                 </div>
               ) : (
                 <button 
                   onClick={logout} 
-                  className="mobile-button mobile-touch-target text-gray-600 hover:text-gray-900 focus-visible:outline-none mobile-focus-visible"
+                  className="detective-button-secondary mobile-button mobile-touch-target focus-visible:outline-none mobile-focus-visible"
                   aria-label="Sign out of Intelligence Theater"
                 >
-                  Sign Out
+                  🚪 Sign Out
                 </button>
               )}
             </div>
@@ -477,6 +520,11 @@ export default function Dashboard() {
         {/* Generate Intelligence Tab */}
         {activeTab === 'generate' && (
           <>
+            {/* API Health Status */}
+            <div className="mb-6">
+              <ApiHealthIndicator refreshInterval={30000} />
+            </div>
+
             {/* BMAD ARCHITECT VALIDATION PANEL */}
             <div className="mb-6 bg-green-50 border border-green-500 rounded-lg p-4">
               <div className="flex justify-between items-start mb-3">
@@ -611,13 +659,12 @@ export default function Dashboard() {
                     
                     <div className="bg-white rounded-lg p-3 border-l-4 border-green-500">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xl">🕵️</span>
                         <span className="font-semibold text-green-700">Intelligence Detective</span>
                       </div>
                       <div className="text-sm space-y-1">
                         {agentProgress.filter(p => p.agent === 'detective').slice(-3).map((p, i) => (
                           <div key={i} className="text-green-600">
-                            🕵️ {p.message}
+                            {p.message}
                           </div>
                         )) || <div className="text-gray-500 italic">Validating intelligence quality...</div>}
                       </div>
@@ -672,8 +719,7 @@ export default function Dashboard() {
                       <div key={index} className="flex items-start gap-3 p-2 bg-gray-50 rounded">
                         <div className="text-xl">
                           {p.agent === 'coordinator' ? '🎭' : 
-                           p.agent === 'field_researcher' || p.agent === 'researcher' ? '🔍' : 
-                           p.agent === 'detective' ? '🕵️' : '🤖'}
+                           p.agent === 'field_researcher' || p.agent === 'researcher' ? '🔍' : '🤖'}
                         </div>
                         <div className="flex-1">
                           <div className="font-medium text-sm text-gray-900">
@@ -709,8 +755,7 @@ export default function Dashboard() {
                     progress: Math.round((progress.confidence || 0.7) * 100),
                     currentAction: progress.message || 'Processing...',
                     avatar: progress.agent === 'coordinator' || progress.agent === 'intelligence-coordinator' ? '🎭' :
-                             progress.agent === 'field_researcher' || progress.agent === 'researcher' ? '🔍' :
-                             progress.agent === 'detective' || progress.agent === 'intelligence-detective' ? '🕵️' : '🤖',
+                             progress.agent === 'field_researcher' || progress.agent === 'researcher' ? '🔍' : '🤖',
                     metadata: {
                       sourceCount: progress.dataSourcesActive?.length || 0,
                       insightsCount: progress.insightsDiscovered || 0,
@@ -727,7 +772,7 @@ export default function Dashboard() {
               </div>
             )}
             
-            {/* Dossier Viewer - Shows when complete */}
+            {/* Progressive Dossier Reveal - Epic 2.1.4 */}
             {currentDossier && !isGenerating && (
               <div className="mt-6">
                 <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -742,12 +787,62 @@ export default function Dashboard() {
                     Confidence: {Math.round(((currentDossier as any).confidence_score || 0.1) * 100)}%
                   </p>
                 </div>
-                <DossierViewer 
-                  dossier={currentDossier}
-                  onSectionToggle={handleSectionToggle}
+                
+                {/* Epic 2.1.4: Progressive Dossier Reveal with Executive Summary */}
+                <ProgressiveDossierReveal 
+                  companyName={(currentDossier as any).company_name || (currentDossier as any).companyName || 'Unknown Company'}
+                  executiveSummary={(currentDossier as any).executive_summary || 'Executive summary available on request.'}
+                  sections={(() => {
+                    const dossier = currentDossier as any;
+                    return [
+                      { 
+                        id: 'overview', 
+                        title: 'Company Overview', 
+                        content: dossier.company_overview || 'Company overview available.', 
+                        confidence: 'high' as const, 
+                        priority: 'critical' as const 
+                      },
+                      { 
+                        id: 'competitive', 
+                        title: 'Competitive Intelligence', 
+                        content: dossier.competitive_analysis || 'Competitive analysis available.', 
+                        confidence: 'medium' as const, 
+                        priority: 'important' as const 
+                      },
+                      { 
+                        id: 'financial', 
+                        title: 'Financial Intelligence', 
+                        content: dossier.financial_intelligence || 'Financial data available.', 
+                        confidence: 'high' as const, 
+                        priority: 'critical' as const 
+                      },
+                      { 
+                        id: 'technology', 
+                        title: 'Technology Stack', 
+                        content: dossier.technology_stack || 'Technology information available.', 
+                        confidence: 'medium' as const, 
+                        priority: 'important' as const 
+                      },
+                    ];
+                  })()}
+                  onShare={() => console.log('Share dossier')}
                   onExport={() => console.log('Export dossier')}
-                  expandedSections={selectedSections}
+                  onGenerateAnother={() => {
+                    setCurrentDossier(null);
+                    setAgentProgress([]);
+                    setIntegrationStatus('Ready for new research');
+                  }}
                 />
+                
+                {/* Traditional Dossier Viewer (fallback) */}
+                <div className="mt-6">
+                  <DossierViewer 
+                    dossier={currentDossier}
+                    onSectionToggle={handleSectionToggle}
+                    onExport={() => console.log('Export dossier')}
+                    expandedSections={selectedSections}
+                  />
+                </div>
               </div>
             )}
           </>
@@ -777,7 +872,6 @@ export default function Dashboard() {
               </div>
             ) : dossierHistory.length === 0 ? (
               <div className="text-center py-12 bg-gray-50 rounded-lg">
-                <div className="text-6xl mb-4">🕵️</div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Dossiers Yet</h3>
                 <p className="text-gray-600 mb-4">Start your first intelligence investigation to build your library</p>
                 <button
@@ -796,7 +890,6 @@ export default function Dashboard() {
                         <h3 className="font-semibold text-gray-900 truncate">{dossier.company_name || dossier.companyName || 'Unknown Company'}</h3>
                         <p className="text-sm text-gray-600">{dossier.classification || 'FBI-Quality Intelligence'}</p>
                       </div>
-                      <span className="text-2xl">🕵️</span>
                     </div>
                     
                     <div className="space-y-2 mb-4">
@@ -844,5 +937,6 @@ export default function Dashboard() {
         )}
       </main>
     </div>
+    </>
   );
 }

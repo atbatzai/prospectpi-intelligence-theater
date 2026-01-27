@@ -205,8 +205,68 @@ class ApiServer {
     // API routes
     this.app.use('/api/v1', apiRouter);
 
+    // Auth Routes (MVP-UX-007)
+    const authRouter = require('./routes/auth/index').default;
+    this.app.use('/api/v1/auth', authRouter);
+
     // Mack Consultation Agent Routes
     this.app.use('/api/v1/consultation', consultationRouter);
+
+    // OAuth 2.0 Routes (Story 5.1)
+    const { oauthRouter } = require('./routes/auth/oauth');
+    this.app.use('/api/auth/oauth', oauthRouter);
+
+    // MFA Routes (Story 5.1)
+    const { mfaRouter } = require('./routes/auth/mfa');
+    this.app.use('/api/auth/mfa', mfaRouter);
+
+    // SAML 2.0 Routes (Story 5.1)
+    const { samlRouter } = require('./routes/auth/saml');
+    this.app.use('/api/auth/saml', samlRouter);
+
+    // Analytics Routes (Story 6.1)
+    const analyticsRouter = require('./routes/analytics/index').default;
+    this.app.use('/api/v1/analytics', analyticsRouter);
+
+    // Quality Metrics Routes (Story 6.2)
+    const qualityRouter = require('./routes/analytics/quality').default;
+    this.app.use('/api/v1/quality', qualityRouter);
+
+    // Dashboard Routes (Story 6.1)
+    const dashboardRouter = require('./routes/analytics/dashboard').default;
+    this.app.use('/api/v1/dashboard', dashboardRouter);
+
+    // Reporting Routes (Story 6.3)
+    const reportsRouter = require('./routes/analytics/reports').default;
+    this.app.use('/api/v1/reports', reportsRouter);
+
+    // Predictive Analytics Routes (Story 6.4)
+    const predictiveRouter = require('./routes/analytics/predictive').default;
+    this.app.use('/api/v1/predictive', predictiveRouter);
+
+    // Public API Routes (Story 7.1)
+    const publicApiRouter = require('./routes/api/v1/public').default;
+    this.app.use('/api/v1/public', publicApiRouter);
+
+    // CRM Integration Routes (Story 7.2)
+    const crmRouter = require('./routes/integrations/crm').default;
+    this.app.use('/api/v1/integrations/crm', crmRouter);
+
+    // Webhook Routes (Story 7.3)
+    const webhooksRouter = require('./routes/integrations/webhooks').default;
+    this.app.use('/api/v1/webhooks', webhooksRouter);
+
+    // White-Label Platform Routes (Story 7.4)
+    const brandingRouter = require('./routes/platform/branding').default;
+    this.app.use('/api/v1/branding', brandingRouter);
+
+    // Plugin Marketplace Routes (Story 7.5)
+    const pluginsRouter = require('./routes/platform/plugins').default;
+    this.app.use('/api/v1/plugins', pluginsRouter);
+
+    // Monitoring Routes (Story 5.3)
+    const monitoringRouter = require('./routes/monitoring/index').default;
+    this.app.use('/api/v1/monitoring', monitoringRouter);
 
     // PHASE 1: Organization Management Routes (temporarily commented out for consultation testing)
     // const organizationRouter = require('./routes/organization');

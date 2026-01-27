@@ -6,10 +6,44 @@
  */
 
 import bundleAnalyzer from '@next/bundle-analyzer';
+import withPWA from 'next-pwa';
 
 // Enable bundle analyzer when ANALYZE=true
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
+});
+
+// Story 2.1.5: PWA configuration for mobile-first implementation
+const pwaConfig = withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/api\.prospectpi\.com\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'api-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 24 * 60 * 60 // 24 hours
+        },
+        networkTimeoutSeconds: 10
+      }
+    },
+    {
+      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'image-cache',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+        }
+      }
+    }
+  ]
 });
 
 const nextConfig = {
@@ -186,4 +220,5 @@ const nextConfig = {
   }
 };
 
-export default withBundleAnalyzer(nextConfig);
+// Story 2.1.5: Export PWA-enabled config
+export default withBundleAnalyzer(pwaConfig(nextConfig));

@@ -116,6 +116,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   checkAuth: async () => {
     const token = localStorage.getItem('token');
     if (!token) {
+      set({ user: null, organization: null, isAuthenticated: false, isLoading: false });
+      return;
+    }
+
+    try {
+      const response = await apiClient.get('/api/auth/me');
+      const { user, organization } = response.data;
+      set({ user, organization, isAuthenticated: true, isLoading: false });
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      localStorage.removeItem('token');
+      set({ user: null, organization: null, isAuthenticated: false, isLoading: false });
+    }
+    
+    /* ORIGINAL AUTH CODE - DISABLED FOR UX TESTING
+    const token = localStorage.getItem('token');
+    if (!token) {
       set({ isLoading: false });
       return;
     }
@@ -136,6 +153,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       tokenManager.clearTimer();
       set({ user: null, organization: null, isAuthenticated: false, isLoading: false });
     }
+    */
   },
 
   updateUser: (user: User) => {

@@ -186,21 +186,21 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
   }, []);
 
   // Optimized animation classes based on device capabilities
-  const getOptimizedAnimationClass = useCallback(() => {
-    if (isEmergencyMode() || !shouldAnimate) return '';
+  const getTransitionConfig = useCallback(() => {
+    if (isEmergencyMode() || !shouldAnimate) return { className: '', style: {} };
     
     const baseDuration = getAnimationDuration(200);
-    if (baseDuration === 0) return '';
+    if (baseDuration === 0) return { className: '', style: {} };
     
     switch (performanceTier) {
       case 'low':
-        return 'transition-opacity duration-200';
+        return { className: 'transition-opacity', style: { transitionDuration: '200ms' } };
       case 'medium':
-        return `transition-all duration-[${baseDuration}ms]`;
+        return { className: 'transition-all', style: { transitionDuration: `${baseDuration}ms` } };
       case 'high':
-        return `transition-all duration-[${baseDuration}ms] ease-in-out`;
+        return { className: 'transition-all ease-in-out', style: { transitionDuration: `${baseDuration}ms` } };
       default:
-        return '';
+        return { className: '', style: {} };
     }
   }, [isEmergencyMode, shouldAnimate, getAnimationDuration, performanceTier]);
 
@@ -208,14 +208,14 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
   const MobileSectionRenderer = useCallback(({ section, index }: { section: IntelligenceSection; index: number }) => {
     const isVisible = visibleSections.has(section.id);
     const isLoaded = loadedSections.has(section.id);
-    const animationClass = getOptimizedAnimationClass();
+    const transitionConfig = getTransitionConfig();
     
     if (!isLoaded && isMobile) {
       return null; // Don't render unloaded sections on mobile
     }
 
     return (
-      <Card key={section.id} className={`mb-4 ${animationClass}`}>
+      <Card key={section.id} className={`mb-4 ${transitionConfig.className}`} style={transitionConfig.style}>
         <Collapsible 
           open={isVisible} 
           onOpenChange={() => loadSectionOnDemand(section.id)}
@@ -250,7 +250,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
             </CardHeader>
           </CollapsibleTrigger>
           
-          <CollapsibleContent className={animationClass}>
+          <CollapsibleContent className={transitionConfig.className} style={transitionConfig.style}>
             <CardContent className="pt-0 px-4 pb-4">
               {isEmergencyMode() ? (
                 // Emergency mode: Text-only content
@@ -320,7 +320,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
         </Collapsible>
       </Card>
     );
-  }, [visibleSections, loadedSections, isMobile, getOptimizedAnimationClass, loadSectionOnDemand, isEmergencyMode, getConfidenceBadge, shouldUseSimplifiedVersion, performanceTier]);
+  }, [visibleSections, loadedSections, isMobile, getTransitionConfig, loadSectionOnDemand, isEmergencyMode, getConfidenceBadge, shouldUseSimplifiedVersion, performanceTier]);
 
   // Show optimized loading state for different performance tiers
   if (!isInitialized) {

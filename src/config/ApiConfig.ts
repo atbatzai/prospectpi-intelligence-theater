@@ -321,12 +321,20 @@ export class ApiConfig {
   static readonly SHODAN_API_KEY = process.env.SHODAN_API_KEY!;
   // Note: Clearbit removed (acquired by HubSpot)
 
-  // Agent Configuration
-  static readonly INTELLIGENCE_COORDINATOR_MODEL = process.env.INTELLIGENCE_COORDINATOR_MODEL || 'claude-3-5-sonnet-20241022';
+  // Agent Configuration - Optimized with Claude 3.5 Sonnet (2x faster, better reasoning)
+  static readonly INTELLIGENCE_COORDINATOR_MODEL = (() => {
+    const model = process.env.INTELLIGENCE_COORDINATOR_MODEL || 'claude-3-5-sonnet-20240620';
+    console.log('🔍 LOADING INTELLIGENCE_COORDINATOR_MODEL:', model);
+    return model;
+  })();
   static readonly INTELLIGENCE_COORDINATOR_TEMPERATURE = parseFloat(process.env.INTELLIGENCE_COORDINATOR_TEMPERATURE || '0.1');
   static readonly FIELD_RESEARCHER_PRIMARY_MODEL = process.env.FIELD_RESEARCHER_PRIMARY_MODEL || 'deepseek-chat';
   static readonly FIELD_RESEARCHER_FALLBACK_MODEL = process.env.FIELD_RESEARCHER_FALLBACK_MODEL || 'gpt-4o-mini';
-  static readonly DETECTIVE_MODEL = process.env.DETECTIVE_MODEL || 'claude-3-5-sonnet-20241022';
+  static readonly DETECTIVE_MODEL = (() => {
+    const model = process.env.DETECTIVE_MODEL || 'claude-3-5-sonnet-20240620';
+    console.log('🔍 LOADING DETECTIVE_MODEL:', model);
+    return model;
+  })();
   static readonly DETECTIVE_TEMPERATURE_MIN = parseFloat(process.env.DETECTIVE_TEMPERATURE_MIN || '0.1');
   static readonly DETECTIVE_TEMPERATURE_MAX = parseFloat(process.env.DETECTIVE_TEMPERATURE_MAX || '0.3');
 

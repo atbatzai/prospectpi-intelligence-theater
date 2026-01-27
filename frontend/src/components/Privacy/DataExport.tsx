@@ -4,8 +4,10 @@
  */
 
 import React, { useState } from 'react';
-import { Button } from '../ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface UserDataExport {
   user_profile: {
@@ -40,7 +42,7 @@ export const DataExport: React.FC = () => {
     setExportData(null);
 
     try {
-      const response = await fetch('/api/v1/privacy/export', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/privacy/export`, {
         credentials: 'include'
       });
 

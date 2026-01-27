@@ -4,8 +4,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '../ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface ConsentPreferences {
   marketing: boolean;
@@ -42,7 +44,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
 
   const loadConsentPreferences = async () => {
     try {
-      const response = await fetch('/api/v1/privacy/consent', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/privacy/consent`, {
         credentials: 'include'
       });
       
@@ -66,7 +68,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
     setMessage(null);
 
     try {
-      const response = await fetch('/api/v1/privacy/consent', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/privacy/consent`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -100,7 +102,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
 
   const updateDataRegion = async (region: string) => {
     try {
-      const response = await fetch('/api/v1/privacy/region', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/privacy/region`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

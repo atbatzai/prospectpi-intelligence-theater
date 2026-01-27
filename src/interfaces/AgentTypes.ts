@@ -8,7 +8,7 @@
 
 export interface AgentProgress {
   stage: 'planning' | 'researching' | 'analyzing' | 'synthesizing' | 'quality_check';
-  agent: 'coordinator' | 'researcher' | 'detective' | 'intelligence_coordinator' | 'field_researcher' | 'intelligence_detective';
+  agent: 'coordinator' | 'researcher' | 'detective' | 'cultural_intelligence' | 'intelligence_coordinator' | 'field_researcher' | 'intelligence_detective';
   message: string;
   confidence: number;
   estimatedTimeRemaining: number;

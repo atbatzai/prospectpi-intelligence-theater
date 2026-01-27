@@ -1,11 +1,15 @@
 /**
  * YOLO User Dashboard - Complete SaaS Dossier Management
  */
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 // import { Separator } from "@/components/ui/separator";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 import { Calendar, FileText, TrendingUp, User, Archive, Download, Share2, Users, Lock, Eye, Edit, Shield } from "lucide-react";
 
 interface Dossier {
@@ -49,15 +53,14 @@ export const UserDashboard = () => {
     try {
       setLoading(true);
       
-      // UX EXPERT: Fetch all user data including shared dossiers
       const [profileRes, dossiersRes, sharedRes] = await Promise.all([
-        fetch('/api/v1/auth/profile', {
+        fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('/api/v1/research/dossiers', {
+        fetch(`${API_BASE_URL}/api/v1/research/dossiers`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('/api/v1/research/shared', {
+        fetch(`${API_BASE_URL}/api/v1/research/shared`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);

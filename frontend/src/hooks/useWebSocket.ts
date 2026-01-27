@@ -286,8 +286,6 @@ function getAgentAvatar(agent: string): string {
       return '🎯';
     case 'researcher':
       return '🔍';
-    case 'detective':
-      return '🕵️';
     default:
       return '🤖';
   }

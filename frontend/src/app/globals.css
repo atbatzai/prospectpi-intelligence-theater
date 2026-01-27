@@ -2,6 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ProspectPI Detective Intelligence Theme */
+:root {
+  /* Primary Brand Colors */
+  --prospectpi-navy: #1E3A8A;
+  --prospectpi-purple: #8B5CF6;
+  --prospectpi-dark: #0F172A;
+  --prospectpi-gray: #64748B;
+  --prospectpi-light: #F8FAFC;
+  
+  /* Detective Theme Variables */
+  --detective-primary: var(--prospectpi-navy);
+  --detective-secondary: var(--prospectpi-purple);
+  --detective-accent: #F59E0B;
+  --detective-text: #1E293B;
+  --detective-text-muted: #64748B;
+  
+  /* Intelligence Theater Specific */
+  --theater-bg: #FAFBFC;
+  --theater-card: #FFFFFF;
+  --theater-border: #E2E8F0;
+  --theater-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Detective Theme Components */
+.detective-card {
+  @apply bg-white border border-slate-200 rounded-lg shadow-sm;
+}
+
+.detective-button-primary {
+  @apply bg-prospectpi-navy hover:bg-blue-800 text-white font-medium px-4 py-2 rounded-md transition-colors;
+}
+
+.detective-button-secondary {
+  @apply bg-prospectpi-purple hover:bg-purple-600 text-white font-medium px-4 py-2 rounded-md transition-colors;
+}
+
+.detective-text-primary {
+  @apply text-slate-900 font-semibold;
+}
+
+.detective-text-secondary {
+  @apply text-slate-600;
+}
+
+.intelligence-theater-container {
+  @apply min-h-screen bg-slate-50;
+}
+
+.intelligence-theater-header {
+  @apply bg-white border-b border-slate-200 shadow-sm;
+}
+
+/* Professional credibility emphasis */
+.credibility-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800;
+}
+
+.confidence-indicator {
+  @apply flex items-center space-x-1 text-sm;
+}
+
+.confidence-high {
+  @apply text-green-600;
+}
+
+.confidence-medium {
+  @apply text-yellow-600;
+}
+
+.confidence-low {
+  @apply text-red-600;
+}
+
 html,
 body {
   max-width: 100vw;

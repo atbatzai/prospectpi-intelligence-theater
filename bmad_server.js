@@ -21,7 +21,7 @@ app.post('/api/v1/research/generate-dossier', (req, res) => {
 });
 
 console.log(' BMad Orchestrator: Starting backend...');
-app.listen(3001, () => {
-  console.log(' Backend OPERATIONAL on port 3001');
+app.listen(3000, () => {
+  console.log('🔥 Backend OPERATIONAL on port 3000');
   console.log(' Frontend-Backend parallel development ENABLED');
 });

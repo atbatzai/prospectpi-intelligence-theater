@@ -6,9 +6,10 @@
 
 import { Router } from 'express';
 import { researchRouter } from './research';
-import { authRouter } from './auth';
-import { monitoringRouter } from './monitoring';
+import authRouter from './auth';
+import monitoringRouter from './monitoring';
 import { privacyRouter } from './privacy';
+import phase3Router from './api/v1/phase3';
 
 export const apiRouter = Router();
 
@@ -23,6 +24,9 @@ apiRouter.use('/monitoring', monitoringRouter);
 
 // GDPR Privacy & Compliance endpoints
 apiRouter.use('/privacy', privacyRouter);
+
+// Phase 3: Advanced Intelligence Features
+apiRouter.use('', phase3Router);
 
 // Additional route groups can be added here
 // apiRouter.use('/user', userRouter);

@@ -54,4 +54,4 @@ authRouter.get('/profile', authenticateJWT, async (req: any, res) => {
   }
 });
 
-export { authRouter };
+export default authRouter;

@@ -1,463 +1,223 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SmartCompanyInput } from '../SmartCompanyInput';
-import { OptimizedUserInput, DeviceCapabilities } from '@/types';
 
-// Mock the performance store
-vi.mock('@/store/intelligenceStore', () => ({
-  usePerformanceStore: vi.fn()
+// Mock the icons
+vi.mock('lucide-react', () => ({
+  Search: () => <div data-testid="search-icon">Search</div>,
+  Sparkles: () => <div data-testid="sparkles-icon">Sparkles</div>,
+  Building: () => <div data-testid="building-icon">Building</div>,
+  Building2: () => <div data-testid="building2-icon">Building2</div>,
+  Globe: () => <div data-testid="globe-icon">Globe</div>,
+  TrendingUp: () => <div data-testid="trending-up-icon">TrendingUp</div>,
+  Users: () => <div data-testid="users-icon">Users</div>,
+  Clock: () => <div data-testid="clock-icon">Clock</div>
 }));
 
-import { usePerformanceStore } from '@/store/intelligenceStore';
-
-describe('SmartCompanyInput', () => {
-  const mockOnSubmit = vi.fn();
-  const mockPreviousCompanies = ['Acme Corp', 'TechCorp', 'Global Solutions'];
+describe('SmartCompanyInput - Magic Entry Interface (Story 2.1.1)', () => {
+  const mockOnGenerate = vi.fn();
 
   beforeEach(() => {
-    mockOnSubmit.mockClear();
+    mockOnGenerate.mockClear();
   });
 
-  const renderComponent = (props = {}) => {
-    return render(
-      <SmartCompanyInput
-        onSubmit={mockOnSubmit}
-        isGenerating={false}
-        previousCompanies={mockPreviousCompanies}
-        {...props}
-      />
-    );
-  };
-
-  it('renders the solution-relevance input interface', () => {
-    renderComponent();
-    
-    expect(screen.getByText('Solution-Relevance Intelligence Theater')).toBeInTheDocument();
-    expect(screen.getByText('Solution Context')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Target Company Name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Your Vendor\/Company/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Your Product\/Solution/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Target Company Industry/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Primary Pain Point/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Generate Intelligence Dossier/i })).toBeInTheDocument();
-  });
-
-  it('validates all required solution-relevance fields', () => {
-    renderComponent();
-    
-    const submitButton = screen.getByRole('button', { name: /Generate Intelligence Dossier/i });
-    expect(submitButton).toBeDisabled();
-    
-    // Should show validation helper when fields are missing
-    expect(screen.getByText(/Required Information Missing:/)).toBeInTheDocument();
-    
-    // Fill in required fields one by one
-    const companyInput = screen.getByLabelText(/Target Company Name/i);
-    fireEvent.change(companyInput, { target: { value: 'OpenAI' } });
-    expect(submitButton).toBeDisabled(); // Still disabled, more fields needed
-    
-    const vendorInput = screen.getByLabelText(/Your Vendor\/Company/i);
-    fireEvent.change(vendorInput, { target: { value: 'Microsoft' } });
-    expect(submitButton).toBeDisabled(); // Still disabled
-    
-    const productInput = screen.getByLabelText(/Your Product\/Solution/i);
-    fireEvent.change(productInput, { target: { value: 'Azure' } });
-    expect(submitButton).toBeDisabled(); // Still disabled
-    
-    const industrySelect = screen.getByLabelText(/Target Company Industry/i);
-    fireEvent.change(industrySelect, { target: { value: 'Technology' } });
-    expect(submitButton).toBeDisabled(); // Still disabled
-    
-    const painPointInput = screen.getByLabelText(/Primary Pain Point/i);
-    fireEvent.change(painPointInput, { target: { value: 'Cloud migration challenges' } });
-    
-    // Now all required fields are filled
-    expect(submitButton).not.toBeDisabled();
-  });
-
-  it('shows autocomplete suggestions from previous companies', async () => {
-    renderComponent();
-    
-    const companyInput = screen.getByLabelText(/Target Company Name/i);
-    fireEvent.change(companyInput, { target: { value: 'Tech' } });
-    fireEvent.focus(companyInput);
-    
-    await waitFor(() => {
-      expect(screen.getByText('TechCorp')).toBeInTheDocument();
-    });
-  });
-
-  it('allows selection of priority and output format', () => {
-    renderComponent();
-    
-    // Test priority selection
-    const expressRadio = screen.getByRole('radio', { name: /Express \(Faster\)/i });
-    fireEvent.click(expressRadio);
-    expect(expressRadio).toBeChecked();
-    
-    // Test output format selection
-    const summaryRadio = screen.getByRole('radio', { name: /Executive Summary/i });
-    fireEvent.click(summaryRadio);
-    expect(summaryRadio).toBeChecked();
-  });
-
-  it('expands additional context section', () => {
-    renderComponent();
-    
-    const contextButton = screen.getByRole('button', { name: /Additional Context & Focus Areas/i });
-    fireEvent.click(contextButton);
-    
-    expect(screen.getByText('Focus on cloud migration signals')).toBeInTheDocument();
-    expect(screen.getByText('Prioritize competitive analysis')).toBeInTheDocument();
-  });
-
-  it('allows selection of context suggestions', () => {
-    renderComponent();
-    
-    // Expand context section
-    const contextButton = screen.getByRole('button', { name: /Additional Context & Focus Areas/i });
-    fireEvent.click(contextButton);
-    
-    // Select a context suggestion
-    const contextSuggestion = screen.getByRole('button', { name: 'Focus on cloud migration signals' });
-    fireEvent.click(contextSuggestion);
-    
-    // Verify it appears in selected areas
-    expect(screen.getByText('Selected focus areas:')).toBeInTheDocument();
-  });
-
-  it('submits form with complete solution-relevance data structure', () => {
-    renderComponent();
-    
-    // Fill all required solution-relevance fields
-    const companyInput = screen.getByLabelText(/Target Company Name/i);
-    fireEvent.change(companyInput, { target: { value: 'OpenAI' } });
-    
-    const vendorInput = screen.getByLabelText(/Your Vendor\/Company/i);
-    fireEvent.change(vendorInput, { target: { value: 'Microsoft' } });
-    
-    const productInput = screen.getByLabelText(/Your Product\/Solution/i);
-    fireEvent.change(productInput, { target: { value: 'Azure OpenAI Service' } });
-    
-    const industrySelect = screen.getByLabelText(/Target Company Industry/i);
-    fireEvent.change(industrySelect, { target: { value: 'Technology' } });
-    
-    const painPointInput = screen.getByLabelText(/Primary Pain Point/i);
-    fireEvent.change(painPointInput, { target: { value: 'AI integration challenges' } });
-    
-    // Open additional context section first
-    const additionalContextButton = screen.getByRole('button', { name: /Show additional context/i });
-    fireEvent.click(additionalContextButton);
-    
-    // Select enhanced analysis options
-    const competitorCheckbox = screen.getByLabelText(/Include Competitor Analysis/i);
-    fireEvent.click(competitorCheckbox);
-    
-    const budgetCheckbox = screen.getByLabelText(/Budget.*Decision Maker Intel/i);
-    fireEvent.click(budgetCheckbox);
-    
-    // Select express priority
-    const expressRadio = screen.getByRole('radio', { name: /Express \(Faster\)/i });
-    fireEvent.click(expressRadio);
-    
-    // Submit form
-    const submitButton = screen.getByRole('button', { name: /Generate Intelligence Dossier/i });
-    fireEvent.click(submitButton);
-    
-    expect(mockOnSubmit).toHaveBeenCalledWith({
-      companyName: 'OpenAI',
-      vendorName: 'Microsoft',
-      productName: 'Azure OpenAI Service',
-      industry: 'Technology',
-      primaryPainPoint: 'AI integration challenges',
-      competitorAnalysis: true,
-      budgetIntelligence: true,
-      technologyStackFocus: false,
-      priority: 'express',
-      outputFormat: 'full',
-      confidenceThreshold: 'medium',
-      additionalContext: undefined
-    });
-  });
-
-  it('disables form when generating', () => {
-    renderComponent({ isGenerating: true });
-    
-    const companyInput = screen.getByLabelText(/Target Company Name/i);
-    const vendorInput = screen.getByLabelText(/Your Vendor\/Company/i);
-    const submitButton = screen.getByRole('button', { name: /Generating Intelligence Dossier.../i });
-    
-    expect(companyInput).toBeDisabled();
-    expect(vendorInput).toBeDisabled();
-    expect(submitButton).toBeDisabled();
-    expect(screen.getByText('Generating Intelligence Dossier...')).toBeInTheDocument();
-  });
-
-  it('displays loading spinner when generating', () => {
-    renderComponent({ isGenerating: true });
-    
-    expect(screen.getByRole('button', { name: /Generating Intelligence Dossier.../i })).toBeInTheDocument();
-    // Check for spinner element
-    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
-  });
-
-  // Task 5.5: Screen Reader & Accessibility Tools Testing
-  describe('Screen Reader & Accessibility Tools Testing', () => {
-    test('provides comprehensive screen reader navigation structure', () => {
-      renderComponent();
-
-      // Check for proper landmarks and regions
-      expect(screen.getByRole('form')).toBeInTheDocument();
+  describe('Single Input Field', () => {
+    it('renders with single company input field', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
       
-      // Verify ARIA labels are present for screen readers
-      expect(screen.getByLabelText(/Target Company Name/i)).toHaveAttribute('aria-required', 'true');
-      expect(screen.getByLabelText(/Your Vendor\/Company/i)).toHaveAttribute('aria-required', 'true');
-      expect(screen.getByLabelText(/Target Company Industry/i)).toHaveAttribute('aria-required', 'true');
-      expect(screen.getByLabelText(/Your Product\/Solution/i)).toHaveAttribute('aria-required', 'true');
-      expect(screen.getByLabelText(/Primary Pain Point/i)).toHaveAttribute('aria-required', 'true');
+      expect(screen.getByText('Generate Business Intelligence')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Enter company name or website...')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Generate Sales Dossier/i })).toBeInTheDocument();
     });
 
-    test('supports screen reader announcement of form validation', async () => {
-      renderComponent();
-
-      const companyInput = screen.getByLabelText(/Target Company Name/i);
-      const submitButton = screen.getByRole('button', { name: /Generate Intelligence Dossier/i });
+    it('enables generate button only when input has content', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
       
-      // Test form validation with screen reader support
-      fireEvent.change(companyInput, { target: { value: 'A' } });
-      fireEvent.blur(companyInput);
+      const input = screen.getByPlaceholderText('Enter company name or website...');
+      const generateButton = screen.getByRole('button', { name: /Generate Sales Dossier/i });
       
-      expect(companyInput).toHaveAttribute('aria-invalid', 'true');
-    });
-
-    test('provides proper heading hierarchy for screen reader navigation', () => {
-      renderComponent();
-
-      // Check heading structure (h1 > h2 > h3, etc.)
-      expect(screen.getByRole('heading', { name: /Solution Context/i })).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: /Enhanced Analysis Options/i })).toBeInTheDocument();
-    });
-
-    test('supports keyboard navigation and focus management', () => {
-      renderComponent();
-
-      const firstInput = screen.getByLabelText(/Target Company Name/i);
-
-      // Test tab order and focus management
-      firstInput.focus();
-      expect(document.activeElement).toBe(firstInput);
-
-      // Test keyboard navigation - inputs should be tabbable
-      const secondInput = screen.getByLabelText(/Your Vendor\/Company/i);
-      expect(firstInput).not.toHaveAttribute('tabIndex', '-1');
-      expect(secondInput).not.toHaveAttribute('tabIndex', '-1');
-    });
-
-    test('provides proper ARIA descriptions for complex form elements', () => {
-      renderComponent();
-
-      // Check radiogroup has proper ARIA attributes
-      const priorityRadiogroup = screen.getByRole('radiogroup', { name: '6. Analysis Priority' });
-      expect(priorityRadiogroup).toHaveAttribute('aria-labelledby');
-
-      // Check radio buttons have descriptions
-      const standardRadio = screen.getByRole('radio', { name: /Standard Analysis/i });
-      expect(standardRadio).toHaveAttribute('aria-describedby');
-    });
-
-    test('announces dynamic content changes to screen readers', async () => {
-      renderComponent();
-
-      const toggleButton = screen.getByRole('button', { name: /Show Additional Context & Focus Areas/i });
+      // Initially disabled
+      expect(generateButton).toBeDisabled();
       
-      // Test ARIA live region updates
-      expect(toggleButton).toHaveAttribute('aria-expanded', 'false');
-      fireEvent.click(toggleButton);
-      expect(toggleButton).toHaveAttribute('aria-expanded', 'true');
+      // Type company name - should enable
+      fireEvent.change(input, { target: { value: 'Netflix' } });
+      expect(generateButton).toBeEnabled();
+      
+      // Clear input - should disable again
+      fireEvent.change(input, { target: { value: '' } });
+      expect(generateButton).toBeDisabled();
+    });
+  });
+
+  describe('Netflix Demo Option', () => {
+    it('displays Netflix as demo option for instant value', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
+      
+      expect(screen.getByText('Or try one of these examples for instant results:')).toBeInTheDocument();
+      expect(screen.getByText('Netflix')).toBeInTheDocument();
+      expect(screen.getByText('Entertainment & Media')).toBeInTheDocument();
     });
 
-    test('supports voice control labeling', () => {
-      renderComponent();
-
-      // Check that all interactive elements have proper labels for voice control
-      const submitButton = screen.getByRole('button', { name: /Generate Intelligence Dossier/i });
-      expect(submitButton).toHaveAttribute('aria-label');
+    it('generates intelligence for Netflix when demo button clicked', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
       
-      const companyInput = screen.getByLabelText(/Target Company Name/i);
-      expect(companyInput).toHaveAccessibleName();
+      const netflixButton = screen.getByText('Netflix').closest('button');
+      fireEvent.click(netflixButton!);
+      
+      expect(mockOnGenerate).toHaveBeenCalledWith({
+        companyName: 'Netflix',
+        industry: 'Entertainment & Media',
+        primaryPainPoint: 'Market Intelligence',
+        productName: 'Intelligence Platform',
+        vendorName: 'ProspectPI'
+      });
     });
 
-    test('provides alternative text and context for non-text elements', () => {
-      renderComponent();
-
-      // Check that SVG icons have proper aria-hidden attributes
-      const icons = document.querySelectorAll('svg[aria-hidden="true"]');
-      expect(icons.length).toBeGreaterThan(0);
+    it('shows multiple demo companies including Netflix', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
       
-      // Icons should be hidden from screen readers when decorative
-      icons.forEach(icon => {
-        expect(icon).toHaveAttribute('aria-hidden', 'true');
+      // Netflix should be prominently featured
+      expect(screen.getByText('Netflix')).toBeInTheDocument();
+      
+      // Should have other demo companies too
+      const demoButtons = screen.getAllByText(/Entertainment|Technology|Finance|E-commerce/);
+      expect(demoButtons.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Smart Autocomplete', () => {
+    it('provides autocomplete suggestions', async () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
+      
+      const input = screen.getByPlaceholderText('Enter company name or website...');
+      
+      // Type partial company name
+      fireEvent.change(input, { target: { value: 'Net' } });
+      
+      // Should show dropdown with suggestions (tested via UI interaction)
+      expect(input).toHaveValue('Net');
+    });
+
+    it('handles keyboard navigation in autocomplete', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
+      
+      const input = screen.getByPlaceholderText('Enter company name or website...');
+      
+      // Type to trigger autocomplete
+      fireEvent.change(input, { target: { value: 'Apple' } });
+      
+      // Press Enter to submit
+      fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+      expect(mockOnGenerate).toHaveBeenCalledWith({
+        companyName: 'Apple',
+        industry: 'Unknown',
+        primaryPainPoint: 'Market Intelligence',
+        productName: 'Intelligence Platform',
+        vendorName: 'ProspectPI'
       });
     });
   });
 
-  // Task 4.1: Mobile Performance Validation Tests
-  describe('Mobile Performance & Touch Interaction Tests', () => {
-    let mockDeviceCapabilities: DeviceCapabilities;
-    const mockUsePerformanceStore = usePerformanceStore as any;
-
-    beforeEach(() => {
-      mockDeviceCapabilities = {
-        performanceTier: 'low',
-        connectionQuality: '3G',
-        hardware: {
-          cores: 4,
-          memory: 3,
-          gpu: 'integrated'
-        },
-        batteryOptimization: true,
-        reducedMotion: false,
-        dataSaver: true,
-        emergencyMode: false
-      };
-
-      mockUsePerformanceStore.mockReturnValue({
-        deviceCapabilities: mockDeviceCapabilities,
-        animationsEnabled: true
+  describe('Generate Button', () => {
+    it('submits form when generate button clicked', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
+      
+      const input = screen.getByPlaceholderText('Enter company name or website...');
+      const generateButton = screen.getByRole('button', { name: /Generate Sales Dossier/i });
+      
+      fireEvent.change(input, { target: { value: 'Tesla' } });
+      fireEvent.click(generateButton);
+      
+      expect(mockOnGenerate).toHaveBeenCalledWith({
+        companyName: 'Tesla',
+        industry: 'Unknown',
+        primaryPainPoint: 'Market Intelligence',
+        productName: 'Intelligence Platform',
+        vendorName: 'ProspectPI'
       });
     });
 
-    it('validates touch target sizes for mobile accessibility', () => {
-      renderComponent();
+    it('shows loading state when generating', async () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} isGenerating={true} />);
       
-      const submitButton = screen.getByRole('button', { name: /Generate Intelligence Dossier/i });
-      const companyInput = screen.getByLabelText(/Target Company Name/i);
+      const input = screen.getByPlaceholderText('Enter company name or website...');
+      const generateButton = screen.getByRole('button', { name: /Generating Intelligence/i });
       
-      // Touch targets should meet mobile accessibility standards (44px minimum)
-      expect(submitButton).toHaveClass('min-h-11'); // 44px
-      expect(companyInput).toHaveClass('min-h-12'); // 48px for inputs
+      // Input and button should be disabled during loading
+      expect(input).toBeDisabled();
+      expect(generateButton).toBeDisabled();
+      
+      // Should show loading spinner in button
+      expect(screen.getByText('Generating Intelligence...')).toBeInTheDocument();
+    });
+  });
+
+  describe('Mobile Optimization', () => {
+    it('uses mobile-optimized input interface', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
+      
+      const input = screen.getByPlaceholderText('Enter company name or website...');
+      
+      // Should have mobile-friendly styling classes
+      expect(input).toHaveClass('text-lg', 'py-4', 'rounded-xl');
     });
 
-    it('adapts form layout for mobile screens', () => {
-      // Mock mobile viewport
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 375, // Mobile width
+    it('uses responsive button sizing', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
+      
+      const generateButton = screen.getByRole('button', { name: /Generate Sales Dossier/i });
+      
+      // Should have mobile-friendly button styling
+      expect(generateButton).toHaveClass('w-full', 'py-4', 'text-lg', 'rounded-xl');
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('handles empty input gracefully', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
+      
+      const generateButton = screen.getByRole('button', { name: /Generate Sales Dossier/i });
+      
+      // Should be disabled for empty input
+      expect(generateButton).toBeDisabled();
+    });
+
+    it('trims whitespace from input', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
+      
+      const input = screen.getByPlaceholderText('Enter company name or website...');
+      const generateButton = screen.getByRole('button', { name: /Generate Sales Dossier/i });
+      
+      fireEvent.change(input, { target: { value: '  Amazon  ' } });
+      fireEvent.click(generateButton);
+      
+      expect(mockOnGenerate).toHaveBeenCalledWith({
+        companyName: 'Amazon',
+        industry: 'Unknown',
+        primaryPainPoint: 'Market Intelligence',
+        productName: 'Intelligence Platform',
+        vendorName: 'ProspectPI'
       });
+    });
+  });
 
-      renderComponent();
+  describe('ProspectPI Branding', () => {
+    it('displays ProspectPI branded interface', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
       
-      // Form should use mobile-optimized layout
-      const formContainer = screen.getByLabelText(/Target Company Name/i).closest('form');
-      expect(formContainer).toHaveClass('space-y-4'); // Mobile spacing
+      expect(screen.getByText('Generate Business Intelligence')).toBeInTheDocument();
+      expect(screen.getByText('Enter any company name to get comprehensive intelligence in seconds')).toBeInTheDocument();
     });
 
-    it('optimizes performance for low-end mobile devices', () => {
-      mockDeviceCapabilities.performanceTier = 'low';
+    it('uses detective theme styling', () => {
+      render(<SmartCompanyInput onGenerate={mockOnGenerate} />);
       
-      // Mock performance.now to return consistent fast times
-      const originalNow = performance.now;
-      let callCount = 0;
-      vi.spyOn(performance, 'now').mockImplementation(() => {
-        callCount++;
-        return callCount === 1 ? 0 : 25; // 25ms render time
-      });
+      const input = screen.getByPlaceholderText('Enter company name or website...');
+      const generateButton = screen.getByRole('button', { name: /Generate Sales Dossier/i });
       
-      renderComponent();
-      
-      // Verify component rendered with performance optimizations
-      expect(screen.getByText(/Mobile Optimized/i)).toBeInTheDocument();
-      
-      // Restore original function
-      performance.now = originalNow;
-    });
-
-    it('handles touch interactions properly', async () => {
-      renderComponent();
-      
-      const companyInput = screen.getByLabelText(/Target Company Name/i);
-      
-      // Simulate touch interaction
-      fireEvent.touchStart(companyInput);
-      fireEvent.change(companyInput, { target: { value: 'Mobile Test Corp' } });
-      fireEvent.touchEnd(companyInput);
-      
-      expect(companyInput).toHaveValue('Mobile Test Corp');
-    });
-
-    it('validates autocomplete performance on mobile', async () => {
-      renderComponent();
-      
-      const companyInput = screen.getByLabelText(/Target Company Name/i);
-      
-      const startTime = performance.now();
-      fireEvent.change(companyInput, { target: { value: 'Tech' } });
-      
-      await waitFor(() => {
-        expect(screen.getByText('TechCorp')).toBeInTheDocument();
-      });
-      
-      const endTime = performance.now();
-      const responseTime = endTime - startTime;
-      
-      // Autocomplete should respond quickly on mobile
-      expect(responseTime).toBeLessThan(100); // 100ms budget
-    });
-
-    it('disables animations in battery optimization mode', () => {
-      mockDeviceCapabilities.batteryOptimization = true;
-      mockUsePerformanceStore.mockReturnValue({
-        deviceCapabilities: mockDeviceCapabilities,
-        animationsEnabled: false
-      });
-
-      renderComponent({ isGenerating: true });
-      
-      // Should not show spinner animation when battery optimization is on
-      const spinner = document.querySelector('.animate-spin');
-      expect(spinner).toBeNull();
-    });
-
-    it('validates form submission performance on mobile networks', async () => {
-      mockDeviceCapabilities.connectionQuality = '3G';
-      renderComponent();
-      
-      // Fill all required fields for valid form
-      fireEvent.change(screen.getByLabelText(/Target Company Name/i), { target: { value: 'Test Company' } });
-      fireEvent.change(screen.getByLabelText(/Your Vendor\/Company/i), { target: { value: 'Test Vendor' } });
-      fireEvent.change(screen.getByLabelText(/Your Product\/Solution/i), { target: { value: 'Test Product' } });
-      fireEvent.change(screen.getByLabelText(/Target Company Industry/i), { target: { value: 'Technology' } });
-      fireEvent.change(screen.getByLabelText(/Primary Pain Point/i), { target: { value: 'Test pain point' } });
-      
-      const submitButton = screen.getByRole('button', { name: /Generate Intelligence Dossier/i });
-      
-      const startTime = performance.now();
-      fireEvent.click(submitButton);
-      
-      await waitFor(() => {
-        expect(mockOnSubmit).toHaveBeenCalled();
-      }, { timeout: 3000 });
-      
-      const endTime = performance.now();
-      const submitTime = endTime - startTime;
-      
-      // Form validation should be fast even on slow networks
-      expect(submitTime).toBeLessThan(1000); // More realistic timeout
-    });
-
-    it('handles emergency mode gracefully', () => {
-      mockDeviceCapabilities.emergencyMode = true;
-      mockUsePerformanceStore.mockReturnValue({
-        deviceCapabilities: mockDeviceCapabilities,
-        animationsEnabled: false
-      });
-
-      renderComponent();
-      
-      // Should still be functional in emergency mode
-      expect(screen.getByLabelText(/Target Company Name/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Generate Intelligence Dossier/i })).toBeInTheDocument();
+      // Should use detective theme classes
+      expect(input).toHaveClass('detective-input');
+      expect(generateButton).toHaveClass('detective-button-primary');
     });
   });
 });

@@ -15,8 +15,10 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-export const authenticateJWT = (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
-  const authHeader = req.headers.authorization;
+export const authenticateJWT = (req: Request, _res: Response, next: NextFunction): void => {
+  // Type assertion to allow optional user property
+  const authReq = req as AuthenticatedRequest;
+  const authHeader = authReq.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
   if (!token) {
@@ -27,7 +29,7 @@ export const authenticateJWT = (req: AuthenticatedRequest, _res: Response, next:
     const jwtSecret = process.env.JWT_SECRET || 'default-secret-key';
     const decoded = jwt.verify(token, jwtSecret) as any;
     
-    req.user = {
+    authReq.user = {
       id: decoded.userId,
       email: decoded.email
     };
