@@ -261,7 +261,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
                       <strong>Key Points:</strong>
                       <ul className="list-disc list-inside ml-4">
                         {section.keyPoints.map((point, idx) => (
-                          <li key={idx}>{point}</li>
+                          <li key={`point-${idx}-${point.slice(0,15)}`}>{point}</li>
                         ))}
                       </ul>
                     </div>
@@ -278,7 +278,7 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
                       <h4 className="font-medium text-sm">Key Insights:</h4>
                       <ul className="space-y-1 text-sm">
                         {section.keyPoints.slice(0, 3).map((point, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
+                          <li key={`kp-${idx}-${point.slice(0,15)}`} className="flex items-start gap-2">
                             <span className="text-blue-500 mt-1">•</span>
                             <span>{point}</span>
                           </li>

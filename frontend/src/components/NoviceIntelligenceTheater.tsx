@@ -304,7 +304,7 @@ export function NoviceIntelligenceTheater({
                 {showDetailedProgress && latestUpdate.details && (
                   <div className="ml-8 space-y-1">
                     {latestUpdate.details.map((detail, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm text-brand-navy-600">
+                      <div key={`detail-${index}-${detail.slice(0,10)}`} className="flex items-center gap-2 text-sm text-brand-navy-600">
                         <div className="w-2 h-2 bg-brand-purple-400 rounded-full"></div>
                         <span>{detail}</span>
                       </div>
@@ -331,7 +331,7 @@ export function NoviceIntelligenceTheater({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {discoveredClues.map((clue, index) => (
                   <div 
-                    key={index}
+                    key={`clue-${index}-${clue.slice(0,10)}`}
                     className="flex items-center gap-2 p-3 bg-brand-navy-50 rounded-lg clue-animation"
                   >
                     <div className="clue-indicator">{index + 1}</div>

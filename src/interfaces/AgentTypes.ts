@@ -146,7 +146,7 @@ export interface QualityGate {
 }
 
 export interface ResearchData {
-  source: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'openai-realtime' | 'shodan' | 'bmad-enhancement' | 'reddit' | 'twitter' | 'github' | 'youtube' | 'discord';
+  source: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'openai-realtime' | 'shodan' | 'bmad-enhancement' | 'twitter' | 'github' | 'youtube' | 'discord' | 'hackernews' | 'googlenews' | 'sec-edgar' | 'sec-formd' | 'sec-8k' | 'sec-xbrl' | 'stackexchange' | 'sam-gov' | 'uspto' | 'wikidata' | 'courtlistener' | 'usaspending' | 'gdelt' | 'opencorporates' | 'ukcompanieshouse' | 'nvd-cve' | 'openalex' | 'federalregister' | 'wikimedia-pageviews' | 'prnewswire' | 'businesswire' | 'globenewswire' | 'greenhouse-jobs' | 'lever-jobs' | 'web-fingerprint' | 'cloud-attribution';
   data: any;
   confidence: number;
   timestamp: Date;

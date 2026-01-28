@@ -2,17 +2,17 @@
   apps: [
     {
       name: "prospectpi-api",
-      script: "ts-node",
-      args: "-r tsconfig-paths/register src/server.ts",
+      script: "npx",
+      args: "ts-node -r tsconfig-paths/register src/server.ts",
+      interpreter: "none",
       cwd: ".",
       instances: 1,
+      exec_mode: "fork",
       autorestart: true,
-      watch: ["src"],
-      watch_delay: 1000,
-      ignore_watch: ["node_modules", "dist", "logs", "frontend", "tests", "*.test.ts", "*.spec.ts", "data"],
+      watch: false,  // Disabled watch to prevent restart loops
       max_memory_restart: "1G",
       kill_timeout: 15000,
-      listen_timeout: 15000,
+      listen_timeout: 30000,
       shutdown_with_message: true,
       merge_logs: false,
       env: {

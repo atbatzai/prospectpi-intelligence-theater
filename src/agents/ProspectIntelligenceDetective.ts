@@ -610,33 +610,68 @@ export class ProspectIntelligenceDetective {
    * Triangulate data from multiple sources to identify patterns and conflicts
    */
   private async triangulateData(researchData: ResearchData[]): Promise<TriangulationResult> {
-    const premiumSources = researchData.filter(d => ['theirstack', 'marketaux', 'coresignal', 'openai-realtime'].includes(d.source));
-    const socialSources = researchData.filter(d => ['reddit', 'twitter', 'github', 'youtube', 'discord', 'newsdata'].includes(d.source));
+    // Categorize sources by intelligence domain
+    const businessSources = researchData.filter(d => ['theirstack', 'marketaux', 'coresignal', 'openai-realtime'].includes(d.source));
+    const newsSources = researchData.filter(d => ['hackernews', 'googlenews', 'gdelt', 'prnewswire', 'businesswire', 'globenewswire'].includes(d.source));
+    const governmentSources = researchData.filter(d => ['sec-edgar', 'sec-formd', 'sec-8k', 'sec-xbrl', 'sam-gov', 'usaspending', 'federalregister'].includes(d.source));
+    const legalSources = researchData.filter(d => ['courtlistener', 'uspto'].includes(d.source));
+    const entitySources = researchData.filter(d => ['opencorporates', 'ukcompanieshouse', 'wikidata'].includes(d.source));
+    const techSources = researchData.filter(d => ['github', 'stackexchange', 'nvd-cve'].includes(d.source));
+    const researchSources = researchData.filter(d => ['openalex', 'wikimedia-pageviews'].includes(d.source));
+    const technographicsSources = researchData.filter(d => ['greenhouse-jobs', 'lever-jobs', 'web-fingerprint', 'cloud-attribution'].includes(d.source));
     
-    const prompt = `You are a senior intelligence analyst performing advanced 10-source triangulation analysis across premium APIs and social intelligence platforms.
+    const prompt = `You are a senior intelligence analyst performing advanced 30-source triangulation analysis across premium APIs, government records, SEC filings, legal databases, press releases, technographics detection, and social intelligence.
 
-    ENHANCED TRIANGULATION SCOPE:
-    - Premium Business Intelligence: ${premiumSources.length} sources
-    - Social & Community Intelligence: ${socialSources.length} sources  
+    ENHANCED TRIANGULATION SCOPE (30 SOURCES):
+    - Business Intelligence: ${businessSources.length} sources (TheirStack, MarketAux, etc.)
+    - News & Press Releases: ${newsSources.length} sources (Hacker News, Google News, GDELT, PR Newswire, Business Wire, GlobeNewswire)
+    - Government Records & SEC: ${governmentSources.length} sources (SEC EDGAR, Form D, 8-K, XBRL, SAM.gov, USAspending, Federal Register)
+    - Legal & IP: ${legalSources.length} sources (CourtListener, USPTO)
+    - Entity Registry: ${entitySources.length} sources (OpenCorporates, UK Companies House, Wikidata)
+    - Technology & Security: ${techSources.length} sources (GitHub, Stack Exchange, NVD CVE)
+    - Research & Attention: ${researchSources.length} sources (OpenAlex, Wikimedia Pageviews)
+    - Technographics Detection: ${technographicsSources.length} sources (Greenhouse Jobs, Lever Jobs, Web Fingerprint, Cloud Attribution)
     - Total Intelligence Matrix: ${researchData.length} sources
+
+    CRITICAL TECHNOGRAPHICS INTELLIGENCE:
+    - Greenhouse/Lever Jobs: Job postings reveal tech stack decisions (hiring for Kubernetes = K8s adoption!)
+    - Web Fingerprint: Detected scripts/tools reveal marketing, analytics, CRM systems in active use
+    - Cloud Attribution: DNS/CNAME reveals infrastructure provider (AWS, Azure, GCP) - STRATEGIC!
+    - Tier 1 Technologies: Top 100 strategic techs (high-budget, high-lock-in) = displacement opportunities
+
+    CRITICAL SEC INTELLIGENCE:
+    - Form D filings indicate PRIVATE FUNDING (VC/angel rounds) - companies with recent Form D have fresh capital = budget!
+    - 8-K Item 5.02 = executive changes (new CEO/CFO = new decision maker = opportunity!)
+    - XBRL data = actual financial metrics (revenue, profitability, growth rate)
 
     Research Data from Multiple Intelligence Domains:
     ${researchData.map((data, index) => `
     Source ${index + 1}: ${data.source.toUpperCase()}
-    Domain: ${['theirstack', 'marketaux', 'coresignal', 'openai-realtime'].includes(data.source) ? 'Premium Business' : 'Social Intelligence'}
+    Domain: ${['theirstack', 'marketaux', 'coresignal', 'openai-realtime'].includes(data.source) ? 'Business Intelligence' : 
+             ['hackernews', 'googlenews', 'gdelt', 'prnewswire', 'businesswire', 'globenewswire'].includes(data.source) ? 'News & Press Releases' :
+             ['sec-edgar', 'sec-formd', 'sec-8k', 'sec-xbrl', 'sam-gov', 'usaspending', 'federalregister'].includes(data.source) ? 'Government Records & SEC' :
+             ['courtlistener', 'uspto'].includes(data.source) ? 'Legal & IP' :
+             ['opencorporates', 'ukcompanieshouse', 'wikidata'].includes(data.source) ? 'Entity Registry' :
+             ['github', 'stackexchange', 'nvd-cve'].includes(data.source) ? 'Technology & Security' :
+             ['openalex', 'wikimedia-pageviews'].includes(data.source) ? 'Research & Attention' :
+             ['greenhouse-jobs', 'lever-jobs', 'web-fingerprint', 'cloud-attribution'].includes(data.source) ? 'Technographics Detection' : 'Other'}
     Confidence: ${data.confidence}
     Data: ${JSON.stringify(data.data, null, 2)}
     `).join('\n')}
 
     Perform comprehensive cross-domain triangulation:
-    1. Cross-validate findings between premium and social intelligence sources
-    2. Identify consistent patterns across different intelligence domains
-    3. Detect conflicting signals requiring resolution
-    4. Assess social sentiment correlation with business intelligence
-    5. Evaluate technology intelligence consistency (GitHub vs TheirStack)
-    6. Cross-reference executive communications with financial/market signals
-    7. Analyze community voice vs official company positioning
-    8. Extract enterprise-grade verified intelligence
+    1. Cross-validate findings between business intelligence and government records
+    2. Correlate SEC filings (10-K, Form D, 8-K, XBRL) with news coverage and market signals
+    3. CRITICAL: If Form D exists, company has PRIVATE FUNDING - this is a tier-1 sales signal!
+    4. CRITICAL: If 8-K shows exec changes, research the NEW PERSON - they're your potential champion!
+    5. Cross-reference litigation (CourtListener) with financial/market signals
+    4. Verify entity structure across OpenCorporates, UK Companies House, and Wikidata
+    5. Assess technology posture (GitHub activity) vs security vulnerabilities (NVD CVE)
+    6. Correlate federal spending (USAspending) with SAM.gov registration status
+    7. Analyze patent activity (USPTO) vs academic publications (OpenAlex)
+    8. Detect attention spikes (Wikipedia pageviews) vs news coverage (GDELT)
+    9. Cross-reference regulatory exposure (Federal Register) with business activities
+    10. Identify consistent patterns and conflicting signals requiring resolution
 
     Respond in JSON format:
     {
@@ -644,10 +679,12 @@ export class ProspectIntelligenceDetective {
       "consistentDataPoints": ["cross-validated facts across multiple domains"],
       "conflictingInformation": ["signals requiring resolution with source attribution"],
       "verifiedFacts": ["high-confidence findings with 2+ source validation"],
-      "socialIntelligenceCorrelation": "how social signals align with business intelligence",
-      "technologyConsistency": "GitHub activity vs TheirStack technographic alignment",
-      "executiveCommunicationSignals": "Twitter leadership vs financial positioning",
-      "communityVoiceAnalysis": "Reddit/Discord sentiment vs company messaging",
+      "governmentIntelligence": "SEC filings + federal contracts + regulatory exposure synthesis",
+      "legalRiskAssessment": "litigation patterns + patent activity + security vulnerabilities",
+      "entityVerification": "cross-jurisdiction entity structure and status",
+      "technologyPosture": "GitHub activity vs Stack Exchange presence vs security posture",
+      "mediaAttentionCorrelation": "GDELT news vs Wikipedia attention vs Hacker News sentiment",
+      "communityVoiceAnalysis": "Stack Exchange pain points vs company messaging vs news sentiment",
       "dataGaps": ["missing intelligence areas for comprehensive analysis"],
       "reliabilityAssessment": "detailed cross-source reliability evaluation",
       "recommendedConfidenceLevel": 0.0-1.0,
@@ -980,12 +1017,12 @@ export class ProspectIntelligenceDetective {
         }
       },
       "socialIntelligence": {
-        "communitySentiment": "overall social media and community perception",
-        "executiveCommunications": ["key leadership messages from Twitter/LinkedIn"],
-        "developerSentiment": "GitHub and Discord technical community feedback",  
-        "brandPerception": "Reddit, YouTube content analysis and reputation signals",
-        "socialProofSignals": ["community advocacy indicators"],
-        "reputationRisks": ["potential social media or community concerns"]
+        "communitySentiment": "REQUIRED: Analyze Hacker News and Google News data if available. Summarize developer/tech community perception. Include specific post counts, upvotes, news sources.",
+        "executiveCommunications": ["key leadership messages - cite specific sources"],
+        "developerSentiment": "REQUIRED: If hackernews data shows discussions, summarize the technical community's view. Include story counts and comment activity.",  
+        "brandPerception": "REQUIRED: Analyze Google News articles and HN discussions. What do real users and media say? Include specific source names.",
+        "socialProofSignals": ["community advocacy indicators from HN/News data"],
+        "reputationRisks": ["potential concerns identified from social/news data"]
       },
       "enterpriseReadiness": {
         "socialProofScore": 0-100,
@@ -994,7 +1031,66 @@ export class ProspectIntelligenceDetective {
         "developerExperienceScore": 0-100,
         "overallSocialIntelligenceScore": 0-100
       }
-    }`;
+    }
+    
+    ═══════════════════════════════════════════════════════════════════════════
+    ⚠️⚠️⚠️ MANDATORY FBI-STYLE ANALYTICAL SECTIONS - VALIDATION WILL FAIL IF MISSING ⚠️⚠️⚠️
+    ═══════════════════════════════════════════════════════════════════════════
+    
+    YOUR OUTPUT WILL BE VALIDATED AND REJECTED IF THESE SECTIONS ARE MISSING OR INCOMPLETE:
+    
+    ▶ analyticalAssessment in executiveSummary (THIS IS THE MOST IMPORTANT SECTION):
+       ✓ primaryHypothesis: "The most likely scenario is X (65% probability) because..."
+       ✓ alternativeHypotheses: At least 2 alternatives with probabilities that sum to 100% with primaryHypothesis
+       ✓ keyAssumptions: Minimum 3 assumptions underlying your analysis
+       ✓ intelligenceGaps: Minimum 3 things we don't know but need to know
+       ✓ confidenceBand: "high|medium|limited" WITH detailed explanation of why
+    
+    ▶ scenarioAnalysis in competitiveIntelligence:
+       ✓ bestCase: {scenario, probability %} - what if everything goes right
+       ✓ mostLikely: {scenario, probability %} - realistic outcome
+       ✓ worstCase: {scenario, probability %} - what could go wrong
+       ✓ All three probabilities should be logically consistent
+    
+    ▶ riskMitigation in strategicRecommendations:
+       ✓ identifiedRisks: Minimum 3 specific risks with evidence
+       ✓ mitigationStrategies: Specific countermeasures for each risk
+       ✓ contingencyPlans: "If X happens, then do Y" for each scenario
+    
+    ▶ successProbability in strategicRecommendations:
+       ✓ baseCase: {probability %, conditions} - normal circumstances
+       ✓ optimisticCase: {probability %, conditions} - best case
+       ✓ pessimisticCase: {probability %, conditions} - worst case
+    
+    ▶ socialIntelligence (if hackernews or googlenews data provided):
+       ✓ Include actual numbers: post counts, upvotes, article counts
+       ✓ Name specific sources: news outlets, HN threads
+       ✓ NEVER say "Limited social intelligence" if data was provided
+    
+    ═══════════════════════════════════════════════════════════════════════════
+    EXAMPLE OF PROPER analyticalAssessment (FOLLOW THIS FORMAT):
+    ═══════════════════════════════════════════════════════════════════════════
+    "analyticalAssessment": {
+      "primaryHypothesis": "ConnectWise is actively seeking integration partners to expand their MSP ecosystem (65% probability). Evidence: Recent Beachhead partnership, 116 open positions, ConnectWise Invent program.",
+      "alternativeHypotheses": [
+        {"scenario": "ConnectWise is consolidating and reducing external partnerships", "probability": "20%", "keyEvidence": ["Private company status limits visibility", "No public expansion announcements"]},
+        {"scenario": "ConnectWise is being acquired and freezing new partnerships", "probability": "15%", "keyEvidence": ["Large employee count", "Enterprise software M&A trend"]}
+      ],
+      "keyAssumptions": [
+        "ConnectWise budget cycles align with calendar year",
+        "Technical integration complexity is manageable",
+        "Decision makers are accessible through existing channels"
+      ],
+      "intelligenceGaps": [
+        "Current vendor lock-in or exclusivity agreements",
+        "Internal technology roadmap and priorities",
+        "Key decision maker identities and preferences"
+      ],
+      "confidenceBand": "medium - We have strong technographic and hiring data from TheirStack, but lack direct stakeholder intelligence due to Coresignal unavailability. News coverage provides market context but not internal strategy."
+    }
+    ═══════════════════════════════════════════════════════════════════════════
+    
+    FAILURE TO INCLUDE COMPLETE analyticalAssessment WILL RESULT IN DOSSIER REJECTION.`;
 
     try {
       const dossierText = await this.callAI(prompt, 4000, ApiConfig.DETECTIVE_TEMPERATURE_MAX, true);

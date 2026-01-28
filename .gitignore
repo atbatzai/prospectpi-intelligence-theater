@@ -139,6 +139,20 @@ frontend/playwright-observe.js
 frontend/test-results/
 frontend/ux-*.png
 ux-*.png
+playwright-*.png
+pw-*.png
+party-*.png
+
+# Observation and party mode scripts
+*-observe.js
+party-mode*.js
+observe-*.js
+bmad-*.js
+
+# Ad-hoc test scripts
+check-sources.js
+check-data.js
+test-free-*.js
 
 # Runtime request tracking files
 latest-request-id.txt

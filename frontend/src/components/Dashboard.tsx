@@ -296,11 +296,12 @@ export default function Dashboard() {
       ws.onmessage = (event) => {
         try {
           const progressData = JSON.parse(event.data);
-          console.log('� Real-time Agent Progress:', progressData);
+          console.log('📡 Real-time Agent Progress:', progressData);
           
           // Handle different types of progress messages
+          // Use timestamp + random suffix to ensure unique keys even for rapid updates
           const updateData = {
-            timestamp: new Date().toISOString(),
+            timestamp: `${new Date().toISOString()}-${Math.random().toString(36).slice(2, 8)}`,
             agent: progressData.agent || progressData.agentId || progressData.source || 'system',
             stage: progressData.stage || progressData.status || 'working',
             message: progressData.message || progressData.action || progressData.description || 'Processing...',
@@ -359,7 +360,7 @@ export default function Dashboard() {
           console.error('Error parsing WebSocket message:', parseError);
           // Add error as system message
           setAgentProgress(prev => [...prev, {
-            timestamp: new Date().toISOString(),
+            timestamp: `${new Date().toISOString()}-${Math.random().toString(36).slice(2, 8)}`,
             agent: 'system',
             stage: 'error',
             message: 'WebSocket message parsing error',
@@ -502,7 +503,7 @@ export default function Dashboard() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              🎭 Generate Intelligence
+              Generate Intelligence
             </button>
             <button
               onClick={() => setActiveTab('history')}
@@ -512,7 +513,7 @@ export default function Dashboard() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              📚 Dossier Library ({dossierHistory.length})
+              Dossier Library ({dossierHistory.length})
             </button>
           </nav>
         </div>
@@ -525,6 +526,9 @@ export default function Dashboard() {
               <ApiHealthIndicator refreshInterval={30000} />
             </div>
 
+            {/* DEBUG PANELS - Only show in development */}
+            {process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SHOW_DEBUG === 'true' && (
+            <>
             {/* BMAD ARCHITECT VALIDATION PANEL */}
             <div className="mb-6 bg-green-50 border border-green-500 rounded-lg p-4">
               <div className="flex justify-between items-start mb-3">
@@ -603,7 +607,7 @@ export default function Dashboard() {
                   <h4 className="text-sm font-medium text-blue-900 mb-1">Real-time Agent Progress ({agentProgress.length} updates):</h4>
                   <div className="max-h-32 overflow-y-auto bg-white rounded p-2 text-xs">
                     {agentProgress.slice(-5).map((progress, index) => (
-                      <div key={index} className="mb-1 border-b border-gray-100 pb-1">
+                      <div key={`debug-${progress.agent}-${progress.timestamp || index}`} className="mb-1 border-b border-gray-100 pb-1">
                         <span className="font-medium text-gray-600">
                           {progress.agent?.toUpperCase() || 'SYSTEM'}:
                         </span>
@@ -617,6 +621,9 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
+            </>
+            )}
+            {/* END DEBUG PANELS */}
 
             <SmartCompanyInput onGenerate={handleStartGeneration} isGenerating={isGenerating} />
             
@@ -636,7 +643,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-sm space-y-1">
                         {agentProgress.filter(p => p.agent === 'coordinator').slice(-3).map((p, i) => (
-                          <div key={i} className="text-violet-600">
+                          <div key={`coord-${p.timestamp || i}-${p.message?.slice(0,20)}`} className="text-violet-600">
                             💭 {p.message}
                           </div>
                         )) || <div className="text-gray-500 italic">Coordinating research strategy...</div>}
@@ -650,7 +657,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-sm space-y-1">
                         {agentProgress.filter(p => p.agent === 'field_researcher' || p.agent === 'researcher').slice(-3).map((p, i) => (
-                          <div key={i} className="text-blue-600">
+                          <div key={`researcher-${p.timestamp || i}-${p.message?.slice(0,20)}`} className="text-blue-600">
                             🔍 {p.message}
                           </div>
                         )) || <div className="text-gray-500 italic">Gathering intelligence sources...</div>}
@@ -663,7 +670,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-sm space-y-1">
                         {agentProgress.filter(p => p.agent === 'detective').slice(-3).map((p, i) => (
-                          <div key={i} className="text-green-600">
+                          <div key={`detective-${p.timestamp || i}-${p.message?.slice(0,20)}`} className="text-green-600">
                             {p.message}
                           </div>
                         )) || <div className="text-gray-500 italic">Validating intelligence quality...</div>}
@@ -682,8 +689,8 @@ export default function Dashboard() {
                         { name: 'Financial Intelligence', status: 'researching', confidence: 0, sources: 0 },
                         { name: 'Key Stakeholders', status: 'pending', confidence: 0, sources: 0 },
                         { name: 'Strategic Insights', status: 'queued', confidence: 0, sources: 0 },
-                      ].map((section, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      ].map((section) => (
+                        <div key={section.name} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <div className="flex items-center gap-3">
                             <div className="text-lg">
                               {section.status === 'complete' ? '✅' : 
@@ -716,7 +723,7 @@ export default function Dashboard() {
                   <h4 className="text-md font-semibold text-gray-900 mb-3">📡 Live Activity Feed</h4>
                   <div className="max-h-64 overflow-y-auto space-y-2">
                     {agentProgress.slice(-10).reverse().map((p, index) => (
-                      <div key={index} className="flex items-start gap-3 p-2 bg-gray-50 rounded">
+                      <div key={`feed-${p.agent}-${p.timestamp || index}-${p.message?.slice(0,15)}`} className="flex items-start gap-3 p-2 bg-gray-50 rounded">
                         <div className="text-xl">
                           {p.agent === 'coordinator' ? '🎭' : 
                            p.agent === 'field_researcher' || p.agent === 'researcher' ? '🔍' : '🤖'}
@@ -744,7 +751,7 @@ export default function Dashboard() {
                 {/* Classic Agent Progress Theater */}
                 <AgentProgressTheater 
                   progress={agentProgress.map((progress, index) => ({
-                    id: progress.agent || `agent-${index}`,
+                    id: `${progress.agent || 'agent'}-${index}-${progress.timestamp || Date.now()}`,
                     name: progress.agent === 'coordinator' || progress.agent === 'intelligence-coordinator' ? 'Intelligence Coordinator' :
                           progress.agent === 'field_researcher' || progress.agent === 'researcher' ? 'Field Researcher' :
                           progress.agent === 'detective' || progress.agent === 'intelligence-detective' ? 'Intelligence Detective' :
