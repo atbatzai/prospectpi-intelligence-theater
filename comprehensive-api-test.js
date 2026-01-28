@@ -41,18 +41,10 @@ const TEST_COMPANIES = [
   }
 ];
 
-// External API sources to test
+// External API sources to test (only configured APIs)
 const API_SOURCES = [
   'TheirStack',
-  'MarketAux', 
-  'Coresignal',
-  'Perplexity',
-  'NewsData',
-  'Reddit',
-  'Twitter',
-  'GitHub',
-  'YouTube',
-  'Discord'
+  'MarketAux'
 ];
 
 // BMad Orchestration Features to test

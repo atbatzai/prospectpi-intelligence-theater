@@ -346,7 +346,6 @@ export const DossierViewer: React.FC<DossierViewerProps> = ({
     const icons: Record<string, string> = {
       theirstack: '🏢',
       marketaux: '📈',
-      coresignal: '👥',
       'openai-realtime': '🤖',
       internal: '🔒'
     };

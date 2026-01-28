@@ -306,16 +306,14 @@ export class ApiConfig {
   static readonly OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
   static readonly DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY!;
   static readonly GOOGLE_GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY!;
-  static readonly PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY!;
   
   /**
    * Epic 2.5.1: TheirStack Integration for Technographic Intelligence
    */
 
-  // Data Sources
+  // Data Sources (Configured APIs only)
   static readonly THEIRSTACK_JWT = process.env.THEIRSTACK_JWT!;
   static readonly MARKETAUX_TOKEN = process.env.MARKETAUX_TOKEN!;
-  static readonly CORESIGNAL_MCP_AUTH = process.env.CORESIGNAL_MCP_AUTH!;
   
   // Infrastructure Intelligence APIs  
   static readonly SHODAN_API_KEY = process.env.SHODAN_API_KEY!;
@@ -343,20 +341,16 @@ export class ApiConfig {
   static readonly ENHANCED_API_BUDGET_MULTIPLIER = parseFloat(process.env.ENHANCED_API_BUDGET_MULTIPLIER || '1.4'); // +40% approved
   static readonly COST_ALERT_THRESHOLD = parseFloat(process.env.COST_ALERT_THRESHOLD || '1.2'); // 120% alert threshold
   
-  // Epic 2.5.3: Solution-Relevance Value Targets
+  // Epic 2.5.3: Solution-Relevance Value Targets (Configured APIs only)
   static readonly THEIRSTACK_VALUE_TARGET = parseFloat(process.env.THEIRSTACK_VALUE_TARGET || '3.0'); // 300% improvement
-  static readonly MARKETAUX_VALUE_TARGET = parseFloat(process.env.MARKETAUX_VALUE_TARGET || '2.5'); // 250% improvement  
-  static readonly CORESIGNAL_VALUE_TARGET = parseFloat(process.env.CORESIGNAL_VALUE_TARGET || '4.0'); // 400% improvement
-  static readonly PERPLEXITY_VALUE_TARGET = parseFloat(process.env.PERPLEXITY_VALUE_TARGET || '5.0'); // 500% improvement
+  static readonly MARKETAUX_VALUE_TARGET = parseFloat(process.env.MARKETAUX_VALUE_TARGET || '2.5'); // 250% improvement
 
   // API Endpoints
   static readonly ANTHROPIC_BASE_URL = 'https://api.anthropic.com';
   static readonly OPENAI_BASE_URL = 'https://api.openai.com/v1';
   static readonly DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';
-  static readonly PERPLEXITY_BASE_URL = 'https://api.perplexity.ai';
   static readonly THEIRSTACK_BASE_URL = 'https://api.theirstack.com/v1';
   static readonly MARKETAUX_BASE_URL = 'https://api.marketaux.com/v1';
-  static readonly CORESIGNAL_MCP_URL = 'https://api.coresignal.com/cdapi/v1';
   
   // Infrastructure Intelligence Base URLs
   static readonly SHODAN_BASE_URL = 'https://api.shodan.io';
@@ -371,15 +365,7 @@ export class ApiConfig {
   static readonly STANDARD_TIMEOUT_MS = 30000;
   static readonly LONG_TIMEOUT_MS = 120000;
 
-  // Social Media Intelligence APIs (Phase 4 - Future Implementation)
-  static readonly REDDIT_BASE_URL = 'https://www.reddit.com';
-  static readonly TWITTER_BASE_URL = 'https://api.twitter.com/2';
-  static readonly GITHUB_BASE_URL = 'https://api.github.com';
-  static readonly YOUTUBE_BASE_URL = 'https://www.googleapis.com/youtube/v3';
-  static readonly DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN || '';
-  static readonly TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN || '';
-  static readonly GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
-  static readonly YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
+  // Note: Social Media APIs (Reddit, Twitter, GitHub, YouTube, Discord) removed - not configured
 
   static validateConfiguration(): void {
     const requiredKeys = [
@@ -387,10 +373,8 @@ export class ApiConfig {
       'OPENAI_API_KEY', 
       'DEEPSEEK_API_KEY',
       'GOOGLE_GEMINI_API_KEY',
-      'PERPLEXITY_API_KEY',
       'THEIRSTACK_JWT',
-      'MARKETAUX_TOKEN',
-      'CORESIGNAL_MCP_AUTH'
+      'MARKETAUX_TOKEN'
     ];
 
     const missing = requiredKeys.filter(key => !process.env[key]);
@@ -406,10 +390,8 @@ export class ApiConfig {
   static hasRealDataSourceAPIs(): boolean {
     const dataSourceKeys = [
       'THEIRSTACK_JWT',
-      'MARKETAUX_TOKEN', 
-      'CORESIGNAL_MCP_AUTH',
-      'SHODAN_API_KEY',
-      'CLEARBIT_API_KEY'
+      'MARKETAUX_TOKEN',
+      'SHODAN_API_KEY'
     ];
     
     return dataSourceKeys.some(key => {
@@ -460,13 +442,6 @@ export class OpenAIClient implements ApiClient {
 export class DeepSeekClient implements ApiClient {
   baseUrl = ApiConfig.DEEPSEEK_BASE_URL;
   apiKey = ApiConfig.DEEPSEEK_API_KEY;
-  timeout = ApiConfig.DEFAULT_TIMEOUT_MS;
-  rateLimitPerMinute = ApiConfig.RATE_LIMIT_REQUESTS_PER_MINUTE;
-}
-
-export class PerplexityClient implements ApiClient {
-  baseUrl = ApiConfig.PERPLEXITY_BASE_URL;
-  apiKey = ApiConfig.PERPLEXITY_API_KEY;
   timeout = ApiConfig.DEFAULT_TIMEOUT_MS;
   rateLimitPerMinute = ApiConfig.RATE_LIMIT_REQUESTS_PER_MINUTE;
 }

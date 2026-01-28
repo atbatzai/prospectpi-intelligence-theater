@@ -678,42 +678,75 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Dossier Building Progress */}
+                  {/* REAL Dossier Building Progress - Driven by WebSocket agent updates */}
                   <div className="bg-white rounded-lg p-4 border border-gray-200">
                     <h4 className="font-semibold text-gray-900 mb-3">📊 Dossier Building Progress</h4>
+                    
+                    {/* Overall Progress Indicator */}
+                    <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-violet-50 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-medium text-gray-700">Overall Completion</span>
+                        <span className="text-lg font-bold text-blue-600">
+                          {Math.min(100, Math.round((agentProgress.length / 20) * 100))}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-violet-500 h-3 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, Math.round((agentProgress.length / 20) * 100))}%` }}
+                        />
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        Stage: {agentProgress.length === 0 ? 'Initializing...' : 
+                               agentProgress.length < 5 ? 'Data Collection' :
+                               agentProgress.length < 10 ? 'Analysis' :
+                               agentProgress.length < 15 ? 'Synthesis' : 'Finalizing'}
+                      </div>
+                    </div>
+
+                    {/* Real-time Data Source Progress */}
                     <div className="space-y-2">
-                      {[
-                        { name: 'Company Overview', status: 'complete', confidence: 93, sources: 4 },
-                        { name: 'Competitive Analysis', status: 'building', confidence: 67, sources: 2 },
-                        { name: 'Technology Stack', status: 'validating', confidence: 45, sources: 1 },
-                        { name: 'Financial Intelligence', status: 'researching', confidence: 0, sources: 0 },
-                        { name: 'Key Stakeholders', status: 'pending', confidence: 0, sources: 0 },
-                        { name: 'Strategic Insights', status: 'queued', confidence: 0, sources: 0 },
-                      ].map((section) => (
-                        <div key={section.name} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <div className="flex items-center gap-3">
-                            <div className="text-lg">
-                              {section.status === 'complete' ? '✅' : 
-                               section.status === 'building' ? '🔄' : 
-                               section.status === 'validating' ? '🔍' : 
-                               section.status === 'researching' ? '📊' : 
-                               section.status === 'pending' ? '⏳' : '📋'}
+                      {(() => {
+                        // Calculate real progress from agent updates
+                        const sources = {
+                          'TheirStack': { updates: agentProgress.filter(p => p.message?.toLowerCase().includes('theirstack') || p.message?.toLowerCase().includes('company') || p.message?.toLowerCase().includes('job')).length, icon: '🏢' },
+                          'MarketAux': { updates: agentProgress.filter(p => p.message?.toLowerCase().includes('market') || p.message?.toLowerCase().includes('financial') || p.message?.toLowerCase().includes('news')).length, icon: '📈' },
+                          'Coresignal': { updates: agentProgress.filter(p => p.message?.toLowerCase().includes('linkedin') || p.message?.toLowerCase().includes('professional') || p.message?.toLowerCase().includes('employee')).length, icon: '👥' },
+                          'Perplexity': { updates: agentProgress.filter(p => p.message?.toLowerCase().includes('search') || p.message?.toLowerCase().includes('web') || p.message?.toLowerCase().includes('realtime')).length, icon: '🔍' },
+                          'AI Analysis': { updates: agentProgress.filter(p => p.agent?.includes('coordinator') || p.agent?.includes('detective')).length, icon: '🤖' }
+                        };
+                        
+                        return Object.entries(sources).map(([name, data]) => {
+                          const status = data.updates === 0 ? 'pending' : 
+                                        data.updates < 2 ? 'researching' : 
+                                        data.updates < 4 ? 'building' : 'complete';
+                          const confidence = Math.min(95, data.updates * 20);
+                          
+                          return (
+                            <div key={name} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <div className="flex items-center gap-3">
+                                <div className="text-lg">
+                                  {status === 'complete' ? '✅' : 
+                                   status === 'building' ? '🔄' : 
+                                   status === 'researching' ? '📊' : '⏳'}
+                                </div>
+                                <span className="font-medium">{data.icon} {name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className={`px-2 py-1 rounded text-xs ${
+                                  confidence > 80 ? 'bg-green-100 text-green-700' :
+                                  confidence > 40 ? 'bg-yellow-100 text-yellow-700' :
+                                  confidence > 0 ? 'bg-red-100 text-red-700' :
+                                  'bg-gray-100 text-gray-500'
+                                }`}>
+                                  {confidence > 0 ? `${confidence}%` : status}
+                                </span>
+                                <span className="text-gray-500">{data.updates} updates</span>
+                              </div>
                             </div>
-                            <span className="font-medium">{section.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              section.confidence > 80 ? 'bg-green-100 text-green-700' :
-                              section.confidence > 50 ? 'bg-yellow-100 text-yellow-700' :
-                              section.confidence > 0 ? 'bg-red-100 text-red-700' :
-                              'bg-gray-100 text-gray-500'
-                            }`}>
-                              {section.confidence > 0 ? `${section.confidence}% confident` : section.status}
-                            </span>
-                            <span className="text-gray-500">{section.sources} sources</span>
-                          </div>
-                        </div>
-                      ))}
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 </div>

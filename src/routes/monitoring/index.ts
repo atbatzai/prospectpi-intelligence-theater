@@ -17,16 +17,14 @@ monitoringRouter.get('/health', async (req: Request, res: Response): Promise<voi
   try {
     const health = await monitoringService.checkHealth();
     
-    // Add API source connectivity status
+    // Add API source connectivity status (removed fake integrations: Perplexity, Coresignal)
     const apiSources = await Promise.all([
-      ApiConnectivityTest.testTheirStackConnection().catch(e => ({ service: 'TheirStack', connected: false, responseTime: 0, error: e.message })),
-      ApiConnectivityTest.testMarketAuxConnection().catch(e => ({ service: 'MarketAux', connected: false, responseTime: 0, error: e.message })),
-      ApiConnectivityTest.testCoresignalConnection().catch(e => ({ service: 'Coresignal MCP', connected: false, responseTime: 0, error: e.message })),
-      ApiConnectivityTest.testPerplexityConnection().catch(e => ({ service: 'Perplexity', connected: false, responseTime: 0, error: e.message }))
+      ApiConnectivityTest.testTheirStackConnection().catch((e: Error) => ({ service: 'TheirStack', connected: false, responseTime: 0, error: e.message })),
+      ApiConnectivityTest.testMarketAuxConnection().catch((e: Error) => ({ service: 'MarketAux', connected: false, responseTime: 0, error: e.message }))
     ]);
     
-    const healthySourcesCount = apiSources.filter(s => s.connected).length;
-    const apiSourceStatus = healthySourcesCount >= 3 ? 'operational' : healthySourcesCount >= 2 ? 'degraded' : 'critical';
+    const healthySourcesCount = apiSources.filter((s: { connected: boolean }) => s.connected).length;
+    const apiSourceStatus = healthySourcesCount >= 2 ? 'operational' : healthySourcesCount >= 1 ? 'degraded' : 'critical';
     
     const enhancedHealth = {
       ...health,
@@ -34,7 +32,7 @@ monitoringRouter.get('/health', async (req: Request, res: Response): Promise<voi
         status: apiSourceStatus,
         healthy: healthySourcesCount,
         total: apiSources.length,
-        sources: apiSources.map(s => ({
+        sources: apiSources.map((s: { service: string; connected: boolean; responseTime: number; error?: string }) => ({
           name: s.service,
           status: s.connected ? 'up' : 'down',
           responseTime: s.responseTime,

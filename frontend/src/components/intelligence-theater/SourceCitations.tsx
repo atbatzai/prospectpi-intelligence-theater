@@ -11,7 +11,7 @@ interface SourceCitation {
   url?: string;
   confidence: number;
   freshness: string;
-  type: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'openai-realtime' | 'internal';
+  type: 'theirstack' | 'marketaux' | 'openai-realtime' | 'internal';
 }
 
 interface SourceCitationsProps {
@@ -30,8 +30,7 @@ export const SourceCitations: React.FC<SourceCitationsProps> = ({
     const icons = {
       theirstack: '',
       marketaux: '',
-      coresignal: '',
-      perplexity: '',
+      'openai-realtime': '',
       internal: ''
     };
     return icons[type as keyof typeof icons] || '';

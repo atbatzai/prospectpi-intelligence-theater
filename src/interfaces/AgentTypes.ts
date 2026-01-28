@@ -54,8 +54,6 @@ export interface ResearchApiPayload extends ProspectResearchInput {
   apiKeys: {
     theirstack: string;
     marketaux: string;
-    coresignal: string;
-    perplexity: string;
     linkedin?: string;
   };
 }
@@ -71,7 +69,7 @@ export interface AgentOrchestrationContext {
     secondaryPainPoints?: string[];
   };
   researchStrategy: {
-    priorityAPIs: ('theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'openai-realtime')[];
+    priorityAPIs: ('theirstack' | 'marketaux' | 'openai-realtime')[];
     industryFocus: string[];
     competitorAnalysis: boolean;
     budgetIntelligence: boolean;
@@ -146,7 +144,7 @@ export interface QualityGate {
 }
 
 export interface ResearchData {
-  source: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'openai-realtime' | 'shodan' | 'bmad-enhancement' | 'twitter' | 'github' | 'youtube' | 'discord' | 'hackernews' | 'googlenews' | 'sec-edgar' | 'sec-formd' | 'sec-8k' | 'sec-xbrl' | 'stackexchange' | 'sam-gov' | 'uspto' | 'wikidata' | 'courtlistener' | 'usaspending' | 'gdelt' | 'opencorporates' | 'ukcompanieshouse' | 'nvd-cve' | 'openalex' | 'federalregister' | 'wikimedia-pageviews' | 'prnewswire' | 'businesswire' | 'globenewswire' | 'greenhouse-jobs' | 'lever-jobs' | 'web-fingerprint' | 'cloud-attribution';
+  source: 'theirstack' | 'marketaux' | 'openai-realtime' | 'deepseek-realtime' | 'shodan' | 'bmad-enhancement' | 'hackernews' | 'googlenews' | 'sec-edgar' | 'sec-formd' | 'sec-8k' | 'sec-xbrl' | 'stackexchange' | 'github' | 'wikidata' | 'gdelt' | 'nvd-cve' | 'openalex' | 'federalregister' | 'wikimedia-pageviews' | 'prnewswire' | 'businesswire' | 'globenewswire' | 'greenhouse-jobs' | 'web-fingerprint' | 'cloud-attribution' | 'courtlistener' | 'usaspending';
   data: any;
   confidence: number;
   timestamp: Date;
@@ -362,8 +360,7 @@ export interface BackendImplementationGuide {
   3. EXTERNAL API INTEGRATION (Parallel Processing):
      - TheirStack API: Technology stack analysis
      - MarketAux API: Financial intelligence & earnings calls
-     - Coresignal API: Professional network mapping
-     - Perplexity API: Real-time web intelligence
+     - OpenAI Realtime: AI-powered web intelligence
      - LinkedIn Intelligence: Hiring patterns & job postings
      - Patent Databases: R&D activity analysis
   

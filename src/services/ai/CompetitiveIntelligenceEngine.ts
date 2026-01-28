@@ -71,7 +71,7 @@ Include both obvious competitors and emerging/hidden competitors.
 Return as JSON array with: name, domain, category (direct/indirect/emerging), reason.\;
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-3-opus-20240229',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
       messages: [{
         role: 'user',
@@ -147,7 +147,7 @@ Generate a comprehensive SWOT analysis with:
 For each point, provide specific evidence and citations. Return as JSON.\;
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-3-opus-20240229',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 4000,
       temperature: 0.3,
       messages: [{ role: 'user', content: prompt }]

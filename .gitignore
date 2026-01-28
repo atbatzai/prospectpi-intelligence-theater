@@ -7,6 +7,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Debug/test scripts (local dev only)
+check-dossier.js
+check-*.js
+test-payload.json
+STOP-SERVER.bat
+scripts/dev-server-launcher.js
+
 # Diagnostic reports
 report.*.json
 

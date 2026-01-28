@@ -80,16 +80,8 @@ export class ApiConnectivityTest {
     );
   }
 
-  static async testPerplexityConnection(): Promise<ConnectivityResult> {
-    return this.testService(
-      'Perplexity',
-      `${ApiConfig.PERPLEXITY_BASE_URL}/chat/completions`,
-      {
-        'Authorization': `Bearer ${ApiConfig.PERPLEXITY_API_KEY}`,
-        'content-type': 'application/json'
-      }
-    );
-  }
+  // Perplexity integration removed - was fake multi-model validation
+  // static async testPerplexityConnection(): Promise<ConnectivityResult> { ... }
 
   static async testTheirStackConnection(): Promise<ConnectivityResult> {
     return this.testService(
@@ -112,17 +104,8 @@ export class ApiConnectivityTest {
     );
   }
 
-  static async testCoresignalConnection(): Promise<ConnectivityResult> {
-    // Coresignal REST API endpoint test
-    return this.testService(
-      'Coresignal API',
-      `${ApiConfig.CORESIGNAL_MCP_URL}/professional-network/company/search?title=test`,
-      {
-        'Authorization': `Bearer ${ApiConfig.CORESIGNAL_MCP_AUTH}`,
-        'content-type': 'application/json'
-      }
-    );
-  }
+  // Coresignal MCP integration removed - not configured
+  // static async testCoresignalConnection(): Promise<ConnectivityResult> { ... }
 
   static async testAllConnections(): Promise<ConnectivityResult[]> {
     console.log('🔍 Testing API connectivity for all services...');
@@ -131,22 +114,22 @@ export class ApiConnectivityTest {
       this.testAnthropicConnection(),
       this.testOpenAIConnection(),
       this.testDeepSeekConnection(),
-      this.testPerplexityConnection(),
+      // this.testPerplexityConnection(), // Removed - fake multi-model validation
       this.testTheirStackConnection(),
       this.testMarketAuxConnection(),
-      this.testCoresignalConnection()
+      // this.testCoresignalConnection() // Removed - not configured
     ];
 
     const results = await Promise.all(tests);
     
     console.log('\n📊 API Connectivity Results:');
-    results.forEach(result => {
+    results.forEach((result: ConnectivityResult) => {
       const status = result.connected ? '✅' : '❌';
       const time = `${result.responseTime}ms`;
       console.log(`${status} ${result.service}: ${time}${result.error ? ` - ${result.error}` : ''}`);
     });
 
-    const connectedCount = results.filter(r => r.connected).length;
+    const connectedCount = results.filter((r: ConnectivityResult) => r.connected).length;
     console.log(`\n📈 Overall: ${connectedCount}/${results.length} services connected`);
     
     return results;

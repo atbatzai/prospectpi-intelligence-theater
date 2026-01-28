@@ -365,9 +365,25 @@ class ApiServer {
 if (require.main === module) {
   const server = new ApiServer();
   let isShuttingDown = false;
+  let signalCount = 0;
+  const isWindows = process.platform === 'win32';
+  
+  // Windows-specific: Track if we're in interactive terminal vs background
+  const isInteractiveTerminal = process.stdin.isTTY && process.stdout.isTTY;
   
   // Enhanced graceful shutdown handling with timeout
-  const gracefulShutdown = async (signal: string) => {
+  const gracefulShutdown = async (signal: string, force: boolean = false) => {
+    signalCount++;
+    
+    // On Windows, require multiple signals or explicit force to actually shutdown
+    // This prevents spurious SIGINT from killing the server
+    if (isWindows && !force && signal === 'SIGINT' && signalCount < 2) {
+      logger.warn(`${signal} received (${signalCount}/2 for shutdown) - press Ctrl+C again to confirm`);
+      // Reset signal count after 3 seconds
+      setTimeout(() => { signalCount = Math.max(0, signalCount - 1); }, 3000);
+      return;
+    }
+    
     if (isShuttingDown) {
       logger.warn(`${signal} received during shutdown, forcing exit`);
       process.exit(1);
@@ -394,9 +410,9 @@ if (require.main === module) {
     }
   };
 
-  // Process signal handlers
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  // Process signal handlers - Windows gets special treatment
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM', true)); // SIGTERM is always intentional
+  process.on('SIGINT', () => gracefulShutdown('SIGINT', false)); // SIGINT needs confirmation on Windows
   
   // Enhanced error handling
   process.on('uncaughtException', (error) => {

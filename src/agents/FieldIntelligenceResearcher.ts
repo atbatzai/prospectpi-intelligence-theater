@@ -301,74 +301,7 @@ export class FieldIntelligenceResearcher {
       });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // CORESIGNAL: DORMANT - Set ENABLE_CORESIGNAL=true in .env to activate
-    // Reason: API returning 404 errors, needs investigation before reactivation
-    // ═══════════════════════════════════════════════════════════════════════
-    const enableCoresignal = process.env.ENABLE_CORESIGNAL === 'true';
-    
-    if (enableCoresignal) {
-      // Coresignal: Professional network intelligence
-      try {
-        await this.updateProgress({
-          stage: 'researching',
-          agent: 'researcher',
-          message: `Analyzing professional networks for ${companyName}...`,
-          confidence: 0.85,
-          estimatedTimeRemaining: 45,
-          userCanInterrupt: false,
-          dataSourcesActive: ['coresignal'],
-          insightsDiscovered: results.length,
-          timestamp: new Date()
-        });
-
-        const coresignalResponse = await axios.get(
-          `${ApiConfig.CORESIGNAL_MCP_URL}/professional-network/company/search`,
-          {
-            params: { 
-              title: companyName,
-              company_name: companyName 
-            },
-            headers: { 
-              'Authorization': `Bearer ${ApiConfig.CORESIGNAL_MCP_AUTH}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: ApiConfig.DEFAULT_TIMEOUT_MS
-          }
-        );
-
-        const coresignalCost = 0.08;
-        this.totalCost += coresignalCost;
-        this.costTracker.trackApiCost({
-          source: 'coresignal',
-          cost: coresignalCost,
-          timestamp: new Date(),
-          requestType: 'solution-focused',
-          valueScore: 4.0,
-          requestId: this.requestId,
-          companyName: companyName
-        });
-
-        results.push({
-          source: 'coresignal',
-          data: coresignalResponse.data || { employees: [], departments: [] },
-          confidence: 0.88,
-          timestamp: new Date(),
-          cost: coresignalCost
-        });
-      } catch (error: any) {
-        console.warn(`⚠️ Coresignal API failed: ${error.message}`);
-        results.push({
-          source: 'coresignal',
-          data: { error: error.message, status: 'unavailable' },
-          confidence: 0.0,
-          timestamp: new Date(),
-          cost: 0
-        });
-      }
-    } else {
-      console.log('💤 Coresignal: DORMANT (set ENABLE_CORESIGNAL=true in .env to activate)');
-    }
+    // Note: Coresignal API removed - not configured
 
     // OpenAI GPT-4o: Real-time intelligence synthesis (replaced Perplexity)
     try {
@@ -385,9 +318,9 @@ export class FieldIntelligenceResearcher {
       });
 
       const openaiResponse = await axios.post(
-        `${ApiConfig.OPENAI_BASE_URL}/chat/completions`,
+        `${ApiConfig.DEEPSEEK_BASE_URL}/chat/completions`,
         {
-          model: 'gpt-4o',
+          model: 'deepseek-chat',
           messages: [{
             role: 'system',
             content: 'You are a business intelligence analyst. Provide factual, specific insights about companies based on your training data. Focus on verifiable information.'
@@ -400,18 +333,18 @@ export class FieldIntelligenceResearcher {
         },
         {
           headers: { 
-            'Authorization': `Bearer ${ApiConfig.OPENAI_API_KEY}`,
+            'Authorization': `Bearer ${ApiConfig.DEEPSEEK_API_KEY}`,
             'Content-Type': 'application/json'
           },
           timeout: ApiConfig.DEFAULT_TIMEOUT_MS
         }
       );
 
-      const openaiCost = 0.08; // GPT-4o is more cost-effective
-      this.totalCost += openaiCost;
+      const deepseekCost = 0.008; // DeepSeek is ~10x cheaper than GPT-4o
+      this.totalCost += deepseekCost;
       this.costTracker.trackApiCost({
-        source: 'openai-realtime',
-        cost: openaiCost,
+        source: 'deepseek-realtime',
+        cost: deepseekCost,
         timestamp: new Date(),
         requestType: 'solution-focused',
         valueScore: 5.0,
@@ -419,22 +352,22 @@ export class FieldIntelligenceResearcher {
         companyName: companyName
       });
 
-      // Extract the content from OpenAI response
+      // Extract the content from DeepSeek response
       const insights = openaiResponse.data?.choices?.[0]?.message?.content || '';
       
       results.push({
-        source: 'openai-realtime',
+        source: 'deepseek-realtime',
         data: { 
           insights: insights,
-          model: 'gpt-4o',
+          model: 'deepseek-chat',
           usage: openaiResponse.data?.usage
         },
         confidence: 0.90,
         timestamp: new Date(),
-        cost: openaiCost
+        cost: deepseekCost
       });
     } catch (error: any) {
-      console.warn(`⚠️ OpenAI Real-time API failed: ${error.message}`);
+      console.warn(`⚠️ DeepSeek Real-time API failed: ${error.message}`);
       results.push({
         source: 'openai-realtime',
         data: { error: error.message, status: 'unavailable' },

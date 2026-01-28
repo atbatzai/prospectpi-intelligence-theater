@@ -142,6 +142,21 @@ export class ProspectIntelligenceDetective {
   /**
    * Helper method to call AI models (Anthropic or OpenAI)
    */
+  /**
+   * Helper to extract JSON from markdown code blocks
+   * Claude often wraps JSON responses in ```json ... ``` blocks
+   */
+  private extractJsonFromMarkdown(text: string): string {
+    // First, try to extract from markdown code blocks
+    const jsonBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonBlockMatch) {
+      console.log('📋 Extracted JSON from markdown code block');
+      return jsonBlockMatch[1].trim();
+    }
+    // If no code block, return original text (might be raw JSON)
+    return text.trim();
+  }
+
   private async callAI(
     prompt: string,
     maxTokens: number = 2000,
@@ -158,7 +173,9 @@ export class ProspectIntelligenceDetective {
           content: prompt
         }]
       });
-      return response.content[0].type === 'text' ? response.content[0].text : '';
+      const rawText = response.content[0].type === 'text' ? response.content[0].text : '';
+      // If JSON mode requested, extract from markdown blocks (Claude doesn't have native JSON mode)
+      return jsonMode ? this.extractJsonFromMarkdown(rawText) : rawText;
     } else if (this.modelType === 'openai' && this.openai) {
       const response = await this.openai.chat.completions.create({
         model: ApiConfig.DETECTIVE_MODEL,
@@ -611,7 +628,7 @@ export class ProspectIntelligenceDetective {
    */
   private async triangulateData(researchData: ResearchData[]): Promise<TriangulationResult> {
     // Categorize sources by intelligence domain
-    const businessSources = researchData.filter(d => ['theirstack', 'marketaux', 'coresignal', 'openai-realtime'].includes(d.source));
+    const businessSources = researchData.filter(d => ['theirstack', 'marketaux', 'openai-realtime', 'deepseek-realtime'].includes(d.source));
     const newsSources = researchData.filter(d => ['hackernews', 'googlenews', 'gdelt', 'prnewswire', 'businesswire', 'globenewswire'].includes(d.source));
     const governmentSources = researchData.filter(d => ['sec-edgar', 'sec-formd', 'sec-8k', 'sec-xbrl', 'sam-gov', 'usaspending', 'federalregister'].includes(d.source));
     const legalSources = researchData.filter(d => ['courtlistener', 'uspto'].includes(d.source));
@@ -647,7 +664,7 @@ export class ProspectIntelligenceDetective {
     Research Data from Multiple Intelligence Domains:
     ${researchData.map((data, index) => `
     Source ${index + 1}: ${data.source.toUpperCase()}
-    Domain: ${['theirstack', 'marketaux', 'coresignal', 'openai-realtime'].includes(data.source) ? 'Business Intelligence' : 
+    Domain: ${['theirstack', 'marketaux', 'openai-realtime', 'deepseek-realtime'].includes(data.source) ? 'Business Intelligence' : 
              ['hackernews', 'googlenews', 'gdelt', 'prnewswire', 'businesswire', 'globenewswire'].includes(data.source) ? 'News & Press Releases' :
              ['sec-edgar', 'sec-formd', 'sec-8k', 'sec-xbrl', 'sam-gov', 'usaspending', 'federalregister'].includes(data.source) ? 'Government Records & SEC' :
              ['courtlistener', 'uspto'].includes(data.source) ? 'Legal & IP' :
@@ -767,61 +784,43 @@ export class ProspectIntelligenceDetective {
     researchData: ResearchData[], 
     triangulation: TriangulationResult
   ): Promise<EvidenceValidation[]> {
+    // 🚨 OPTIMIZED: Single batch validation instead of N individual API calls
+    // Previous implementation called Claude for EACH of 23+ sources = 23+ API calls!
+    // This was burning credits at an alarming rate.
+    
     const validations: EvidenceValidation[] = [];
-
+    
+    // Use triangulation data and source confidence for quick heuristic validation
+    // Instead of calling AI for each source individually
     for (const data of researchData) {
-      const prompt = `You are validating intelligence evidence from source: ${data.source.toUpperCase()}
-
-      Source Data: ${JSON.stringify(data.data, null, 2)}
-      Source Confidence: ${data.confidence}
-      Triangulation Context: ${JSON.stringify({
-        consistencyScore: triangulation.consistencyScore,
-        verifiedFacts: triangulation.verifiedFacts,
-        conflictingInfo: triangulation.conflictingInformation
-      }, null, 2)}
-
-      Perform evidence validation:
-      1. Assess source credibility and reliability
-      2. Verify claims against known facts
-      3. Identify supporting and contradicting evidence
-      4. Calculate confidence score for this source
-
-      Respond in JSON format:
-      {
-        "sourceCredibility": 0.0-1.0,
-        "keyClaims": ["claim1", "claim2", ...],
-        "verifiedClaims": ["verified1", "verified2", ...],
-        "supportingEvidence": ["evidence1", "evidence2", ...],
-        "contradictingEvidence": ["contradiction1", "contradiction2", ...],
-        "overallConfidence": 0.0-1.0,
-        "validationNotes": "detailed analysis"
-      }`;
-
-      try {
-        const validationText = await this.callAI(prompt, 2000, ApiConfig.DETECTIVE_TEMPERATURE_MIN + 0.1, true);
-        const validation = JSON.parse(validationText);
-
-        validations.push({
-          source: data.source,
-          claim: validation.keyClaims?.join('; ') || 'No claims identified',
-          verified: validation.overallConfidence > 0.6,
-          confidence: validation.overallConfidence || 0,
-          supportingEvidence: validation.supportingEvidence || [],
-          contradictingEvidence: validation.contradictingEvidence || []
-        });
-
-      } catch (error: any) {
-        validations.push({
-          source: data.source,
-          claim: 'Validation failed',
-          verified: false,
-          confidence: 0,
-          supportingEvidence: [],
-          contradictingEvidence: [`Validation error: ${error.message}`]
-        });
-      }
+      // Heuristic validation based on source type and initial confidence
+      const sourceReliability: Record<string, number> = {
+        'sec-edgar': 0.95, 'sec-formd': 0.95, 'sec-8k': 0.95, 'sec-xbrl': 0.95,
+        'wikidata': 0.90, 'github': 0.85, 'openai-realtime': 0.85,
+        'theirstack': 0.85, 'marketaux': 0.80,
+        'googlenews': 0.75, 'hackernews': 0.70, 'gdelt': 0.70,
+        'prnewswire': 0.80, 'businesswire': 0.80, 'globenewswire': 0.80,
+        'courtlistener': 0.90, 'federalregister': 0.90, 'usaspending': 0.90,
+        'greenhouse-jobs': 0.75, 'lever-jobs': 0.75,
+        'default': 0.60
+      };
+      
+      const baseReliability = sourceReliability[data.source] || sourceReliability['default'];
+      const adjustedConfidence = (baseReliability + data.confidence) / 2;
+      const hasData = data.data && !data.data.error && Object.keys(data.data).length > 0;
+      
+      validations.push({
+        source: data.source,
+        claim: hasData ? `Data retrieved from ${data.source}` : 'No data available',
+        verified: hasData && adjustedConfidence > 0.6,
+        confidence: hasData ? adjustedConfidence : 0,
+        supportingEvidence: hasData ? ['Source responded with data'] : [],
+        contradictingEvidence: hasData ? [] : ['Source unavailable or empty']
+      });
     }
-
+    
+    console.log(`📊 Evidence validation: ${validations.filter(v => v.verified).length}/${validations.length} sources verified (heuristic, no AI calls)`);
+    
     return validations;
   }
 
@@ -1093,7 +1092,8 @@ export class ProspectIntelligenceDetective {
     FAILURE TO INCLUDE COMPLETE analyticalAssessment WILL RESULT IN DOSSIER REJECTION.`;
 
     try {
-      const dossierText = await this.callAI(prompt, 4000, ApiConfig.DETECTIVE_TEMPERATURE_MAX, true);
+      // Increased from 4000 to 8000 to prevent JSON truncation
+      const dossierText = await this.callAI(prompt, 8000, ApiConfig.DETECTIVE_TEMPERATURE_MAX, true);
       let structuredIntelligence;
       
       try {
@@ -1137,19 +1137,12 @@ export class ProspectIntelligenceDetective {
         }
       }
 
-      // 🎯 FBI-LIKE MULTI-MODEL VALIDATION ENHANCEMENT
-      // Apply multi-model validation to increase analytical rigor
-      if (this.context) {
-        try {
-          console.log('🔍 Initiating FBI-like multi-model validation...');
-          const validatedIntelligence = await this.performMultiModelValidation(structuredIntelligence, this.context);
-          structuredIntelligence = validatedIntelligence;
-          console.log('✅ Multi-model validation complete - enhanced analytical rigor achieved');
-        } catch (validationError) {
-          console.warn('⚠️ Multi-model validation failed, using original analysis:', validationError);
-          // Continue with original analysis if validation fails
-        }
-      }
+      // 🚨 DISABLED: FAKE MULTI-MODEL VALIDATION (Was burning 3x Claude credits)
+      // The "GPT" and "Perplexity" stages were actually just calling Claude 3 more times!
+      // This was a credit-burning anti-pattern that provided no real value.
+      // TODO: Implement REAL multi-model validation if needed (actual GPT-4 + Perplexity APIs)
+      // For now, the initial Claude analysis is sufficient and cost-effective.
+      console.log('📊 Using efficient single-model analysis (multi-model validation disabled for cost optimization)');
 
       // Epic 2.5.2: Calculate solution-relevance score from structured analysis
       const solutionRelevanceScore = structuredIntelligence.executiveSummary?.solutionRelevanceScore || 

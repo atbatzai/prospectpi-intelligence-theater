@@ -14,6 +14,20 @@ import {
 } from '../interfaces/AgentTypes';
 import { CulturalDetectionService, CulturalContext } from '../services/CulturalDetectionService';
 
+/**
+ * Helper function to extract JSON from markdown code blocks
+ * Handles Claude's tendency to wrap JSON in ```json ... ``` blocks
+ */
+function extractJsonFromMarkdown(text: string): string {
+  // Check if response is wrapped in markdown code block
+  const jsonBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (jsonBlockMatch) {
+    console.log('📋 Extracted JSON from markdown code block (Cultural Agent)');
+    return jsonBlockMatch[1].trim();
+  }
+  return text.trim();
+}
+
 export interface CulturalAdaptationResult {
   culturalContext: CulturalContext;
   adaptedSections: {
@@ -183,7 +197,7 @@ Please provide culturally adapted versions of these sections in the following JS
       
       if (this.modelType === 'anthropic' && this.anthropic) {
         const response = await this.anthropic.messages.create({
-          model: 'claude-3-opus-20240229',
+          model: ApiConfig.DETECTIVE_MODEL, // Use same model as Detective (claude-sonnet-4)
           max_tokens: 3000,
           temperature: 0.3,
           messages: [
@@ -192,6 +206,8 @@ Please provide culturally adapted versions of these sections in the following JS
         });
         const content = response.content[0];
         responseText = content.type === 'text' ? content.text : '';
+        // Extract JSON from markdown code block if present (Claude often wraps in ```json)
+        responseText = extractJsonFromMarkdown(responseText);
       } else if (this.modelType === 'openai' && this.openai) {
         const response = await this.openai.chat.completions.create({
           model: ApiConfig.DETECTIVE_MODEL,
