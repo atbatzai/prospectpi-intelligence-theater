@@ -103,7 +103,7 @@ export class AgentProgressService {
   async publishResearcherUpdate(
     requestId: string,
     companyName: string,
-    activeSource: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity',
+    activeSource: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'openai-realtime',
     discoveredCount: number,
     insightsTotal: number
   ): Promise<void> {

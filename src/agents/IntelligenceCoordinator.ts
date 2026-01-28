@@ -10,6 +10,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { ApiConfig } from '../config/ApiConfig';
 import { 
   AgentProgress, 
@@ -21,14 +22,30 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 export class IntelligenceCoordinator {
-  private anthropic: Anthropic;
+  private anthropic: Anthropic | null = null;
+  private openai: OpenAI | null = null;
+  private modelType: 'anthropic' | 'openai';
   private context: AgentContext | null = null;
   private progressCallback: ((progress: AgentProgress) => void) | undefined;
 
   constructor(progressCallback?: (progress: AgentProgress) => void) {
-    this.anthropic = new Anthropic({
-      apiKey: ApiConfig.ANTHROPIC_API_KEY,
-    });
+    // Dynamically select API client based on model
+    const model = ApiConfig.INTELLIGENCE_COORDINATOR_MODEL;
+    
+    if (model.startsWith('claude-')) {
+      this.modelType = 'anthropic';
+      this.anthropic = new Anthropic({
+        apiKey: ApiConfig.ANTHROPIC_API_KEY,
+      });
+    } else if (model.startsWith('gpt-')) {
+      this.modelType = 'openai';
+      this.openai = new OpenAI({
+        apiKey: ApiConfig.OPENAI_API_KEY,
+      });
+    } else {
+      throw new Error(`Unsupported model: ${model}. Must start with 'claude-' or 'gpt-'`);
+    }
+    
     this.progressCallback = progressCallback;
   }
 
@@ -115,17 +132,35 @@ export class IntelligenceCoordinator {
     }`;
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: ApiConfig.INTELLIGENCE_COORDINATOR_MODEL,
-        max_tokens: 2000,
-        temperature: ApiConfig.INTELLIGENCE_COORDINATOR_TEMPERATURE,
-        messages: [{
-          role: 'user',
-          content: prompt
-        }]
-      });
+      let planText: string;
+      
+      if (this.modelType === 'anthropic' && this.anthropic) {
+        const response = await this.anthropic.messages.create({
+          model: ApiConfig.INTELLIGENCE_COORDINATOR_MODEL,
+          max_tokens: 2000,
+          temperature: ApiConfig.INTELLIGENCE_COORDINATOR_TEMPERATURE,
+          messages: [{
+            role: 'user',
+            content: prompt
+          }]
+        });
+        planText = response.content[0].type === 'text' ? response.content[0].text : '';
+      } else if (this.modelType === 'openai' && this.openai) {
+        const response = await this.openai.chat.completions.create({
+          model: ApiConfig.INTELLIGENCE_COORDINATOR_MODEL,
+          max_tokens: 2000,
+          temperature: ApiConfig.INTELLIGENCE_COORDINATOR_TEMPERATURE,
+          messages: [{
+            role: 'user',
+            content: prompt
+          }],
+          response_format: { type: 'json_object' }
+        });
+        planText = response.choices[0]?.message?.content || '';
+      } else {
+        throw new Error('API client not initialized');
+      }
 
-      const planText = response.content[0].type === 'text' ? response.content[0].text : '';
       const planData = JSON.parse(planText);
 
       // Create quality gates from the plan
@@ -207,17 +242,35 @@ export class IntelligenceCoordinator {
     }`;
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: ApiConfig.INTELLIGENCE_COORDINATOR_MODEL,
-        max_tokens: 1000,
-        temperature: ApiConfig.INTELLIGENCE_COORDINATOR_TEMPERATURE,
-        messages: [{
-          role: 'user',
-          content: prompt
-        }]
-      });
+      let validationText: string;
+      
+      if (this.modelType === 'anthropic' && this.anthropic) {
+        const response = await this.anthropic.messages.create({
+          model: ApiConfig.INTELLIGENCE_COORDINATOR_MODEL,
+          max_tokens: 1000,
+          temperature: ApiConfig.INTELLIGENCE_COORDINATOR_TEMPERATURE,
+          messages: [{
+            role: 'user',
+            content: prompt
+          }]
+        });
+        validationText = response.content[0].type === 'text' ? response.content[0].text : '';
+      } else if (this.modelType === 'openai' && this.openai) {
+        const response = await this.openai.chat.completions.create({
+          model: ApiConfig.INTELLIGENCE_COORDINATOR_MODEL,
+          max_tokens: 1000,
+          temperature: ApiConfig.INTELLIGENCE_COORDINATOR_TEMPERATURE,
+          messages: [{
+            role: 'user',
+            content: prompt
+          }],
+          response_format: { type: 'json_object' }
+        });
+        validationText = response.choices[0]?.message?.content || '';
+      } else {
+        throw new Error('API client not initialized');
+      }
 
-      const validationText = response.content[0].type === 'text' ? response.content[0].text : '';
       const validation = JSON.parse(validationText);
 
       const qualityGate: QualityGate = {
@@ -312,17 +365,35 @@ export class IntelligenceCoordinator {
     }`;
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: ApiConfig.INTELLIGENCE_COORDINATOR_MODEL,
-        max_tokens: 1500,
-        temperature: ApiConfig.INTELLIGENCE_COORDINATOR_TEMPERATURE,
-        messages: [{
-          role: 'user',
-          content: prompt
-        }]
-      });
+      let qaText: string;
+      
+      if (this.modelType === 'anthropic' && this.anthropic) {
+        const response = await this.anthropic.messages.create({
+          model: ApiConfig.INTELLIGENCE_COORDINATOR_MODEL,
+          max_tokens: 1500,
+          temperature: ApiConfig.INTELLIGENCE_COORDINATOR_TEMPERATURE,
+          messages: [{
+            role: 'user',
+            content: prompt
+          }]
+        });
+        qaText = response.content[0].type === 'text' ? response.content[0].text : '';
+      } else if (this.modelType === 'openai' && this.openai) {
+        const response = await this.openai.chat.completions.create({
+          model: ApiConfig.INTELLIGENCE_COORDINATOR_MODEL,
+          max_tokens: 1500,
+          temperature: ApiConfig.INTELLIGENCE_COORDINATOR_TEMPERATURE,
+          messages: [{
+            role: 'user',
+            content: prompt
+          }],
+          response_format: { type: 'json_object' }
+        });
+        qaText = response.choices[0]?.message?.content || '';
+      } else {
+        throw new Error('API client not initialized');
+      }
 
-      const qaText = response.content[0].type === 'text' ? response.content[0].text : '';
       const qaResult = JSON.parse(qaText);
 
       return {

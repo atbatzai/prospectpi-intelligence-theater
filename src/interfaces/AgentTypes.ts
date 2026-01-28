@@ -71,7 +71,7 @@ export interface AgentOrchestrationContext {
     secondaryPainPoints?: string[];
   };
   researchStrategy: {
-    priorityAPIs: ('theirstack' | 'marketaux' | 'coresignal' | 'perplexity')[];
+    priorityAPIs: ('theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'openai-realtime')[];
     industryFocus: string[];
     competitorAnalysis: boolean;
     budgetIntelligence: boolean;
@@ -146,7 +146,7 @@ export interface QualityGate {
 }
 
 export interface ResearchData {
-  source: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'shodan' | 'bmad-enhancement' | 'reddit' | 'twitter' | 'github' | 'youtube' | 'discord';
+  source: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'openai-realtime' | 'shodan' | 'bmad-enhancement' | 'reddit' | 'twitter' | 'github' | 'youtube' | 'discord';
   data: any;
   confidence: number;
   timestamp: Date;

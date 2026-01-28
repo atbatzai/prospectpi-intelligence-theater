@@ -4,6 +4,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { ApiConfig } from '../config/ApiConfig';
 import { 
   AgentProgress, 
@@ -28,14 +29,30 @@ export interface CulturalAdaptationResult {
 }
 
 export class CulturalIntelligenceAgent {
-  private anthropic: Anthropic;
+  private anthropic: Anthropic | null = null;
+  private openai: OpenAI | null = null;
+  private modelType: 'anthropic' | 'openai';
   private context: AgentContext | null = null;
   private progressCallback: ((progress: AgentProgress) => void) | undefined;
   
   constructor(progressCallback?: (progress: AgentProgress) => void) {
-    this.anthropic = new Anthropic({
-      apiKey: ApiConfig.ANTHROPIC_API_KEY,
-    });
+    // Dynamically select API client based on model - use Detective model for cultural intelligence
+    const model = ApiConfig.DETECTIVE_MODEL;
+    
+    if (model.startsWith('claude-')) {
+      this.modelType = 'anthropic';
+      this.anthropic = new Anthropic({
+        apiKey: ApiConfig.ANTHROPIC_API_KEY,
+      });
+    } else if (model.startsWith('gpt-')) {
+      this.modelType = 'openai';
+      this.openai = new OpenAI({
+        apiKey: ApiConfig.OPENAI_API_KEY,
+      });
+    } else {
+      throw new Error(`Unsupported model: ${model}. Must start with 'claude-' or 'gpt-'`);
+    }
+    
     this.progressCallback = progressCallback;
   }
   
@@ -162,27 +179,40 @@ Please provide culturally adapted versions of these sections in the following JS
 }`;
     
     try {
-      const response = await this.anthropic.messages.create({
-        model: 'claude-3-opus-20240229',
-        max_tokens: 3000,
-        temperature: 0.3,
-        messages: [
-          { role: 'user', content: systemPrompt + '\n\n' + userPrompt }
-        ]
-      });
+      let responseText: string;
       
-      const content = response.content[0];
-      if (content.type === 'text') {
-        return JSON.parse(content.text);
+      if (this.modelType === 'anthropic' && this.anthropic) {
+        const response = await this.anthropic.messages.create({
+          model: 'claude-3-opus-20240229',
+          max_tokens: 3000,
+          temperature: 0.3,
+          messages: [
+            { role: 'user', content: systemPrompt + '\n\n' + userPrompt }
+          ]
+        });
+        const content = response.content[0];
+        responseText = content.type === 'text' ? content.text : '';
+      } else if (this.modelType === 'openai' && this.openai) {
+        const response = await this.openai.chat.completions.create({
+          model: ApiConfig.DETECTIVE_MODEL,
+          max_tokens: 3000,
+          temperature: 0.3,
+          messages: [
+            { role: 'user', content: systemPrompt + '\n\n' + userPrompt }
+          ],
+          response_format: { type: 'json_object' }
+        });
+        responseText = response.choices[0]?.message?.content || '';
+      } else {
+        throw new Error('API client not initialized');
       }
+      
+      return JSON.parse(responseText);
     } catch (error: any) {
       console.error('Cultural adaptation LLM error:', error);
       // Fallback to rule-based adaptation
       return this.fallbackRuleBasedAdaptation(dossier, culturalContext, rules);
     }
-    
-    // Fallback if LLM fails
-    return this.fallbackRuleBasedAdaptation(dossier, culturalContext, rules);
   }
   
   private fallbackRuleBasedAdaptation(dossier: DossierResult, culturalContext: CulturalContext, rules: any): any {

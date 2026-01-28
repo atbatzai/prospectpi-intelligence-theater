@@ -113,12 +113,12 @@ export class ApiConnectivityTest {
   }
 
   static async testCoresignalConnection(): Promise<ConnectivityResult> {
-    // Coresignal uses MCP protocol, so we test the basic endpoint
+    // Coresignal REST API endpoint test
     return this.testService(
-      'Coresignal MCP',
-      ApiConfig.CORESIGNAL_MCP_URL,
+      'Coresignal API',
+      `${ApiConfig.CORESIGNAL_MCP_URL}/professional-network/company/search?title=test`,
       {
-        'apikey': ApiConfig.CORESIGNAL_MCP_AUTH,
+        'Authorization': `Bearer ${ApiConfig.CORESIGNAL_MCP_AUTH}`,
         'content-type': 'application/json'
       }
     );

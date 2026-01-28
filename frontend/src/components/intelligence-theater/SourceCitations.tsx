@@ -11,7 +11,7 @@ interface SourceCitation {
   url?: string;
   confidence: number;
   freshness: string;
-  type: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'internal';
+  type: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'openai-realtime' | 'internal';
 }
 
 interface SourceCitationsProps {

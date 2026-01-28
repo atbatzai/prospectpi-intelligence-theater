@@ -131,3 +131,14 @@ mcp-config.json
 # QA gates directory (keep structure in docs/qa/gates but ignore root-level)
 /qa-gates/
 
+# Session handoff files (temporary documentation)
+SESSION-HANDOFF.md
+
+# Playwright test artifacts and observation scripts
+frontend/playwright-observe.js
+frontend/test-results/
+frontend/ux-*.png
+ux-*.png
+
+# Runtime request tracking files
+latest-request-id.txt

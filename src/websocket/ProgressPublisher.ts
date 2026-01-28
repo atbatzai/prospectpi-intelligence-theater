@@ -226,7 +226,7 @@ export class ProgressPublisher {
   async publishAdvancedResearcherProgress(
     requestId: string,
     companyName: string,
-    activeSource: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity',
+    activeSource: 'theirstack' | 'marketaux' | 'coresignal' | 'perplexity' | 'openai-realtime',
     discoveredCount: number,
     insightsTotal: number
   ): Promise<void> {
@@ -234,10 +234,11 @@ export class ProgressPublisher {
       theirstack: `TheirStack: Discovered ${discoveredCount.toLocaleString()} technology implementations across ${companyName} subsidiaries...`,
       marketaux: `MarketAux: Gathering financial intelligence signals for ${companyName}...`,
       coresignal: `Coresignal: Mapping professional networks and hiring patterns for ${companyName}...`,
-      perplexity: `Perplexity: Real-time web reconnaissance discovering latest ${companyName} developments...`
+      perplexity: `Perplexity: Real-time web reconnaissance discovering latest ${companyName} developments...`,
+      'openai-realtime': `OpenAI: Synthesizing real-time intelligence about ${companyName}...`
     };
 
-    const dataSources = ['theirstack', 'marketaux', 'coresignal', 'perplexity'];
+    const dataSources = ['theirstack', 'marketaux', 'coresignal', 'openai-realtime'];
     const activeIndex = dataSources.indexOf(activeSource);
     const activeSources = dataSources.slice(0, activeIndex + 1);
 

@@ -5,7 +5,8 @@ FROM node:20-alpine AS base
 WORKDIR /app
 
 # Install build dependencies for native modules like better-sqlite3
-RUN apk add --no-cache python3 make g++
+# Also install wget for health checks
+RUN apk add --no-cache python3 make g++ wget
 
 # Copy package files
 COPY package*.json ./

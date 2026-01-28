@@ -57,7 +57,7 @@ export const AgentProgressTheater: React.FC<AgentTheaterProps> = ({
     { id: 'theirstack', name: '🔍 Investigating Technology Stack', progress: 0, status: 'pending', estimatedDuration: 45 },
     { id: 'marketaux', name: '💼 Gathering Financial Intelligence', progress: 0, status: 'pending', estimatedDuration: 35 },
     { id: 'coresignal', name: '🌐 Analyzing Professional Networks', progress: 0, status: 'pending', estimatedDuration: 40 },
-    { id: 'perplexity', name: '📰 Real-time News Research', progress: 0, status: 'pending', estimatedDuration: 25 },
+    { id: 'openai-realtime', name: '🤖 AI Intelligence Synthesis', progress: 0, status: 'pending', estimatedDuration: 25 },
     { id: 'analysis', name: '🧠 Cross-referencing Evidence', progress: 0, status: 'pending', estimatedDuration: 60 },
     { id: 'synthesis', name: '📋 Compiling Intelligence Report', progress: 0, status: 'pending', estimatedDuration: 45 }
   ]);

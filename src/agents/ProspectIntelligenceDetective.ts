@@ -11,6 +11,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { ApiConfig } from '../config/ApiConfig';
 import { 
   AgentProgress, 
@@ -111,15 +112,68 @@ interface AgentReasoningExposure {
 }
 
 export class ProspectIntelligenceDetective {
-  private anthropic: Anthropic;
+  private anthropic: Anthropic | null = null;
+  private openai: OpenAI | null = null;
+  private modelType: 'anthropic' | 'openai';
   private context: AgentContext | null = null;
   private progressCallback: ((progress: AgentProgress) => void) | undefined;
 
   constructor(progressCallback?: (progress: AgentProgress) => void) {
-    this.anthropic = new Anthropic({
-      apiKey: ApiConfig.ANTHROPIC_API_KEY,
-    });
+    // Dynamically select API client based on model
+    const model = ApiConfig.DETECTIVE_MODEL;
+    
+    if (model.startsWith('claude-')) {
+      this.modelType = 'anthropic';
+      this.anthropic = new Anthropic({
+        apiKey: ApiConfig.ANTHROPIC_API_KEY,
+      });
+    } else if (model.startsWith('gpt-')) {
+      this.modelType = 'openai';
+      this.openai = new OpenAI({
+        apiKey: ApiConfig.OPENAI_API_KEY,
+      });
+    } else {
+      throw new Error(`Unsupported model: ${model}. Must start with 'claude-' or 'gpt-'`);
+    }
+    
     this.progressCallback = progressCallback;
+  }
+
+  /**
+   * Helper method to call AI models (Anthropic or OpenAI)
+   */
+  private async callAI(
+    prompt: string,
+    maxTokens: number = 2000,
+    temperature?: number,
+    jsonMode: boolean = false
+  ): Promise<string> {
+    if (this.modelType === 'anthropic' && this.anthropic) {
+      const response = await this.anthropic.messages.create({
+        model: ApiConfig.DETECTIVE_MODEL,
+        max_tokens: maxTokens,
+        temperature: temperature || ApiConfig.DETECTIVE_TEMPERATURE_MIN,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      });
+      return response.content[0].type === 'text' ? response.content[0].text : '';
+    } else if (this.modelType === 'openai' && this.openai) {
+      const response = await this.openai.chat.completions.create({
+        model: ApiConfig.DETECTIVE_MODEL,
+        max_tokens: maxTokens,
+        temperature: temperature || ApiConfig.DETECTIVE_TEMPERATURE_MIN,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }],
+        ...(jsonMode ? { response_format: { type: 'json_object' } } : {})
+      });
+      return response.choices[0]?.message?.content || '';
+    } else {
+      throw new Error('API client not initialized');
+    }
   }
 
   /**
@@ -209,18 +263,9 @@ export class ProspectIntelligenceDetective {
 
     Return a JSON object with your challenges and revised confidence assessments.`;
 
-    const response = await this.anthropic.messages.create({
-      model: ApiConfig.DETECTIVE_MODEL,
-      max_tokens: 4000,
-      temperature: 0.3,
-      messages: [{ role: 'user', content: challengePrompt }]
-    });
-
     try {
-      const content = response.content[0];
-      if (content.type === 'text') {
-        return JSON.parse(content.text);
-      }
+      const responseText = await this.callAI(challengePrompt, 4000, 0.3, true);
+      return JSON.parse(responseText);
     } catch (parseError) {
       console.warn('Failed to parse GPT challenge response');
       return { challenges: ['Challenge analysis failed'], revisedConfidence: 0.7 };
@@ -257,18 +302,9 @@ export class ProspectIntelligenceDetective {
 
     Return verification results with confidence scores.`;
 
-    const response = await this.anthropic.messages.create({
-      model: ApiConfig.DETECTIVE_MODEL, 
-      max_tokens: 3000,
-      temperature: 0.1,
-      messages: [{ role: 'user', content: verificationPrompt }]
-    });
-
     try {
-      const content = response.content[0];
-      if (content.type === 'text') {
-        return JSON.parse(content.text);
-      }
+      const responseText = await this.callAI(verificationPrompt, 3000, 0.1, true);
+      return JSON.parse(responseText);
     } catch (parseError) {
       console.warn('Failed to parse Perplexity verification response');
       return { verificationStatus: 'failed', confidence: 0.6 };
@@ -312,18 +348,9 @@ export class ProspectIntelligenceDetective {
 
     Return the enhanced analysis with FBI-like analytical rigor.`;
 
-    const response = await this.anthropic.messages.create({
-      model: ApiConfig.DETECTIVE_MODEL,
-      max_tokens: 6000,
-      temperature: 0.2,
-      messages: [{ role: 'user', content: synthesisPrompt }]
-    });
-
     try {
-      const content = response.content[0];
-      if (content.type === 'text') {
-        return JSON.parse(content.text);
-      }
+      const responseText = await this.callAI(synthesisPrompt, 6000, 0.2, true);
+      return JSON.parse(responseText);
     } catch (parseError) {
       console.warn('Failed to parse Claude synthesis response');
       return validationData.originalAnalysis; // Fallback to original
@@ -459,21 +486,11 @@ export class ProspectIntelligenceDetective {
     Include agent reasoning, hunches, and hypotheses with confidence levels.
     Prioritize GO/NO-GO decision support over comprehensive analysis.`;
 
-    const response = await this.anthropic.messages.create({
-      model: ApiConfig.DETECTIVE_MODEL,
-      max_tokens: 4000,
-      temperature: 0.2,
-      messages: [{ role: 'user', content: prompt }]
-    });
-
-    const content = response.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Unexpected response format from Claude API');
-    }
+    const responseText = await this.callAI(prompt, 4000, 0.2, false);
 
     try {
       // Parse the JSON response
-      const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No valid JSON found in response');
       }
@@ -593,7 +610,7 @@ export class ProspectIntelligenceDetective {
    * Triangulate data from multiple sources to identify patterns and conflicts
    */
   private async triangulateData(researchData: ResearchData[]): Promise<TriangulationResult> {
-    const premiumSources = researchData.filter(d => ['theirstack', 'marketaux', 'coresignal', 'perplexity'].includes(d.source));
+    const premiumSources = researchData.filter(d => ['theirstack', 'marketaux', 'coresignal', 'openai-realtime'].includes(d.source));
     const socialSources = researchData.filter(d => ['reddit', 'twitter', 'github', 'youtube', 'discord', 'newsdata'].includes(d.source));
     
     const prompt = `You are a senior intelligence analyst performing advanced 10-source triangulation analysis across premium APIs and social intelligence platforms.
@@ -606,7 +623,7 @@ export class ProspectIntelligenceDetective {
     Research Data from Multiple Intelligence Domains:
     ${researchData.map((data, index) => `
     Source ${index + 1}: ${data.source.toUpperCase()}
-    Domain: ${['theirstack', 'marketaux', 'coresignal', 'perplexity'].includes(data.source) ? 'Premium Business' : 'Social Intelligence'}
+    Domain: ${['theirstack', 'marketaux', 'coresignal', 'openai-realtime'].includes(data.source) ? 'Premium Business' : 'Social Intelligence'}
     Confidence: ${data.confidence}
     Data: ${JSON.stringify(data.data, null, 2)}
     `).join('\n')}
@@ -639,17 +656,7 @@ export class ProspectIntelligenceDetective {
     }`;
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: ApiConfig.DETECTIVE_MODEL,
-        max_tokens: 3000,
-        temperature: ApiConfig.DETECTIVE_TEMPERATURE_MIN,
-        messages: [{
-          role: 'user',
-          content: prompt
-        }]
-      });
-
-      const triangulationText = response.content[0].type === 'text' ? response.content[0].text : '';
+      const triangulationText = await this.callAI(prompt, 3000, ApiConfig.DETECTIVE_TEMPERATURE_MIN, true);
       
       // Enhanced JSON parsing with multiple recovery strategies
       let triangulationData;
@@ -754,17 +761,7 @@ export class ProspectIntelligenceDetective {
       }`;
 
       try {
-        const response = await this.anthropic.messages.create({
-          model: ApiConfig.DETECTIVE_MODEL,
-          max_tokens: 2000,
-          temperature: ApiConfig.DETECTIVE_TEMPERATURE_MIN + 0.1,
-          messages: [{
-            role: 'user',
-            content: prompt
-          }]
-        });
-
-        const validationText = response.content[0].type === 'text' ? response.content[0].text : '';
+        const validationText = await this.callAI(prompt, 2000, ApiConfig.DETECTIVE_TEMPERATURE_MIN + 0.1, true);
         const validation = JSON.parse(validationText);
 
         validations.push({
@@ -819,6 +816,12 @@ export class ProspectIntelligenceDetective {
     };
 
     const prompt = `You are an FBI-trained intelligence analyst creating solution-focused business intelligence for ${solutionContext.vendorName} selling ${solutionContext.productName} to ${companyName}.
+
+    ⚠️ CRITICAL INSTRUCTION: ALL OUTPUT MUST BE SPECIFIC TO ${companyName.toUpperCase()}!
+    - NEVER use generic phrases like "this document provides" or "our strategic position"
+    - ALWAYS reference "${companyName}" by name in every section
+    - Every insight must cite specific data from the intelligence sources below
+    - The Executive Summary MUST start with "${companyName}" and include specific facts about them
 
     EXECUTE STRUCTURED ANALYTICAL TECHNIQUES FOR MAXIMUM RIGOR:
 
@@ -905,10 +908,10 @@ export class ProspectIntelligenceDetective {
     {
       "dealWinningIntelligence": ${dealWinningIntel ? JSON.stringify(dealWinningIntel, null, 2) : 'null'},
       "executiveSummary": {
-        "summary": "2-3 paragraph overview focusing on ${solutionContext.productName} fit for ${companyName}",
+        "summary": "MUST START WITH '${companyName}' - Write 2-3 paragraphs about ${companyName} specifically: their industry position, why ${solutionContext.productName} is relevant to them, key intelligence findings. Include specific facts like employee count, revenue, technology stack from the data.",
         "solutionRelevanceScore": 0-100,
-        "keyOpportunities": ["opp1", "opp2", "opp3"],
-        "criticalRisks": ["risk1", "risk2"],
+        "keyOpportunities": ["specific opportunities at ${companyName}"],
+        "criticalRisks": ["specific risks for selling to ${companyName}"],
         "analyticalAssessment": {
           "primaryHypothesis": "most likely scenario with probability %",
           "alternativeHypotheses": [{"scenario": "alternative", "probability": "%", "keyEvidence": []}],
@@ -920,8 +923,8 @@ export class ProspectIntelligenceDetective {
       "painPointAlignment": {
         "primaryPainPoint": {
           "challenge": "${solutionContext.primaryPainPoint}",
-          "evidence": [{"claim": "evidence", "source": "API", "reliability": "A-F", "credibility": "1-6"}],
-          "solutionFit": "how ${solutionContext.productName} addresses this",
+          "evidence": [{"claim": "specific evidence about ${companyName}", "source": "API", "reliability": "A-F", "credibility": "1-6"}],
+          "solutionFit": "how ${solutionContext.productName} specifically addresses ${companyName}'s needs",
           "confidence": "high|medium|limited",
           "alternativeExplanations": ["what else could explain this pain point"],
           "corroborationLevel": "single-source|multiple-sources|conflicting-sources"
@@ -994,17 +997,7 @@ export class ProspectIntelligenceDetective {
     }`;
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: ApiConfig.DETECTIVE_MODEL,
-        max_tokens: 4000,
-        temperature: ApiConfig.DETECTIVE_TEMPERATURE_MAX,
-        messages: [{
-          role: 'user',
-          content: prompt
-        }]
-      });
-
-      const dossierText = response.content[0].type === 'text' ? response.content[0].text : '';
+      const dossierText = await this.callAI(prompt, 4000, ApiConfig.DETECTIVE_TEMPERATURE_MAX, true);
       let structuredIntelligence;
       
       try {

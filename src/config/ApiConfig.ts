@@ -323,7 +323,7 @@ export class ApiConfig {
 
   // Agent Configuration - Optimized with Claude 3.5 Sonnet (2x faster, better reasoning)
   static readonly INTELLIGENCE_COORDINATOR_MODEL = (() => {
-    const model = process.env.INTELLIGENCE_COORDINATOR_MODEL || 'claude-3-5-sonnet-20240620';
+    const model = process.env.INTELLIGENCE_COORDINATOR_MODEL || 'gpt-4o';
     console.log('🔍 LOADING INTELLIGENCE_COORDINATOR_MODEL:', model);
     return model;
   })();
@@ -331,7 +331,7 @@ export class ApiConfig {
   static readonly FIELD_RESEARCHER_PRIMARY_MODEL = process.env.FIELD_RESEARCHER_PRIMARY_MODEL || 'deepseek-chat';
   static readonly FIELD_RESEARCHER_FALLBACK_MODEL = process.env.FIELD_RESEARCHER_FALLBACK_MODEL || 'gpt-4o-mini';
   static readonly DETECTIVE_MODEL = (() => {
-    const model = process.env.DETECTIVE_MODEL || 'claude-3-5-sonnet-20240620';
+    const model = process.env.DETECTIVE_MODEL || 'gpt-4o';
     console.log('🔍 LOADING DETECTIVE_MODEL:', model);
     return model;
   })();
@@ -356,7 +356,7 @@ export class ApiConfig {
   static readonly PERPLEXITY_BASE_URL = 'https://api.perplexity.ai';
   static readonly THEIRSTACK_BASE_URL = 'https://api.theirstack.com/v1';
   static readonly MARKETAUX_BASE_URL = 'https://api.marketaux.com/v1';
-  static readonly CORESIGNAL_MCP_URL = 'https://mcp.coresignal.com/sse';
+  static readonly CORESIGNAL_MCP_URL = 'https://api.coresignal.com/cdapi/v1';
   
   // Infrastructure Intelligence Base URLs
   static readonly SHODAN_BASE_URL = 'https://api.shodan.io';
