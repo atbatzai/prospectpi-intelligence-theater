@@ -163,3 +163,35 @@ test-free-*.js
 
 # Runtime request tracking files
 latest-request-id.txt
+# Validation and analysis output files
+raw-intelligence-analysis.json
+section-synthesis-report.md
+source-quality-report.md
+DEPLOYMENT_READY.txt
+FINAL_SOURCE_FIX_VALIDATION.txt
+GUIDED-SYNTHESIS-README.md
+MASTER_INDEX.md
+SERVER_STABILITY_FIX.md
+SOURCE_FIX_CODE_PATTERNS.md
+VERIFICATION_CHECKLIST.txt
+
+# Backup directories
+.bmad-core-v4-backup/
+
+# New framework/agent directories
+_bmad/
+.github/agents/
+
+# Utility scripts for data analysis
+analyze-db.js
+analyze-sources.js
+test-source-content.js
+test-sources-playwright.js
+test-synthesis-guide.js
+test-quick.js
+
+# PowerShell validation scripts
+validation-report.ps1
+
+# Node utility scripts
+scripts/kill-port.js
