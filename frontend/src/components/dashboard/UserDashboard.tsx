@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 // import { Separator } from "@/components/ui/separator";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-import { Calendar, FileText, TrendingUp, User, Archive, Download, Share2, Users, Lock, Eye, Edit, Shield } from "lucide-react";
+import { Calendar, FileText, TrendingUp, User, Archive, Download, Share2, Users, Lock, Eye, Edit, Shield, Database } from "lucide-react";
+import Link from 'next/link';
 
 interface Dossier {
   id: string;
@@ -243,6 +244,26 @@ export const UserDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Raw Intelligence Vault Link */}
+      <Link href="/dashboard/raw-intelligence">
+        <Card className="bg-gradient-to-r from-gray-900 to-gray-800 border-blue-500/30 hover:border-blue-500 transition-colors cursor-pointer">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Database className="h-8 w-8 text-blue-400" />
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Raw Intelligence Vault</h3>
+                  <p className="text-gray-400 text-sm">View 100% raw data from each source before synthesis</p>
+                </div>
+              </div>
+              <Button variant="outline" className="border-blue-400 text-blue-400 hover:bg-blue-400/10">
+                Explore Data →
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* UX EXPERT: Enhanced Tabbed Interface */}
       <Card>

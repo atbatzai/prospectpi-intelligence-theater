@@ -20,6 +20,7 @@ import { requestLogger } from './middleware/requestLogger';
 import { rateLimiter } from './middleware/rateLimiter';
 import { ApiConfig } from './config/ApiConfig';
 import { DatabaseManager } from './database/DatabaseManager';
+import { RawIntelligenceVault } from './services/RawIntelligenceVault';
 import { specs, swaggerUi } from './docs/swagger';
 import { WebSocketServer } from './websocket/WebSocketServer';
 
@@ -309,17 +310,40 @@ class ApiServer {
       await DatabaseManager.initialize();
       logger.info('Database initialized successfully');
 
-      // Start server
-      this.server.listen(this.port, () => {
-        logger.info(`🚀 ProspectPI Intelligence Theater API server running on port ${this.port}`);
-        logger.info(`📡 WebSocket server running on ws://localhost:${this.port}/ws`);
-        logger.info(`🏥 Health check available at http://localhost:${this.port}/health`);
-      });
+      // Initialize Raw Intelligence Vault (stores 100% of source data for review)
+      logger.info('Initializing Raw Intelligence Vault...');
+      await RawIntelligenceVault.getInstance().initialize();
+      logger.info('Raw Intelligence Vault initialized successfully');
+
+      // Start server with EADDRINUSE handling
+      await this.startWithPortHandling();
 
     } catch (error: any) {
       logger.error('Failed to start API server', { error: error.message });
       process.exit(1);
     }
+  }
+
+  private async startWithPortHandling(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Handle port in use error
+      this.server.once('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE') {
+          logger.error(`Port ${this.port} is already in use!`);
+          logger.info('💡 Run "npm run ports:clean" to free the port, or check for zombie processes');
+          reject(new Error(`EADDRINUSE: Port ${this.port} is already in use`));
+        } else {
+          reject(err);
+        }
+      });
+
+      this.server.listen(this.port, () => {
+        logger.info(`🚀 ProspectPI Intelligence Theater API server running on port ${this.port}`);
+        logger.info(`📡 WebSocket server running on ws://localhost:${this.port}/ws`);
+        logger.info(`🏥 Health check available at http://localhost:${this.port}/health`);
+        resolve();
+      });
+    });
   }
 
   public async stop(): Promise<void> {

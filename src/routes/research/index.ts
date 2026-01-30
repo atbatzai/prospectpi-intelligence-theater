@@ -6,11 +6,15 @@
 import { Router } from 'express';
 import { generateDossierHandler } from './generateDossier';
 import { generateMockDossier } from './generateMockDossier';
+import { rawIntelligenceRouter } from './rawIntelligence';
 import { optionalAuth } from '../../middleware/auth';
 import { ApiConfig } from '../../config/ApiConfig';
 import { Request, Response } from 'express';
 
 export const researchRouter = Router();
+
+// Mount raw intelligence routes (view 100% of source data)
+researchRouter.use('/', rawIntelligenceRouter);
 
 /**
  * 🎯 CLEAN SEPARATION: Environment-based routing

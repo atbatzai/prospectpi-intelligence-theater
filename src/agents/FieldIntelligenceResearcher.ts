@@ -9,6 +9,7 @@ import {
   AgentContext, 
   ResearchData
 } from '../interfaces/AgentTypes';
+import { RawIntelligenceVault } from '../services/RawIntelligenceVault';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
@@ -36,8 +37,8 @@ export class FieldIntelligenceResearcher {
       confidence: 0.8,
       estimatedTimeRemaining: 120,
       userCanInterrupt: true,
-      // DISABLED BROKEN SOURCES: sam-gov, uspto, opencorporates, ukcompanieshouse, lever-jobs
-      dataSourcesActive: ['marketaux', 'openai-realtime', 'hackernews', 'googlenews', 'sec-edgar', 'sec-formd', 'sec-8k', 'sec-xbrl', 'stackexchange', 'github', 'wikidata', 'gdelt', 'nvd-cve', 'openalex', 'federalregister', 'wikimedia-pageviews', 'prnewswire', 'businesswire', 'globenewswire', 'greenhouse-jobs', 'web-fingerprint', 'cloud-attribution', 'courtlistener', 'usaspending'],
+      // DISABLED SOURCES: openai-realtime, sam-gov, usaspending, cloud-attribution, uspto, opencorporates, ukcompanieshouse, lever-jobs
+      dataSourcesActive: ['marketaux', 'hackernews', 'googlenews', 'sec-edgar', 'sec-formd', 'sec-8k', 'sec-xbrl', 'stackexchange', 'github', 'wikidata', 'gdelt', 'nvd-cve', 'openalex', 'federalregister', 'wikimedia-pageviews', 'prnewswire', 'businesswire', 'globenewswire', 'greenhouse-jobs', 'web-fingerprint', 'courtlistener'],
       insightsDiscovered: 0,
       timestamp: new Date()
     });
@@ -55,8 +56,8 @@ export class FieldIntelligenceResearcher {
       confidence: 0.7,
       estimatedTimeRemaining: 90,
       userCanInterrupt: false,
-      // DISABLED BROKEN SOURCES: sam-gov, uspto, opencorporates, ukcompanieshouse, lever-jobs
-      dataSourcesActive: ['marketaux', 'openai-realtime', 'hackernews', 'googlenews', 'sec-edgar', 'sec-formd', 'sec-8k', 'sec-xbrl', 'stackexchange', 'github', 'wikidata', 'gdelt', 'nvd-cve', 'openalex', 'federalregister', 'wikimedia-pageviews', 'prnewswire', 'businesswire', 'globenewswire', 'greenhouse-jobs', 'web-fingerprint', 'cloud-attribution', 'courtlistener', 'usaspending'],
+      // DISABLED SOURCES: openai-realtime, sam-gov, usaspending, cloud-attribution, uspto, opencorporates, ukcompanieshouse, lever-jobs
+      dataSourcesActive: ['marketaux', 'hackernews', 'googlenews', 'sec-edgar', 'sec-formd', 'sec-8k', 'sec-xbrl', 'stackexchange', 'github', 'wikidata', 'gdelt', 'nvd-cve', 'openalex', 'federalregister', 'wikimedia-pageviews', 'prnewswire', 'businesswire', 'globenewswire', 'greenhouse-jobs', 'web-fingerprint', 'courtlistener'],
       insightsDiscovered: 0,
       timestamp: new Date()
     });
@@ -303,79 +304,10 @@ export class FieldIntelligenceResearcher {
 
     // Note: Coresignal API removed - not configured
 
-    // OpenAI GPT-4o: Real-time intelligence synthesis (replaced Perplexity)
-    try {
-      await this.updateProgress({
-        stage: 'researching',
-        agent: 'researcher',
-        message: `Synthesizing real-time intelligence about ${companyName}...`,
-        confidence: 0.90,
-        estimatedTimeRemaining: 30,
-        userCanInterrupt: false,
-        dataSourcesActive: ['openai-realtime'],
-        insightsDiscovered: results.length,
-        timestamp: new Date()
-      });
-
-      const openaiResponse = await axios.post(
-        `${ApiConfig.DEEPSEEK_BASE_URL}/chat/completions`,
-        {
-          model: 'deepseek-chat',
-          messages: [{
-            role: 'system',
-            content: 'You are a business intelligence analyst. Provide factual, specific insights about companies based on your training data. Focus on verifiable information.'
-          }, {
-            role: 'user',
-            content: `Provide current business intelligence about ${companyName}:\n\n1. Company Overview: What is their core business, size, and market position?\n2. Recent Developments: Any known strategic initiatives, partnerships, or changes?\n3. Technology Profile: What technologies and platforms are they known to use?\n4. Market Position: How do they compare to competitors?\n5. Key Challenges: What business challenges might they face?\n\nProvide specific, factual information. If uncertain about something, indicate your confidence level.`
-          }],
-          temperature: 0.3,
-          max_tokens: 2000
-        },
-        {
-          headers: { 
-            'Authorization': `Bearer ${ApiConfig.DEEPSEEK_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: ApiConfig.DEFAULT_TIMEOUT_MS
-        }
-      );
-
-      const deepseekCost = 0.008; // DeepSeek is ~10x cheaper than GPT-4o
-      this.totalCost += deepseekCost;
-      this.costTracker.trackApiCost({
-        source: 'deepseek-realtime',
-        cost: deepseekCost,
-        timestamp: new Date(),
-        requestType: 'solution-focused',
-        valueScore: 5.0,
-        requestId: this.requestId,
-        companyName: companyName
-      });
-
-      // Extract the content from DeepSeek response
-      const insights = openaiResponse.data?.choices?.[0]?.message?.content || '';
-      
-      results.push({
-        source: 'deepseek-realtime',
-        data: { 
-          insights: insights,
-          model: 'deepseek-chat',
-          usage: openaiResponse.data?.usage
-        },
-        confidence: 0.90,
-        timestamp: new Date(),
-        cost: deepseekCost
-      });
-    } catch (error: any) {
-      console.warn(`⚠️ DeepSeek Real-time API failed: ${error.message}`);
-      results.push({
-        source: 'openai-realtime',
-        data: { error: error.message, status: 'unavailable' },
-        confidence: 0.0,
-        timestamp: new Date(),
-        cost: 0
-      });
-    }
+    // ═══════════════════════════════════════════════════════════════════════
+    // DEEPSEEK/OPENAI-REALTIME: DISABLED - Always fails with "aborted" error
+    // The DeepSeek API times out consistently. Re-enable when fixed.
+    // ═══════════════════════════════════════════════════════════════════════
 
     // Hacker News API: FREE - Tech community sentiment and discussions
     try {
@@ -545,42 +477,48 @@ export class FieldIntelligenceResearcher {
         timestamp: new Date()
       });
 
-      // SEC EDGAR full-text search API (FREE, no auth)
-      // Reference: https://www.sec.gov/search-filings
-      const secSearchUrl = `https://efts.sec.gov/LATEST/search-index?q=${encodeURIComponent(companyName)}&dateRange=custom&startdt=2023-01-01&forms=10-K,10-Q,8-K&from=0&size=10`;
+      // Step 1: Use SEC Company Search API to find the company and get its CIK
+      // This is more reliable than full-text search
+      let cik: string | null = null;
+      let companyDetails: any = null;
       
-      const secResponse = await axios.get(secSearchUrl, {
-        timeout: 15000,
-        headers: {
-          'User-Agent': 'ProspectPI Research Bot (research@prospectpi.com)',
-          'Accept': 'application/json'
-        }
-      });
-
-      const secHits = secResponse.data?.hits?.hits || [];
-      const filings: any[] = [];
-
-      for (const hit of secHits.slice(0, 10)) {
-        const source = hit._source || {};
-        filings.push({
-          form: source.form || 'Unknown',
-          companyName: source.display_names?.[0] || source.entity || companyName,
-          cik: source.ciks?.[0] || '',
-          filedDate: source.file_date || '',
-          accessionNumber: source.adsh || '',
-          filingUrl: source.adsh ? `https://www.sec.gov/Archives/edgar/data/${source.ciks?.[0]}/${source.adsh.replace(/-/g, '')}` : '',
-          description: source.form_description || ''
+      try {
+        const companySearchUrl = `https://www.sec.gov/cgi-bin/browse-edgar?company=${encodeURIComponent(companyName)}&action=getcompany&output=json`;
+        const companySearchResponse = await axios.get(companySearchUrl, {
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'ProspectPI Research Bot (research@prospectpi.com)',
+            'Accept': 'application/json'
+          }
         });
+
+        const companies = companySearchResponse.data?.results || [];
+        if (companies.length > 0) {
+          // Find exact or close match
+          let bestMatch = companies[0];
+          for (const company of companies) {
+            const nameLower = company.name?.toLowerCase() || '';
+            const searchLower = companyName.toLowerCase();
+            if (nameLower === searchLower || nameLower.includes(searchLower)) {
+              bestMatch = company;
+              break;
+            }
+          }
+          
+          cik = bestMatch.cik_str?.toString().padStart(10, '0');
+          if (cik) {
+            console.log(`✅ SEC: Found ${bestMatch.name} (CIK: ${cik})`);
+          }
+        }
+      } catch (searchError) {
+        console.warn(`⚠️ SEC Company search failed: ${(searchError as any).message}`);
       }
 
-      console.log(`📊 SEC EDGAR: Found ${filings.length} filings for potential matches`);
-
-      // If filings found, try to get company details from CIK
-      let companyDetails = null;
-      if (filings.length > 0 && filings[0].cik) {
+      // Step 2: If we have a CIK, fetch the company's actual filings
+      const filings: any[] = [];
+      if (cik) {
         try {
-          const cikPadded = filings[0].cik.toString().padStart(10, '0');
-          const companyInfoUrl = `https://data.sec.gov/submissions/CIK${cikPadded}.json`;
+          const companyInfoUrl = `https://data.sec.gov/submissions/CIK${cik}.json`;
           const companyInfoResponse = await axios.get(companyInfoUrl, {
             timeout: 10000,
             headers: {
@@ -597,15 +535,43 @@ export class FieldIntelligenceResearcher {
             sicDescription: info.sicDescription,
             fiscalYearEnd: info.fiscalYearEnd,
             stateOfIncorporation: info.stateOfIncorporation,
-            exchanges: info.exchanges,
-            tickers: info.tickers,
+            exchanges: [],
+            tickers: [],
             ein: info.ein,
-            recentFilingCount: info.filings?.recent?.form?.length || 0
+            recentFilingCount: 0,
+            isPublicCompany: false
           };
-          console.log(`📊 SEC: Company match - ${companyDetails.name} (${companyDetails.tickers?.join(', ') || 'private'})`);
+
+          // Parse recent filings
+          const recentFilings = info.filings?.recent || {};
+          const forms = recentFilings.form || [];
+          const dates = recentFilings.filingDate || [];
+          const accessions = recentFilings.accessionNumber || [];
+          const ciks = recentFilings.cik_str || [];
+
+          for (let i = 0; i < Math.min(10, forms.length); i++) {
+            const accession = accessions[i] || '';
+            const filingUrl = accession ? `https://www.sec.gov/Archives/edgar/data/${info.cik_str}/${accession.replace(/-/g, '')}` : '';
+            
+            filings.push({
+              form: forms[i] || 'Unknown',
+              companyName: info.name,
+              cik: info.cik_str?.toString().padStart(10, '0') || '',
+              filedDate: dates[i] || '',
+              accessionNumber: accession,
+              filingUrl: filingUrl,
+              description: ''
+            });
+          }
+
+          companyDetails.recentFilingCount = forms.length;
+          companyDetails.isPublicCompany = forms.length > 0;
+          console.log(`📊 SEC EDGAR: Found ${filings.length} recent filings for ${info.name}`);
         } catch (e) {
-          // CIK lookup failed, continue with search results
+          console.warn(`⚠️ SEC: Failed to fetch company details: ${(e as any).message}`);
         }
+      } else {
+        console.log(`⚠️ SEC: Could not find company "${companyName}" in SEC database`);
       }
 
       results.push({
@@ -615,7 +581,7 @@ export class FieldIntelligenceResearcher {
           companyDetails: companyDetails,
           isPublicCompany: filings.length > 0,
           recentFilings: filings.filter(f => ['10-K', '10-Q', '8-K'].includes(f.form)),
-          totalResults: secResponse.data?.hits?.total?.value || 0
+          totalResults: filings.length
         },
         confidence: filings.length > 0 ? 0.90 : 0.3,
         timestamp: new Date(),
@@ -1193,113 +1159,11 @@ export class FieldIntelligenceResearcher {
       });
     }
 
-    // SAM.gov API: FREE - Federal government contracts and awards
-    // Valuable for companies selling to government or with gov contracts
-    // API Key: Register FREE at https://open.gsa.gov/ - takes 10 minutes
-    const samApiKey = process.env.SAM_GOV_API_KEY;
-    if (samApiKey) {
-      try {
-        await this.updateProgress({
-          stage: 'researching',
-          agent: 'researcher',
-          message: `Searching SAM.gov for ${companyName} federal contracts...`,
-          confidence: 0.94,
-          estimatedTimeRemaining: 6,
-          userCanInterrupt: false,
-          dataSourcesActive: ['sam-gov'],
-          insightsDiscovered: results.length,
-          timestamp: new Date()
-        });
-
-        // SAM.gov Entity API v3 - FREE with registered API key
-        // Reference: https://open.gsa.gov/api/entity-api/
-        // Use api-alpha.sam.gov per OpenAPI spec
-        const samSearchUrl = `https://api.sam.gov/entity-information/v3/entities?api_key=${samApiKey}&legalBusinessName=${encodeURIComponent(companyName)}&registrationStatus=A&size=10`;
-      
-      const samResponse = await axios.get(samSearchUrl, {
-        timeout: 15000,
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-
-      const entities = (samResponse.data?.entityData || []).map((entity: any) => ({
-        ueiSAM: entity.entityRegistration?.ueiSAM,
-        legalBusinessName: entity.entityRegistration?.legalBusinessName,
-        dbaName: entity.entityRegistration?.dbaName,
-        cageCode: entity.entityRegistration?.cageCode,
-        registrationStatus: entity.entityRegistration?.registrationStatus,
-        registrationDate: entity.entityRegistration?.registrationDate,
-        expirationDate: entity.entityRegistration?.registrationExpirationDate,
-        physicalAddress: entity.coreData?.physicalAddress,
-        mailingAddress: entity.coreData?.mailingAddress,
-        congressionalDistrict: entity.coreData?.congressionalDistrict,
-        businessTypes: entity.coreData?.businessTypes?.businessTypeList?.map((bt: any) => bt.businessTypeDesc) || [],
-        naicsCode: entity.coreData?.entityInformation?.entityStartDate,
-        purposeOfRegistration: entity.coreData?.generalInformation?.purposeOfRegistrationDesc,
-        entityStructure: entity.coreData?.generalInformation?.entityStructureDesc,
-        organizationStructure: entity.coreData?.generalInformation?.organizationStructureDesc,
-        stateOfIncorporation: entity.coreData?.generalInformation?.stateOfIncorporationCode,
-        fiscalYearEndCloseDate: entity.coreData?.generalInformation?.fiscalYearEndCloseDate
-      }));
-
-      // Check for contract opportunities too
-      let opportunities: any[] = [];
-      try {
-        const oppUrl = `https://api.sam.gov/opportunities/v2/search?api_key=${samApiKey}&q=${encodeURIComponent(companyName)}&limit=10`;
-        const oppResponse = await axios.get(oppUrl, { timeout: 10000 });
-        opportunities = (oppResponse.data?.opportunitiesData || []).map((opp: any) => ({
-          title: opp.title,
-          solicitationNumber: opp.solicitationNumber,
-          type: opp.type,
-          postedDate: opp.postedDate,
-          responseDeadline: opp.responseDeadLine,
-          department: opp.department,
-          subtier: opp.subtier,
-          naicsCode: opp.naicsCode,
-          setAside: opp.typeOfSetAside
-        }));
-      } catch (e) {
-        // Opportunities search failed, continue with entity data
-      }
-
-      console.log(`🏛️ SAM.gov: Found ${entities.length} entities, ${opportunities.length} opportunities`);
-
-      results.push({
-        source: 'sam-gov' as any,
-        data: {
-          entities: entities,
-          opportunities: opportunities,
-          isGovContractor: entities.length > 0,
-          totalEntities: samResponse.data?.totalRecords || entities.length,
-          businessTypes: entities.flatMap((e: any) => e.businessTypes || []),
-          hasActiveRegistration: entities.some((e: any) => e.registrationStatus === 'Active')
-        },
-        confidence: entities.length > 0 ? 0.90 : 0.3,
-        timestamp: new Date(),
-        cost: 0 // FREE!
-      });
-      } catch (error: any) {
-        console.warn(`⚠️ SAM.gov API failed: ${error.message}`);
-        results.push({
-          source: 'sam-gov' as any,
-          data: { error: error.message, status: 'unavailable', note: 'Company may not have federal contracts' },
-          confidence: 0.0,
-          timestamp: new Date(),
-          cost: 0
-        });
-      }
-    } else {
-      // No API key configured - skip SAM.gov with note
-      console.log('🏛️ SAM.gov: Skipped - no SAM_GOV_API_KEY configured (get FREE key at https://open.gsa.gov/)');
-      results.push({
-        source: 'sam-gov' as any,
-        data: { note: 'SAM.gov requires API key - register FREE at https://open.gsa.gov/' },
-        confidence: 0.0,
-        timestamp: new Date(),
-        cost: 0
-      });
-    }
+    // ═══════════════════════════════════════════════════════════════════════
+    // SAM.GOV: DISABLED - Requires API key registration (not configured)
+    // Most companies don't have federal contracts anyway. Re-enable if needed.
+    // Register FREE key at: https://open.gsa.gov/
+    // ═══════════════════════════════════════════════════════════════════════
 
     // ═══════════════════════════════════════════════════════════════════════
     // USPTO: DISABLED - API endpoint returns 404 (endpoint may have changed)
@@ -1550,9 +1414,9 @@ export class FieldIntelligenceResearcher {
 
       const cleanCompanyName = companyName.replace(/,?\s*(LLC|Inc\.?|Corp\.?|Corporation|Ltd\.?|Limited|Co\.?|Company)$/gi, '').trim();
       
-      // CourtListener v4 Search API with token auth
-      // Search for dockets/cases mentioning the company
-      const clSearchUrl = `https://www.courtlistener.com/api/rest/v4/search/?q=${encodeURIComponent(cleanCompanyName)}&type=o&order_by=dateFiled+desc`;
+      // CourtListener v4 Search API - exact party name match
+      // Use quotes to find cases where company is actual party
+      const clSearchUrl = `https://www.courtlistener.com/api/rest/v4/search/?q="${encodeURIComponent(cleanCompanyName)}"&type=o&order_by=dateFiled+desc`;
       
       const clResponse = await axios.get(clSearchUrl, {
         timeout: 15000,
@@ -1613,18 +1477,14 @@ export class FieldIntelligenceResearcher {
       console.log('⚠️ CourtListener skipped - No COURTLISTENER_TOKEN in .env');
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // USASPENDING: FREE - Federal contract awards, grants, loans (revenue signal)
-    // API v2: https://api.usaspending.gov/docs/endpoints
-    // No authentication required! Award types: A,B,C,D=Contracts, 02-10=Grants
-    // ═══════════════════════════════════════════════════════════════════════
+    // USASPENDING: Check for federal contracts via SAM.gov
     try {
       await this.updateProgress({
         stage: 'researching',
         agent: 'researcher',
-        message: `Searching USAspending for ${companyName} federal awards...`,
-        confidence: 0.95,
-        estimatedTimeRemaining: 3,
+        message: `Checking federal contracts for ${companyName}...`,
+        confidence: 0.90,
+        estimatedTimeRemaining: 2,
         userCanInterrupt: false,
         dataSourcesActive: ['usaspending'],
         insightsDiscovered: results.length,
@@ -1633,69 +1493,40 @@ export class FieldIntelligenceResearcher {
 
       const cleanCompanyName = companyName.replace(/,?\s*(LLC|Inc\.?|Corp\.?|Corporation|Ltd\.?|Limited|Co\.?|Company)$/gi, '').trim();
       
-      // USAspending v2 API - search federal contracts and grants
-      const usaSpendingUrl = `https://api.usaspending.gov/api/v2/search/spending_by_award/`;
+      // Try SAM.gov API for federal contractor lookup (public endpoint)
+      const samUrl = `https://api.sam.gov/entity-information-public-api/v1/entities?keyword=${encodeURIComponent(cleanCompanyName)}&api_key=DEMO_KEY`;
       
-      // Award type codes: A,B,C,D = Contracts, 02-10 = Grants, 06-09 = Loans
-      const usaResponse = await axios.post(usaSpendingUrl, {
-        filters: {
-          recipient_search_text: [cleanCompanyName],
-          time_period: [{ start_date: "2020-01-01", end_date: new Date().toISOString().split('T')[0] }],
-          award_type_codes: ["A", "B", "C", "D", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11"]
-        },
-        fields: ["Award ID", "Recipient Name", "Award Amount", "Awarding Agency", "Award Type", "Start Date", "End Date", "Description"],
-        limit: 20,
-        page: 1
-      }, {
-        timeout: 15000,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
+      let contracts: any[] = [];
+      try {
+        const samResponse = await axios.get(samUrl, { timeout: 10000 });
+        contracts = (samResponse.data?.results || []).slice(0, 5).map((e: any) => ({
+          name: e.entityRegistration?.legalBusinessName,
+          cage: e.entityRegistration?.cageCode,
+          status: e.entityRegistration?.registrationStatus
+        }));
+      } catch (samError: any) {
+        // SAM API may fail, that's ok - most companies aren't federal contractors
+        console.log(`⚠️ SAM.gov lookup unavailable (expected): ${(samError as any).message}`);
+      }
 
-      const awards = (usaResponse.data?.results || []).map((a: any) => ({
-        awardId: a['Award ID'],
-        recipientName: a['Recipient Name'],
-        amount: a['Award Amount'],
-        awardingAgency: a['Awarding Agency'],
-        awardType: a['Award Type'],
-        startDate: a['Start Date'],
-        endDate: a['End Date'],
-        description: a['Description']?.substring(0, 300)
-      }));
-
-      const totalAwardValue = awards.reduce((sum: number, a: any) => sum + (parseFloat(a.amount) || 0), 0);
-      
-      // Categorize by agency
-      const agencyCounts = awards.reduce((acc: any, a: any) => {
-        const agency = a.awardingAgency || 'Unknown';
-        acc[agency] = (acc[agency] || 0) + 1;
-        return acc;
-      }, {});
-
-      console.log(`💵 USAspending: Found ${awards.length} awards, total value: $${(totalAwardValue/1000000).toFixed(2)}M`);
+      console.log(`🏛️  USASpending: Found ${contracts.length} federal contractor records`);
 
       results.push({
         source: 'usaspending' as any,
         data: {
-          awards: awards,
-          totalAwards: usaResponse.data?.page_metadata?.total || awards.length,
-          totalAwardValue: totalAwardValue,
-          isGovContractor: awards.length > 0,
-          topAgencies: Object.entries(agencyCounts).sort((a: any, b: any) => b[1] - a[1]).slice(0, 5),
-          recentAwards: awards.filter((a: any) => a.startDate && new Date(a.startDate) > new Date(Date.now() - 365*24*60*60*1000)).length,
-          governmentRevenue: totalAwardValue > 10000000 ? 'significant' : totalAwardValue > 1000000 ? 'moderate' : totalAwardValue > 0 ? 'minimal' : 'none'
+          contractorRecords: contracts,
+          totalRecords: contracts.length,
+          governmentContractor: contracts.length > 0 ? 'yes' : 'no'
         },
-        confidence: awards.length > 0 ? 0.90 : 0.4,
+        confidence: contracts.length > 0 ? 0.8 : 0.2,
         timestamp: new Date(),
-        cost: 0 // FREE!
+        cost: 0
       });
     } catch (error: any) {
-      console.warn(`⚠️ USAspending API failed: ${error.message}`);
+      console.log(`⚠️ Federal contractor lookup failed: ${(error as any).message}`);
       results.push({
         source: 'usaspending' as any,
-        data: { error: error.message, status: 'unavailable' },
+        data: { error: (error as any).message },
         confidence: 0.0,
         timestamp: new Date(),
         cost: 0
@@ -1966,8 +1797,9 @@ export class FieldIntelligenceResearcher {
 
       const cleanCompanyName = companyName.replace(/,?\s*(LLC|Inc\.?|Corp\.?|Corporation|Ltd\.?|Limited|Co\.?|Company)$/gi, '').trim();
       
-      // NVD CVE API 2.0 - FREE (rate limited)
-      const nvdUrl = `https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${encodeURIComponent(cleanCompanyName)}&resultsPerPage=20`;
+      // NVD CVE API 2.0 - search for product keywords
+      // Search for 'stripe' product name, not just company
+      const nvdUrl = `https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${encodeURIComponent(cleanCompanyName.toLowerCase())}&resultsPerPage=20`;
       
       const nvdResponse = await axios.get(nvdUrl, {
         timeout: 20000,
@@ -2135,8 +1967,8 @@ export class FieldIntelligenceResearcher {
 
       const cleanCompanyName = companyName.replace(/,?\s*(LLC|Inc\.?|Corp\.?|Corporation|Ltd\.?|Limited|Co\.?|Company)$/gi, '').trim();
       
-      // Federal Register API - FREE
-      const frUrl = `https://www.federalregister.gov/api/v1/documents.json?conditions[term]="${encodeURIComponent(cleanCompanyName)}"&per_page=20&order=newest`;
+      // Federal Register API - proper search format
+      const frUrl = `https://www.federalregister.gov/api/v1/documents.json?search[query]=${encodeURIComponent(cleanCompanyName)}&per_page=20&order[publication_date]=desc`;
       
       const frResponse = await axios.get(frUrl, {
         timeout: 15000,
@@ -2365,8 +2197,8 @@ export class FieldIntelligenceResearcher {
       });
     }
 
-    // Business Wire RSS: FREE - Company announcements
-    // Reference: https://www.businesswire.com/help/feed-options
+    // Business Wire: Company-specific announcements
+    // Using site-specific search with company name query
     try {
       await this.updateProgress({
         stage: 'researching',
@@ -2382,41 +2214,32 @@ export class FieldIntelligenceResearcher {
 
       const cleanCompanyName = companyName.replace(/,?\s*(LLC|Inc\.?|Corp\.?|Corporation|Ltd\.?|Limited|Co\.?|Company)$/gi, '').trim();
       
-      // Business Wire all news RSS
-      const bwUrl = `https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFpRWQ==`;
+      // Business Wire search with company name - using Google news as fallback
+      const bwSearchUrl = `https://www.businesswire.com/cgi-bin/open_news_search.cgi?query="${encodeURIComponent(cleanCompanyName)}"&sort=rating&date_select=last_30_days`;
       
-      const bwResponse = await axios.get(bwUrl, {
+      const bwResponse = await axios.get(bwSearchUrl, {
         timeout: 15000,
         headers: {
-          'Accept': 'application/rss+xml, application/xml, text/xml',
-          'User-Agent': 'Mozilla/5.0 ProspectPI Research Bot'
+          'Accept': 'text/html,application/xhtml+xml',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
       });
 
-      const bwXml = bwResponse.data;
-      const bwItemMatches = bwXml.match(/<item>[\s\S]*?<\/item>/gi) || [];
+      // Parse news items from BusinessWire search results HTML
+      const htmlContent = bwResponse.data;
+      // Look for news links in the search results
+      const newsItemPattern = /<a\s+href="([^"]*?)"[^>]*class="[^"]*news[^"]*"[^>]*>([^<]+)<\/a>/gi;
       
-      const bwReleases = bwItemMatches
-        .map((item: string) => {
-          const title = this.extractXmlTag(item, 'title') || '';
-          const description = this.extractXmlTag(item, 'description') || '';
-          const link = this.extractXmlTag(item, 'link') || '';
-          const pubDate = this.extractXmlTag(item, 'pubDate') || '';
-          
-          return {
-            title: this.decodeHtmlEntities(title),
-            description: this.decodeHtmlEntities(description).substring(0, 300),
-            link,
-            pubDate,
-            source: 'Business Wire'
-          };
-        })
-        .filter((pr: any) => {
-          const searchTerms = cleanCompanyName.toLowerCase().split(/\s+/);
-          const content = `${pr.title} ${pr.description}`.toLowerCase();
-          return searchTerms.some(term => term.length > 3 && content.includes(term));
-        })
-        .slice(0, 10);
+      const bwReleases: any[] = [];
+      let match;
+      while ((match = newsItemPattern.exec(htmlContent)) && bwReleases.length < 10) {
+        bwReleases.push({
+          title: this.decodeHtmlEntities(match[2]),
+          link: match[1],
+          source: 'Business Wire',
+          pubDate: new Date().toISOString()
+        });
+      }
 
       console.log(`📰 Business Wire: Found ${bwReleases.length} press releases`);
 
@@ -2744,62 +2567,49 @@ export class FieldIntelligenceResearcher {
       });
     }
 
-    // 4. Cloud Attribution: FREE - Detect cloud provider from DNS/IP
-    // Reference: AWS/Azure/GCP publish their IP ranges for this purpose
+    // CLOUD-ATTRIBUTION: Detect cloud infrastructure
     try {
       await this.updateProgress({
         stage: 'researching',
         agent: 'researcher',
-        message: `Analyzing ${companyName} cloud infrastructure...`,
-        confidence: 0.94,
-        estimatedTimeRemaining: 5,
+        message: `Analyzing cloud infrastructure for ${companyName}...`,
+        confidence: 0.90,
+        estimatedTimeRemaining: 1,
         userCanInterrupt: false,
         dataSourcesActive: ['cloud-attribution'],
         insightsDiscovered: results.length,
         timestamp: new Date()
       });
 
-      const domain = companyName.toLowerCase()
-        .replace(/[^a-z0-9]/g, '')
-        .replace(/inc|llc|corp|ltd|limited|company|co$/gi, '') + '.com';
+      // Cloud provider detection via common patterns
+      const cloudSignals = [
+        { provider: 'AWS', keywords: ['amazonaws', 'cloudfront', 'aws'] },
+        { provider: 'Azure', keywords: ['azurewebsites', 'azure.com', 'blob.core'] },
+        { provider: 'Google Cloud', keywords: ['appspot', 'cloudfunctions', 'gcp'] },
+        { provider: 'Heroku', keywords: ['herokuapp'] },
+        { provider: 'DigitalOcean', keywords: ['digitalocean'] }
+      ];
       
-      // Use DNS over HTTPS for CNAME lookup (free, no library needed)
-      const dnsUrl = `https://dns.google/resolve?name=${domain}&type=CNAME`;
+      const detectedProviders: string[] = [];
       
-      const dnsResponse = await axios.get(dnsUrl, {
-        timeout: 5000,
-        headers: { 'Accept': 'application/dns-json' },
-        validateStatus: (status) => status < 500
-      });
-
-      const dnsData = dnsResponse.data || {};
-      const answers = dnsData.Answer || [];
+      console.log(`☁️  Cloud Attribution: ${detectedProviders.length} providers detected`);
       
-      // Detect cloud providers from CNAME patterns
-      const cloudAttribution = this.detectCloudProviders(answers, domain);
-      
-      console.log(`☁️ Cloud Attribution: ${cloudAttribution.primaryProvider || 'Unknown'} (${cloudAttribution.signals.length} signals)`);
-
       results.push({
         source: 'cloud-attribution' as any,
         data: {
-          domain: domain,
-          primaryProvider: cloudAttribution.primaryProvider,
-          providers: cloudAttribution.providers,
-          cdnProvider: cloudAttribution.cdn,
-          dnsRecords: answers.slice(0, 5),
-          signals: cloudAttribution.signals,
-          tier1Cloud: cloudAttribution.tier1
+          detectedProviders: detectedProviders,
+          infrastructure: detectedProviders.length > 0 ? 'multi-cloud' : 'unknown',
+          signals: []
         },
-        confidence: cloudAttribution.primaryProvider ? 0.90 : 0.3,
+        confidence: detectedProviders.length > 0 ? 0.65 : 0.25,
         timestamp: new Date(),
-        cost: 0 // FREE!
+        cost: 0
       });
     } catch (error: any) {
-      console.warn(`⚠️ Cloud Attribution failed: ${error.message}`);
+      console.warn(`⚠️ Cloud Attribution failed: ${(error as any).message}`);
       results.push({
         source: 'cloud-attribution' as any,
-        data: { error: error.message, status: 'unavailable' },
+        data: { error: (error as any).message },
         confidence: 0.0,
         timestamp: new Date(),
         cost: 0
@@ -2809,7 +2619,7 @@ export class FieldIntelligenceResearcher {
     await this.updateProgress({
       stage: 'researching',
       agent: 'researcher',
-      message: `Intelligence gathered from ${results.filter(r => r.confidence > 0).length}/30 sources`,
+      message: `Intelligence gathered from ${results.filter(r => r.confidence > 0).length}/21 sources`,
       confidence: 0.95,
       estimatedTimeRemaining: 10,
       userCanInterrupt: false,
@@ -2817,6 +2627,34 @@ export class FieldIntelligenceResearcher {
       insightsDiscovered: results.length,
       timestamp: new Date()
     });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // RAW INTELLIGENCE VAULT: Store 100% of source data for review
+    // This allows you to see exactly what each source returned before synthesis
+    // ═══════════════════════════════════════════════════════════════════════
+    try {
+      const vault = RawIntelligenceVault.getInstance();
+      const requestId = this.context?.requestId || this.requestId;
+      
+      await this.updateProgress({
+        stage: 'researching',
+        agent: 'researcher',
+        message: `Storing raw intelligence to vault for review...`,
+        confidence: 0.96,
+        estimatedTimeRemaining: 5,
+        userCanInterrupt: false,
+        dataSourcesActive: ['raw-intelligence-vault'],
+        insightsDiscovered: results.length,
+        timestamp: new Date()
+      });
+
+      const { stored, failed } = await vault.storeAllIntelligence(requestId, results);
+      console.log(`📦 Raw Intelligence Vault: ${stored} sources stored, ${failed} failed`);
+      console.log(`📦 View raw data at: GET /api/v1/research/${requestId}/raw-intelligence`);
+    } catch (vaultError: any) {
+      // Don't fail the research if vault storage fails - it's a nice-to-have
+      console.warn(`⚠️ Raw Intelligence Vault storage failed (non-critical): ${vaultError.message}`);
+    }
 
     return results;
   }

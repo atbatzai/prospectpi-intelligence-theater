@@ -20,6 +20,7 @@ import {
   DossierResult,
   AgentError 
 } from '../interfaces/AgentTypes';
+import { SourceQualityGuide } from '../services/SourceQualityGuide';
 
 interface TriangulationResult {
   dataPoints: any[];
@@ -117,8 +118,11 @@ export class ProspectIntelligenceDetective {
   private modelType: 'anthropic' | 'openai';
   private context: AgentContext | null = null;
   private progressCallback: ((progress: AgentProgress) => void) | undefined;
+  private sourceQualityGuide: SourceQualityGuide;
 
   constructor(progressCallback?: (progress: AgentProgress) => void) {
+    // Initialize SourceQualityGuide for guided synthesis
+    this.sourceQualityGuide = new SourceQualityGuide();
     // Dynamically select API client based on model
     const model = ApiConfig.DETECTIVE_MODEL;
     
@@ -851,7 +855,22 @@ export class ProspectIntelligenceDetective {
       primaryPainPoint: 'Unknown Pain Point'
     };
 
+    // Step 3 Enhancement: Get source quality hints for guided synthesis
+    let sourceQualityHints = '';
+    try {
+      await this.sourceQualityGuide.initialize();
+      const requestId = this.context?.requestId;
+      if (requestId) {
+        sourceQualityHints = await this.sourceQualityGuide.getDetectivePromptHints(requestId);
+        console.log(`📊 Loaded source quality hints for guided synthesis`);
+      }
+    } catch (error) {
+      console.log('⚠️ Could not load source quality hints, proceeding with standard synthesis');
+    }
+
     const prompt = `You are an FBI-trained intelligence analyst creating solution-focused business intelligence for ${solutionContext.vendorName} selling ${solutionContext.productName} to ${companyName}.
+
+    ${sourceQualityHints}
 
     ⚠️ CRITICAL INSTRUCTION: ALL OUTPUT MUST BE SPECIFIC TO ${companyName.toUpperCase()}!
     - NEVER use generic phrases like "this document provides" or "our strategic position"
